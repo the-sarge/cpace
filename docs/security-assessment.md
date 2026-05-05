@@ -29,7 +29,7 @@ Scalar sampling masks bits above group size 252 and rejects zero. This creates a
 secret-dependent loop only for the all-zero masked scalar case. That event has
 negligible probability with a uniform random reader, but the behavior should be
 reviewed for hostile or deterministic random sources. Sampling failure wraps
-`ErrRandomness` and `ErrInvalidInput`.
+`ErrRandomness`.
 
 ## Memory Handling
 
