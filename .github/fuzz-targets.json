@@ -5,5 +5,12 @@
   { "target": "FuzzDraftVectorJSONLoader", "package": "." },
   { "target": "FuzzDraftInvalidVectorJSONLoader", "package": "." },
   { "target": "FuzzProtocolConsistency", "package": "." },
-  { "target": "FuzzProtocolMismatch", "package": "." }
+  { "target": "FuzzProtocolMismatch", "package": "." },
+  { "target": "FuzzRespondWithFuzzedMessageA", "package": "." },
+  { "target": "FuzzInitiatorFinishWithFuzzedMessageB", "package": "." },
+  { "target": "FuzzResponderFinishWithFuzzedMessageC", "package": "." },
+  { "target": "FuzzScalarMultVFY", "package": "." },
+  { "target": "FuzzMessageARoundTrip", "package": "." },
+  { "target": "FuzzMessageBRoundTrip", "package": "." },
+  { "target": "FuzzMessageCRoundTrip", "package": "." }
 ]
