@@ -116,6 +116,66 @@ func TestMutableInputsAreCopied(t *testing.T) {
 	}
 }
 
+func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
+	initCfg := testConfig()
+	initCfg.AssociatedData = []byte("ADa")
+	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
+	respCfg := testConfig()
+	respCfg.AssociatedData = []byte("ADb")
+	respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
+
+	initiator, msgA, err := Start(initCfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	initiatorScalar := initiator.scalar
+	responder, msgB, err := Respond(respCfg, msgA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	responderISK := responder.isk
+	responderTranscript := responder.transcript
+
+	msgC, sI, err := initiator.Finish(msgB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if initiator.scalar != nil {
+		t.Fatal("initiator scalar reference retained after Finish")
+	}
+	if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
+		t.Fatal("consumed initiator scalar was not cleared")
+	}
+
+	sR, err := responder.Finish(msgC)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if responder.isk != nil || responder.transcript != nil {
+		t.Fatal("responder retained cleared state references after Finish")
+	}
+	if !allZero(responderISK) {
+		t.Fatal("responder-owned ISK was not cleared")
+	}
+	if !allZero(responderTranscript) {
+		t.Fatal("responder-owned transcript was not cleared")
+	}
+	if allZero(sI.isk) || allZero(sR.isk) {
+		t.Fatal("returned session ISK was cleared through an alias")
+	}
+	kI, err := sI.Export([]byte("label"), []byte("ctx"), 32)
+	if err != nil {
+		t.Fatal(err)
+	}
+	kR, err := sR.Export([]byte("label"), []byte("ctx"), 32)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(kI, kR) {
+		t.Fatal("exports differ after cleanup")
+	}
+}
+
 func TestInputValidation(t *testing.T) {
 	cases := []struct {
 		name string
@@ -576,4 +636,13 @@ func completeExchange(t *testing.T, initCfg, respCfg Config) (*Session, *Session
 		t.Fatal(err)
 	}
 	return sI, sR
+}
+
+func allZero(in []byte) bool {
+	for _, b := range in {
+		if b != 0 {
+			return false
+		}
+	}
+	return true
 }

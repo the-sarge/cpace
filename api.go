@@ -98,6 +98,7 @@ func Start(cfg Config) (*Initiator, []byte, error) {
 	defer clearBytes(nc.password)
 
 	g := calculateGenerator(nc.password, nc.ci, nc.sid)
+	defer clearElement(g)
 	clearBytes(nc.password)
 	nc.password = nil
 	y, err := sampleScalar(nc.rand)
@@ -133,12 +134,14 @@ func Respond(cfg Config, messageA []byte) (*Responder, []byte, error) {
 	}
 
 	g := calculateGenerator(nc.password, nc.ci, nc.sid)
+	defer clearElement(g)
 	clearBytes(nc.password)
 	nc.password = nil
 	y, err := sampleScalar(nc.rand)
 	if err != nil {
 		return nil, nil, err
 	}
+	defer clearScalar(y)
 	yb := scalarMult(y, g)
 	k, ok := scalarMultVFY(y, a.ya)
 	defer clearBytes(k)
@@ -174,6 +177,7 @@ func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
 	}
 	scalar := i.scalar
 	defer func() {
+		clearScalar(scalar)
 		i.scalar = nil
 	}()
 	b, err := decodeMessageB(messageB)

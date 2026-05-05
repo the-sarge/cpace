@@ -5,6 +5,7 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"io"
+	"runtime"
 
 	"github.com/gtank/ristretto255"
 )
@@ -41,6 +42,15 @@ func calculateGenerator(prs, ci, sid []byte) *ristretto255.Element {
 	return g
 }
 
+//go:noinline
+func clearElement(e *ristretto255.Element) {
+	if e == nil {
+		return
+	}
+	e.Set(ristretto255.NewIdentityElement())
+	runtime.KeepAlive(e)
+}
+
 func sampleScalar(r io.Reader) (*ristretto255.Scalar, error) {
 	var b [scalarSize]byte
 	defer clearBytes(b[:])
@@ -59,6 +69,15 @@ func sampleScalar(r io.Reader) (*ristretto255.Scalar, error) {
 		return s, nil
 	}
 	return nil, fmt.Errorf("%w: scalar randomness produced only zero scalars", ErrRandomness)
+}
+
+//go:noinline
+func clearScalar(s *ristretto255.Scalar) {
+	if s == nil {
+		return
+	}
+	s.Zero()
+	runtime.KeepAlive(s)
 }
 
 func scalarFromCanonical(b []byte) (*ristretto255.Scalar, error) {
@@ -93,8 +112,11 @@ func scalarMultVFY(s *ristretto255.Scalar, encoded []byte) ([]byte, bool) {
 }
 
 func deriveISK(sid, k, transcript []byte) []byte {
-	material := lvCat([]byte(dsiISK), sid, k)
-	material = append(material, transcript...)
+	prefix := lvCat([]byte(dsiISK), sid, k)
+	material := make([]byte, len(prefix)+len(transcript))
+	copy(material, prefix)
+	copy(material[len(prefix):], transcript)
+	clearBytes(prefix)
 	sum := sha512.Sum512(material)
 	clearBytes(material)
 	out := make([]byte, sha512.Size)
@@ -116,8 +138,10 @@ func confirmationTag(isk, sid, y, ad []byte) []byte {
 	return m.Sum(nil)
 }
 
+//go:noinline
 func clearBytes(b []byte) {
 	for i := range b {
 		b[i] = 0
 	}
+	runtime.KeepAlive(b)
 }
