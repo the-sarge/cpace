@@ -93,9 +93,6 @@ func scalarMultVFY(s *ristretto255.Scalar, encoded []byte) ([]byte, bool) {
 }
 
 func deriveISK(sid, k, transcript []byte) []byte {
-	// lvCat fixes the DSI, sid, and K boundaries. The remaining raw transcript
-	// is injective for the public initiator-responder flow because transcriptIR
-	// has a fixed sequence of length-value fields.
 	material := lvCat([]byte(dsiISK), sid, k)
 	material = append(material, transcript...)
 	sum := sha512.Sum512(material)
