@@ -1,0 +1,39 @@
+name: Vulnerability Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vuln-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  vuln:
+    name: Govulncheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.4.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install task
+        run: go install github.com/go-task/task/v3/cmd/task@v3.50.0
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+
+      - name: Run vulnerability scan
+        run: task vuln

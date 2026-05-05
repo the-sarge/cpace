@@ -57,8 +57,8 @@ point lengths, and invalid tag lengths.
 - `github.com/gtank/ristretto255 v0.2.0`
 - `filippo.io/edwards25519 v1.2.0` as an indirect dependency
 
-Dependency review is not complete. Run `govulncheck ./...` before any release.
-Initial notes are recorded in `docs/dependency-review.md`.
+Dependency review is not complete. Run `govulncheck -test ./...` before any
+release. Initial notes are recorded in `docs/dependency-review.md`.
 
 ## Release Bar
 
@@ -69,7 +69,7 @@ Do not mark a release production-ready until:
 - parser and protocol fuzz targets have completed a meaningful run
 - every target in `.github/fuzz-targets.json` has run for more than five
   minutes on release hardware or the manual long-fuzz workflow
-- `govulncheck ./...` and `staticcheck ./...` pass
+- `govulncheck -test ./...` and `staticcheck ./...` pass
 - this assessment and `docs/spec-matrix.md` are reviewed
 - no critical or high independent review findings remain
 

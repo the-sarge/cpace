@@ -13,8 +13,8 @@ Dependencies:
 
 Local checks run:
 
-- `govulncheck ./...`: no vulnerabilities found.
+- `govulncheck -test ./...`: no vulnerabilities found.
 - `go list -m all`: only the two modules above are required.
 
 Before release, repeat this review with the exact release commit and archive the
-full `govulncheck -show verbose ./...` output.
+full `govulncheck -test -show verbose ./...` output.

@@ -11,6 +11,7 @@ version: "3"
 output: group
 
 vars:
+  GOSEC: '{{.GOSEC | default "gosec"}}'
   GOVULNCHECK: '{{.GOVULNCHECK | default "govulncheck"}}'
   STATICCHECK: '{{.STATICCHECK | default "staticcheck"}}'
   FUZZTIME: '{{.FUZZTIME | default "30s"}}'
@@ -39,7 +40,12 @@ tasks:
   vuln:
     desc: Run govulncheck
     cmds:
-      - "{{.GOVULNCHECK}} ./..."
+      - "{{.GOVULNCHECK}} -test ./..."
+
+  gosec:
+    desc: Run advisory gosec scan
+    cmds:
+      - "{{.GOSEC}} ./..."
 
   check:
     desc: Full local validation gate
