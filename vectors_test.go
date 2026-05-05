@@ -151,24 +151,28 @@ func TestRistrettoDraft21Vectors(t *testing.T) {
 	if !bytes.Equal(g.Bytes(), wantG) {
 		t.Fatalf("generator got %x want %x", g.Bytes(), wantG)
 	}
-	for name, alteredSID := range map[string][]byte{
-		"first byte": func() []byte {
+	sidMutations := []struct {
+		name string
+		sid  []byte
+	}{
+		{"first byte", func() []byte {
 			out := clone(sid)
 			out[0] ^= 0x01
 			return out
-		}(),
-		"last byte": func() []byte {
+		}()},
+		{"last byte", func() []byte {
 			out := clone(sid)
 			out[len(out)-1] ^= 0x01
 			return out
-		}(),
-		"nil":       nil,
-		"empty":     {},
-		"appended":  append(clone(sid), 0x00),
-		"truncated": clone(sid[:len(sid)-1]),
-	} {
-		t.Run("generator sid mutation "+name, func(t *testing.T) {
-			alteredG := calculateGenerator(prs, ci, alteredSID)
+		}()},
+		{"nil", nil},
+		{"empty", []byte{}},
+		{"appended", append(clone(sid), 0x00)},
+		{"truncated", clone(sid[:len(sid)-1])},
+	}
+	for _, tc := range sidMutations {
+		t.Run("generator sid mutation "+tc.name, func(t *testing.T) {
+			alteredG := calculateGenerator(prs, ci, tc.sid)
 			if bytes.Equal(alteredG.Bytes(), wantG) {
 				t.Fatal("generator unexpectedly matched official vector after sid mutation")
 			}

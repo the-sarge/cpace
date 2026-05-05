@@ -6,8 +6,8 @@ var (
 	// ErrInvalidInput reports invalid local configuration or parameters.
 	ErrInvalidInput = errors.New("cpace: invalid input")
 
-	// ErrRandomness reports failure to sample a usable non-zero scalar from
-	// the configured random source.
+	// ErrRandomness reports randomness-related failures, including random
+	// source read failures and repeated unusable scalar samples.
 	ErrRandomness = errors.New("cpace: randomness failure")
 
 	// ErrMessage reports malformed or unexpected wire messages.

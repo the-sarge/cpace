@@ -116,4 +116,3 @@ tasks:
         echo "All $target_count fuzz targets passed"
     env:
       FUZZTIME: "{{.FUZZTIME}}"
-

@@ -55,7 +55,7 @@ point lengths, and invalid tag lengths.
 ## Dependencies
 
 - `github.com/gtank/ristretto255 v0.2.0`
-- `filippo.io/edwards25519 v1.1.0` as an indirect dependency
+- `filippo.io/edwards25519 v1.2.0` as an indirect dependency
 
 Dependency review is not complete. Run `govulncheck ./...` before any release.
 Initial notes are recorded in `docs/dependency-review.md`.

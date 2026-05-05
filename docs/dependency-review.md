@@ -13,7 +13,7 @@ Dependencies:
 
 Local checks run:
 
-- `govulncheck ./...`: no reachable vulnerabilities found. The tool reported one vulnerability in imported packages that this code does not call.
+- `govulncheck ./...`: no vulnerabilities found.
 - `go list -m all`: only the two modules above are required.
 
 Before release, repeat this review with the exact release commit and archive the

@@ -43,19 +43,19 @@ func sampleScalar(r io.Reader) (*ristretto255.Scalar, error) {
 	var b [scalarSize]byte
 	for attempts := 0; attempts < maxScalarTries; attempts++ {
 		if _, err := io.ReadFull(r, b[:]); err != nil {
-			return nil, fmt.Errorf("%w: %w: scalar randomness: %w", ErrInvalidInput, ErrRandomness, err)
+			return nil, fmt.Errorf("%w: scalar randomness: %w", ErrRandomness, err)
 		}
 		b[31] &= 0x0f
 		s, err := ristretto255.NewScalar().SetCanonicalBytes(b[:])
 		if err != nil {
-			return nil, fmt.Errorf("%w: %w: scalar sampling rejected masked bytes: %w", ErrInvalidInput, ErrRandomness, err)
+			return nil, fmt.Errorf("%w: scalar sampling rejected masked bytes: %w", ErrRandomness, err)
 		}
 		if s.Equal(ristretto255.NewScalar().Zero()) == 1 {
 			continue
 		}
 		return s, nil
 	}
-	return nil, fmt.Errorf("%w: %w: scalar randomness produced only zero scalars", ErrInvalidInput, ErrRandomness)
+	return nil, fmt.Errorf("%w: scalar randomness produced only zero scalars", ErrRandomness)
 }
 
 func scalarFromCanonical(b []byte) (*ristretto255.Scalar, error) {

@@ -18,7 +18,7 @@ This module is a package-specific `cpace-go` profile over draft-21. It builds
 CI internally from the draft version, suite, roles, initiator ID, responder ID,
 and caller context. It also owns its binary wire framing; applications should
 treat message bytes as opaque and versioned by this module. The current wire
-format prefix byte is `0x01`.
+format prefix byte is `0xc1`.
 
 Provide a fresh, non-secret `SessionID` agreed by both parties for every
 session. Empty session IDs remain accepted because draft-21 only recommends

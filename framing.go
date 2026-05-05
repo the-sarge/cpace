@@ -3,7 +3,7 @@ package cpace
 import "fmt"
 
 const (
-	wireFormatV1           byte = 0x01
+	wireFormatV1           byte = 0xc1
 	wireSuite              byte = byte(SuiteCPaceRistretto255SHA512)
 	roleA                  byte = 0x01
 	roleB                  byte = 0x02

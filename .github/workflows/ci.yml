@@ -44,4 +44,3 @@ jobs:
 
       - name: Run fuzz smoke
         run: FUZZTIME=10s PARALLEL=2 task fuzz
-
