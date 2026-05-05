@@ -1,0 +1,279 @@
+package cpace
+
+import (
+	"bytes"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha512"
+	"fmt"
+	"io"
+	"sync"
+
+	"github.com/gtank/ristretto255"
+)
+
+const (
+	// DraftVersion identifies the CPace Internet-Draft revision implemented by
+	// this package.
+	DraftVersion = "draft-irtf-cfrg-cpace-21"
+
+	// SuiteCPaceRistretto255SHA512 is the only suite implemented by v1 of this
+	// package.
+	SuiteCPaceRistretto255SHA512 Suite = 0x01
+)
+
+const suiteName = "CPACE-RISTR255-SHA512"
+
+// Suite identifies a CPace ciphersuite in this package's wire framing.
+type Suite byte
+
+// Config contains the local inputs for one CPace role.
+//
+// Password, InitiatorID, and ResponderID must be non-empty. Context,
+// SessionID, and AssociatedData may be empty. The AssociatedData field is ADa
+// for Start and ADb for Respond. All byte slices are copied by Start and
+// Respond before use.
+type Config struct {
+	Password       []byte
+	InitiatorID    []byte
+	ResponderID    []byte
+	Context        []byte
+	SessionID      []byte
+	AssociatedData []byte
+
+	// Rand supplies scalar randomness. If nil, crypto/rand.Reader is used.
+	Rand io.Reader
+}
+
+// Initiator is a single-use initiator state returned by Start.
+type Initiator struct {
+	mu   sync.Mutex
+	used bool
+
+	scalar *ristretto255.Scalar
+	sid    []byte
+	ya     []byte
+	ada    []byte
+}
+
+// Responder is a single-use responder state returned by Respond.
+type Responder struct {
+	mu   sync.Mutex
+	used bool
+
+	sid        []byte
+	ya         []byte
+	ada        []byte
+	yb         []byte
+	adb        []byte
+	isk        []byte
+	transcript []byte
+}
+
+// Session is an explicitly confirmed CPace session.
+type Session struct {
+	isk          []byte
+	transcriptID []byte
+}
+
+type normalizedConfig struct {
+	password []byte
+	ci       []byte
+	sid      []byte
+	ad       []byte
+	rand     io.Reader
+}
+
+// Start creates initiator state and message A.
+func Start(cfg Config) (*Initiator, []byte, error) {
+	nc, err := normalizeConfig(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	g := calculateGenerator(nc.password, nc.ci, nc.sid)
+	y, err := sampleScalar(nc.rand)
+	if err != nil {
+		return nil, nil, err
+	}
+	ya := scalarMult(y, g)
+	msg := encodeMessageA(nc.sid, ya, nc.ad)
+
+	st := &Initiator{
+		scalar: y,
+		sid:    clone(nc.sid),
+		ya:     clone(ya),
+		ada:    clone(nc.ad),
+	}
+	return st, msg, nil
+}
+
+// Respond consumes message A, creates responder state, and returns message B.
+// Message B includes the responder's explicit key-confirmation tag.
+func Respond(cfg Config, messageA []byte) (*Responder, []byte, error) {
+	nc, err := normalizeConfig(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	a, err := decodeMessageA(messageA)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !bytes.Equal(a.sid, nc.sid) {
+		return nil, nil, fmt.Errorf("%w: session id mismatch", ErrMessage)
+	}
+
+	g := calculateGenerator(nc.password, nc.ci, nc.sid)
+	y, err := sampleScalar(nc.rand)
+	if err != nil {
+		return nil, nil, err
+	}
+	yb := scalarMult(y, g)
+	k, ok := scalarMultVFY(y, a.ya)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: invalid initiator share", ErrAbort)
+	}
+	tr := transcriptIR(a.ya, a.ada, yb, nc.ad)
+	isk := deriveISK(nc.sid, k, tr)
+	tagB := confirmationTag(isk, nc.sid, yb, nc.ad)
+	msg := encodeMessageB(yb, nc.ad, tagB)
+
+	st := &Responder{
+		sid:        clone(nc.sid),
+		ya:         clone(a.ya),
+		ada:        clone(a.ada),
+		yb:         clone(yb),
+		adb:        clone(nc.ad),
+		isk:        isk,
+		transcript: tr,
+	}
+	return st, msg, nil
+}
+
+// Finish consumes message B, verifies the responder confirmation tag, and
+// returns message C plus an authenticated session.
+func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
+	if i == nil {
+		return nil, nil, fmt.Errorf("%w: nil initiator", ErrInvalidInput)
+	}
+	if err := i.consume(); err != nil {
+		return nil, nil, err
+	}
+	b, err := decodeMessageB(messageB)
+	if err != nil {
+		return nil, nil, err
+	}
+	k, ok := scalarMultVFY(i.scalar, b.yb)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: invalid responder share", ErrAbort)
+	}
+	tr := transcriptIR(i.ya, i.ada, b.yb, b.adb)
+	isk := deriveISK(i.sid, k, tr)
+	expectedB := confirmationTag(isk, i.sid, b.yb, b.adb)
+	if !hmac.Equal(expectedB, b.tag) {
+		return nil, nil, ErrConfirmationFailed
+	}
+	tagA := confirmationTag(isk, i.sid, i.ya, i.ada)
+	msgC := encodeMessageC(tagA)
+	sess := newSession(isk, tr)
+	return msgC, sess, nil
+}
+
+// Finish consumes message C, verifies the initiator confirmation tag, and
+// returns an authenticated session.
+func (r *Responder) Finish(messageC []byte) (*Session, error) {
+	if r == nil {
+		return nil, fmt.Errorf("%w: nil responder", ErrInvalidInput)
+	}
+	if err := r.consume(); err != nil {
+		return nil, err
+	}
+	c, err := decodeMessageC(messageC)
+	if err != nil {
+		return nil, err
+	}
+	expectedA := confirmationTag(r.isk, r.sid, r.ya, r.ada)
+	if !hmac.Equal(expectedA, c.tag) {
+		return nil, ErrConfirmationFailed
+	}
+	return newSession(r.isk, r.transcript), nil
+}
+
+func (i *Initiator) consume() error {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if i.used {
+		return ErrStateUsed
+	}
+	i.used = true
+	return nil
+}
+
+func (r *Responder) consume() error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.used {
+		return ErrStateUsed
+	}
+	r.used = true
+	return nil
+}
+
+func normalizeConfig(cfg Config) (normalizedConfig, error) {
+	if len(cfg.Password) == 0 {
+		return normalizedConfig{}, fmt.Errorf("%w: empty password", ErrInvalidInput)
+	}
+	if len(cfg.InitiatorID) == 0 {
+		return normalizedConfig{}, fmt.Errorf("%w: empty initiator id", ErrInvalidInput)
+	}
+	if len(cfg.ResponderID) == 0 {
+		return normalizedConfig{}, fmt.Errorf("%w: empty responder id", ErrInvalidInput)
+	}
+	if len(cfg.Password) > maxFieldLength ||
+		len(cfg.InitiatorID) > maxFieldLength ||
+		len(cfg.ResponderID) > maxFieldLength ||
+		len(cfg.Context) > maxFieldLength ||
+		len(cfg.SessionID) > maxFieldLength ||
+		len(cfg.AssociatedData) > maxFieldLength {
+		return normalizedConfig{}, fmt.Errorf("%w: field too large", ErrInvalidInput)
+	}
+	r := cfg.Rand
+	if r == nil {
+		r = rand.Reader
+	}
+	return normalizedConfig{
+		password: clone(cfg.Password),
+		ci:       buildCI(cfg.InitiatorID, cfg.ResponderID, cfg.Context),
+		sid:      clone(cfg.SessionID),
+		ad:       clone(cfg.AssociatedData),
+		rand:     r,
+	}, nil
+}
+
+func buildCI(initiatorID, responderID, context []byte) []byte {
+	return lvCat(
+		[]byte("CPace-Go-CI"),
+		[]byte(DraftVersion),
+		[]byte(suiteName),
+		[]byte("initiator"),
+		initiatorID,
+		[]byte("responder"),
+		responderID,
+		[]byte("context"),
+		context,
+	)
+}
+
+func newSession(isk, transcript []byte) *Session {
+	sidOut := sha512.Sum512(append([]byte("CPaceSidOutput"), transcript...))
+	return &Session{isk: clone(isk), transcriptID: sidOut[:]}
+}
+
+func clone(in []byte) []byte {
+	if in == nil {
+		return nil
+	}
+	out := make([]byte, len(in))
+	copy(out, in)
+	return out
+}

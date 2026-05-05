@@ -1,0 +1,5 @@
+*.test
+*.out
+coverage/
+dist/
+bin/
