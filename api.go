@@ -95,8 +95,11 @@ func Start(cfg Config) (*Initiator, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	defer clearBytes(nc.password)
 
 	g := calculateGenerator(nc.password, nc.ci, nc.sid)
+	clearBytes(nc.password)
+	nc.password = nil
 	y, err := sampleScalar(nc.rand)
 	if err != nil {
 		return nil, nil, err
@@ -120,6 +123,7 @@ func Respond(cfg Config, messageA []byte) (*Responder, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	defer clearBytes(nc.password)
 	a, err := decodeMessageA(messageA)
 	if err != nil {
 		return nil, nil, err
@@ -129,12 +133,15 @@ func Respond(cfg Config, messageA []byte) (*Responder, []byte, error) {
 	}
 
 	g := calculateGenerator(nc.password, nc.ci, nc.sid)
+	clearBytes(nc.password)
+	nc.password = nil
 	y, err := sampleScalar(nc.rand)
 	if err != nil {
 		return nil, nil, err
 	}
 	yb := scalarMult(y, g)
 	k, ok := scalarMultVFY(y, a.ya)
+	defer clearBytes(k)
 	if !ok {
 		return nil, nil, fmt.Errorf("%w: invalid initiator share", ErrAbort)
 	}
@@ -165,11 +172,16 @@ func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
 	if err := i.consume(); err != nil {
 		return nil, nil, err
 	}
+	scalar := i.scalar
+	defer func() {
+		i.scalar = nil
+	}()
 	b, err := decodeMessageB(messageB)
 	if err != nil {
 		return nil, nil, err
 	}
-	k, ok := scalarMultVFY(i.scalar, b.yb)
+	k, ok := scalarMultVFY(scalar, b.yb)
+	defer clearBytes(k)
 	if !ok {
 		return nil, nil, fmt.Errorf("%w: invalid responder share", ErrAbort)
 	}
@@ -177,11 +189,13 @@ func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
 	isk := deriveISK(i.sid, k, tr)
 	expectedB := confirmationTag(isk, i.sid, b.yb, b.adb)
 	if !hmac.Equal(expectedB, b.tag) {
+		clearBytes(isk)
 		return nil, nil, ErrConfirmationFailed
 	}
 	tagA := confirmationTag(isk, i.sid, i.ya, i.ada)
 	msgC := encodeMessageC(tagA)
 	sess := newSession(isk, tr)
+	clearBytes(isk)
 	return msgC, sess, nil
 }
 
@@ -195,6 +209,12 @@ func (r *Responder) Finish(messageC []byte) (*Session, error) {
 	if err := r.consume(); err != nil {
 		return nil, err
 	}
+	defer func() {
+		clearBytes(r.isk)
+		clearBytes(r.transcript)
+		r.isk = nil
+		r.transcript = nil
+	}()
 	c, err := decodeMessageC(messageC)
 	if err != nil {
 		return nil, err
@@ -203,7 +223,8 @@ func (r *Responder) Finish(messageC []byte) (*Session, error) {
 	if !hmac.Equal(expectedA, c.tag) {
 		return nil, ErrConfirmationFailed
 	}
-	return newSession(r.isk, r.transcript), nil
+	sess := newSession(r.isk, r.transcript)
+	return sess, nil
 }
 
 func (i *Initiator) consume() error {

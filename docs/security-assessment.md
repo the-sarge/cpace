@@ -33,10 +33,12 @@ reviewed for hostile or deterministic random sources. Sampling failure wraps
 
 ## Memory Handling
 
-All mutable public inputs and received message fields are copied. The Go runtime
-does not guarantee secure zeroization, pinning, or avoidance of copies made by
-the compiler or garbage collector. This package does not claim resistance to a
-local memory disclosure adversary.
+All mutable public inputs and received message fields are copied. The
+implementation clears selected owned byte-slice temporaries and consumed
+responder state on a best-effort basis, and drops consumed initiator scalar
+references. The Go runtime does not guarantee secure zeroization, pinning, or
+avoidance of copies made by the compiler or garbage collector. This package
+does not claim resistance to a local memory disclosure adversary.
 
 ## Key Access
 

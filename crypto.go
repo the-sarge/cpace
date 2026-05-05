@@ -32,7 +32,9 @@ func generatorString(dsi, prs, ci, sid []byte, sInBytes int) []byte {
 func calculateGenerator(prs, ci, sid []byte) *ristretto255.Element {
 	genStr := generatorString([]byte(dsiRistretto255), prs, ci, sid, sha512BlockSize)
 	hash := sha512.Sum512(genStr)
+	clearBytes(genStr)
 	g, err := ristretto255.NewIdentityElement().SetUniformBytes(hash[:])
+	clearBytes(hash[:])
 	if err != nil {
 		panic("cpace: SHA-512 output rejected by Ristretto255 SetUniformBytes")
 	}
@@ -41,6 +43,7 @@ func calculateGenerator(prs, ci, sid []byte) *ristretto255.Element {
 
 func sampleScalar(r io.Reader) (*ristretto255.Scalar, error) {
 	var b [scalarSize]byte
+	defer clearBytes(b[:])
 	for attempts := 0; attempts < maxScalarTries; attempts++ {
 		if _, err := io.ReadFull(r, b[:]); err != nil {
 			return nil, fmt.Errorf("%w: scalar randomness: %w", ErrRandomness, err)
@@ -93,7 +96,11 @@ func deriveISK(sid, k, transcript []byte) []byte {
 	material := lvCat([]byte(dsiISK), sid, k)
 	material = append(material, transcript...)
 	sum := sha512.Sum512(material)
-	return sum[:]
+	clearBytes(material)
+	out := make([]byte, sha512.Size)
+	copy(out, sum[:])
+	clearBytes(sum[:])
+	return out
 }
 
 func confirmationTag(isk, sid, y, ad []byte) []byte {
@@ -102,7 +109,15 @@ func confirmationTag(isk, sid, y, ad []byte) []byte {
 	// because ISK is fixed at SHA-512's 64-byte output length.
 	keyInput = append(keyInput, isk...)
 	macKey := sha512.Sum512(keyInput)
+	clearBytes(keyInput)
 	m := hmac.New(sha512.New, macKey[:])
+	clearBytes(macKey[:])
 	_, _ = m.Write(lvCat(y, ad))
 	return m.Sum(nil)
+}
+
+func clearBytes(b []byte) {
+	for i := range b {
+		b[i] = 0
+	}
 }
