@@ -1,7 +1,7 @@
 # Project Plan
 
 Status: living release-readiness plan after the policy/API decisions landed in
-PRs #13-#17.
+PRs #13-#17 and the public CI hardening snapshot shipped as `v0.1.1`.
 
 This document tracks current work. Historical review triage remains in
 `docs/interview-results-triage.md`.
@@ -41,9 +41,15 @@ All rows below are closed and preserved as the policy/API decision record.
 
 ## Recommended PR Order
 
-1. External review package.
-   Prepare reviewer handoff notes for draft-compatible behavior, package-owned
-   framing/profile choices, unsupported scope, and remaining release blockers.
+1. External review cycle.
+   Use `docs/external-review-handoff.md` to brief reviewers on
+   draft-compatible behavior, package-owned framing/profile choices, unsupported
+   scope, current evidence, and remaining release blockers. Track findings in
+   focused follow-up PRs.
+2. Exact-candidate evidence refresh.
+   After any review-driven changes, repeat dependency review, long fuzzing, and
+   security/spec audit against the exact release-candidate commit before making
+   any stronger readiness claim.
 
 ## Completed Evidence
 
@@ -53,6 +59,8 @@ All rows below are closed and preserved as the policy/API decision record.
 | Long fuzz evidence | `docs/fuzz-evidence.md` records all 14 registered targets on local smoke and long ARM/Intel runs for commit `06f21c51645f54e2b7bde7c5b538479463be5d0e`. | Repeat if parser, protocol, fuzz harness, dependency, or toolchain changes before release. |
 | Security/spec audit | `docs/security-spec-audit.md` records review of `docs/security-assessment.md` and `docs/spec-matrix.md` against implementation commit `4a8f629e59f0cc5c8f9351abacfa511fe6e4f441`. | Repeat if protocol code, parser/framing code, package-profile docs, dependencies, toolchain, or the targeted draft revision changes. |
 | Integration guidance | `docs/integration-guidance.md` documents outer PAKE/version negotiation, downgrade-protection, identity-orientation, and session-output guidance. | External reviewers should still evaluate whether this guidance is sufficient for real integrations. |
+| CI hardening | `v0.1.1` is a signed annotated prerelease tag at commit `74b82cbc65a1ea6186f2732749c9c5e5b03eecc3`. Tag-triggered Release Validation passed `Check`, `Race`, `Govulncheck`, and `Gosec` with SARIF upload in workflow run `25465518681`. Public background signal now includes CodeQL, OpenSSF Scorecard, Staticcheck Advisory, Actionlint, cross-platform smoke, scheduled vulnerability scanning, scheduled gosec, and scheduled fuzz regression. | CI evidence supports auditable prerelease hygiene, not production readiness. Keep release tags signed, watch scheduled lanes, and keep external and cryptographic review as release blockers. |
+| External review handoff | `docs/external-review-handoff.md` summarizes supported scope, package-owned choices, evidence, review questions, and remaining release blockers for external reviewers. | The handoff is a review input, not a completed review. Findings still need to be tracked and resolved. |
 
 ## Release Readiness
 
@@ -68,8 +76,6 @@ Before any production-readiness claim:
 
 ## Later Investigation
 
-- OpenSSF Scorecard.
-- CodeQL.
 - Capslock.
 - OSS-Fuzz.
 - Longer continuous fuzzing campaigns.
