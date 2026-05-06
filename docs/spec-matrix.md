@@ -33,5 +33,6 @@ Package-owned profile and extensions:
 Known gaps before a production release:
 
 - independent cryptographic review
-- external review of package-owned message framing, CI/profile choices, and
-  outer PAKE/version negotiation guidance
+- external review of package-owned message framing, CI, and profile choices
+- documented application integration guidance for any outer PAKE/version
+  negotiation and downgrade protection

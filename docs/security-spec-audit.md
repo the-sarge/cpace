@@ -14,7 +14,8 @@ Draft source: `draft-irtf-cfrg-cpace-21`
 This audit checked `docs/security-assessment.md` and `docs/spec-matrix.md`
 against the implementation, tests, release evidence, and the draft-21 text.
 It is a documentation and conformance audit, not an independent cryptographic
-review.
+review. This is a self-audit by the project maintainer, distinct from
+independent cryptographic review or external review.
 
 The audit covered:
 
@@ -29,6 +30,8 @@ The audit covered:
 ## Result
 
 No security/spec drift was found at the audit commit.
+
+`go test ./...` passes at the audit commit.
 
 The security assessment and spec matrix accurately describe the current
 implementation:
