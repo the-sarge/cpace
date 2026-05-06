@@ -16,3 +16,22 @@ prevalidation, and best-effort memory hygiene workstreams.
 This session adds the previously local interview-results triage document to the
 repository and updates the changelog so the merged hardening work and triage
 artifact are visible from the release notes.
+
+---
+
+## cpace.S2 - 2026-05-06 02:42 EDT
+
+**Main:** `3f38b43`
+**Board:** Policy/API decisions closed; release-readiness tracking begins.
+**Planner:** Josh
+
+Recorded the close of the CPace policy/API decision phase after PRs #13 through
+#17 landed. Those PRs removed public randomness injection, required explicit
+empty-session-ID compatibility opt-in, added session lifecycle and peer metadata
+accessors, tightened framing/profile caps while keeping draft-compatible
+confirmation tags, and documented the draft-21 scalar-sampling policy.
+
+This session shifts the active project plan to release readiness. The next work
+items are dependency review refresh, long fuzzing evidence, security/spec
+documentation audit, and external review handoff before any production-readiness
+claim.
