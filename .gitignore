@@ -3,3 +3,5 @@
 coverage/
 dist/
 bin/
+cpace-maturity*.md
+ci-hardening-plan.md
