@@ -13,15 +13,32 @@ import (
 //go:embed testdata/draft21-ristretto255-sha512.json
 var draft21RistrettoVectorJSON []byte
 
+//go:embed testdata/draft21-ristretto255-generator.json
+var draft21RistrettoGeneratorJSON []byte
+
 //go:embed testdata/draft21-ristretto255-invalid.json
 var draft21RistrettoInvalidJSON []byte
 
 const (
-	draft21RistrettoVectorJSONSHA256  = "dc74177668cc2374beaf57fcb6e4c08a908238bab6b74d8edf8c86e04bc663ae"
-	draft21RistrettoInvalidJSONSHA256 = "6288f7ff96dfb8c2d6c4d743927c5fe6ac4aecbc56da2d1f00f27104000b6dfd"
+	draft21RistrettoGeneratorJSONSHA256 = "05c8a34bd623fbdefd7fbffcd261d2420bd34363efa301d0b0dd9817f7f47c94"
+	draft21RistrettoVectorJSONSHA256    = "dc74177668cc2374beaf57fcb6e4c08a908238bab6b74d8edf8c86e04bc663ae"
+	draft21RistrettoInvalidJSONSHA256   = "6288f7ff96dfb8c2d6c4d743927c5fe6ac4aecbc56da2d1f00f27104000b6dfd"
 )
 
 type draftVector map[string][]byte
+
+type draftGeneratorVector struct {
+	H               string
+	HsInBytes       int
+	ZPADLength      int
+	PRS             []byte
+	DSI             []byte
+	CI              []byte
+	SID             []byte
+	GeneratorString []byte
+	HashResult      []byte
+	EncodedG        []byte
+}
 
 type draftInvalidVector struct {
 	Valid     map[string][]byte
@@ -52,6 +69,86 @@ func loadDraftVectorJSON(in []byte) (draftVector, error) {
 		out[k] = decoded
 	}
 	return out, nil
+}
+
+func loadDraftGeneratorJSON(in []byte) (draftGeneratorVector, error) {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(in, &raw); err != nil {
+		return draftGeneratorVector{}, err
+	}
+	stringField := func(key string) (string, error) {
+		var out string
+		if err := json.Unmarshal(raw[key], &out); err != nil {
+			return "", err
+		}
+		return out, nil
+	}
+	intField := func(key string) (int, error) {
+		var out int
+		if err := json.Unmarshal(raw[key], &out); err != nil {
+			return 0, err
+		}
+		return out, nil
+	}
+	hexField := func(key string) ([]byte, error) {
+		s, err := stringField(key)
+		if err != nil {
+			return nil, err
+		}
+		return hex.DecodeString(s)
+	}
+	h, err := stringField("H")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	hsInBytes, err := intField("H.s_in_bytes")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	zpadLength, err := intField("ZPAD length")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	prs, err := hexField("PRS")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	dsi, err := hexField("DSI")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	ci, err := hexField("CI")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	sid, err := hexField("sid")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	genStr, err := hexField("generator_string(G.DSI,PRS,CI,sid,H.s_in_bytes)")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	hashResult, err := hexField("hash result")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	encodedG, err := hexField("encoded generator g")
+	if err != nil {
+		return draftGeneratorVector{}, err
+	}
+	return draftGeneratorVector{
+		H:               h,
+		HsInBytes:       hsInBytes,
+		ZPADLength:      zpadLength,
+		PRS:             prs,
+		DSI:             dsi,
+		CI:              ci,
+		SID:             sid,
+		GeneratorString: genStr,
+		HashResult:      hashResult,
+		EncodedG:        encodedG,
+	}, nil
 }
 
 func loadDraftInvalidVectorJSON(in []byte) (draftInvalidVector, error) {
@@ -97,10 +194,36 @@ func TestEmbeddedDraftVectorJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, key := range []string{"PRS", "CI", "sid", "g", "Ya", "Yb", "K", "ISK_IR", "ISK_SY", "sid_output_ir"} {
+	for _, key := range []string{"PRS", "CI", "sid", "g", "Ya", "Yb", "K", "ISK_IR", "ISK_SY", "sid_output_ir", "sid_output_oc"} {
 		if len(v[key]) == 0 {
 			t.Fatalf("missing %s", key)
 		}
+	}
+}
+
+func TestEmbeddedDraftGeneratorJSON(t *testing.T) {
+	// Hash pins the decoded JSON block in draft-21 Appendix B.3.1.1.
+	if got := pinnedJSONHash(draft21RistrettoGeneratorJSON); got != draft21RistrettoGeneratorJSONSHA256 {
+		t.Fatalf("generator JSON SHA-256 got %s want %s", got, draft21RistrettoGeneratorJSONSHA256)
+	}
+	v, err := loadDraftGeneratorJSON(draft21RistrettoGeneratorJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v.H != "SHA-512" || v.HsInBytes != sha512BlockSize || v.ZPADLength != 100 {
+		t.Fatalf("unexpected generator metadata H=%q H.s_in_bytes=%d ZPAD=%d", v.H, v.HsInBytes, v.ZPADLength)
+	}
+	gotGS := generatorString(v.DSI, v.PRS, v.CI, v.SID, v.HsInBytes)
+	if !bytes.Equal(gotGS, v.GeneratorString) {
+		t.Fatalf("generator_string got %x want %x", gotGS, v.GeneratorString)
+	}
+	sum := sha512.Sum512(v.GeneratorString)
+	if !bytes.Equal(sum[:], v.HashResult) {
+		t.Fatalf("hash result got %x want %x", sum, v.HashResult)
+	}
+	g := calculateGenerator(v.PRS, v.CI, v.SID)
+	if !bytes.Equal(g.Bytes(), v.EncodedG) {
+		t.Fatalf("encoded generator got %x want %x", g.Bytes(), v.EncodedG)
 	}
 }
 
@@ -235,6 +358,11 @@ func TestRistrettoDraft21Vectors(t *testing.T) {
 	wantSidOut := v["sid_output_ir"]
 	if !bytes.Equal(sidOut[:], wantSidOut) {
 		t.Fatalf("sid_output got %x want %x", sidOut, wantSidOut)
+	}
+	sidOutOC := sha512.Sum512(append([]byte("CPaceSidOutput"), trOC...))
+	wantSidOutOC := v["sid_output_oc"]
+	if !bytes.Equal(sidOutOC[:], wantSidOutOC) {
+		t.Fatalf("sid_output_oc got %x want %x", sidOutOC, wantSidOutOC)
 	}
 }
 

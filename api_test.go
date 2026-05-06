@@ -496,6 +496,23 @@ func TestInitiatorAbortsOnInvalidResponderShare(t *testing.T) {
 	}
 }
 
+func TestInitiatorReflectedShareFailsConfirmationNotAbort(t *testing.T) {
+	cfg := testConfig()
+	cfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
+	initiator, msgA, err := Start(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, err := decodeMessageA(msgA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	msgB := encodeMessageB(a.ya, nil, bytes.Repeat([]byte{0x99}, tagSize))
+	if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrConfirmationFailed) {
+		t.Fatalf("Finish err=%v", err)
+	}
+}
+
 func TestResponderRejectsTamperedMessageC(t *testing.T) {
 	initCfg := testConfig()
 	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
