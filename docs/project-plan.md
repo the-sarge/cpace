@@ -33,13 +33,12 @@ Each policy PR should include:
 | Peer metadata | `PeerAssociatedData` and `PeerID` expose copied metadata bound into the confirmed exchange. | Done. Local AD/ID accessors are deferred until a concrete caller need appears. |
 | Confirmation tag role separation | Draft-compatible tag input is unchanged. | Done. Keep draft-compatible tags; no package-added role labels. |
 | Field size limits | Package-owned per-field caps: password and IDs 4 KiB, context and session ID 1 KiB, AD 64 KiB, public shares/tags exact-sized. | Done. Caps remain non-configurable and are not aggregate message limits. |
-| Scalar sampling | Masked canonical 32-byte sampling with zero retry. | Keep for draft conformance, or investigate a `SetUniformBytes`-based approach and prove compatibility/distribution properties. |
+| Scalar sampling | Masked canonical 32-byte sampling with zero retry. | Done. Keep the draft-21 Ristretto255 recommendation; `SetUniformBytes` plus zero rejection/retry is an allowed alternative but would use 64-byte modulo reduction and define a different package profile. |
 
 ## Recommended PR Order
 
-1. Scalar sampling investigation.
-   Treat any change as a protocol-conformance project, not a mechanical
-   refactor. Keep this separate from API policy changes.
+All current policy rows are closed. Move to release-readiness work unless a new
+review finding reopens a policy decision.
 
 ## Release Readiness
 

@@ -550,6 +550,22 @@ func TestScalarSamplingRejectsRepeatedZero(t *testing.T) {
 	}
 }
 
+func TestScalarSamplingMasksDraftRistrettoBits(t *testing.T) {
+	in := bytes.Repeat([]byte{0xff}, scalarSize)
+	if _, err := scalarFromCanonical(in); !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("unmasked all-ones scalar err=%v", err)
+	}
+	s, err := sampleScalar(&repeatingReader{buf: in})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := bytes.Repeat([]byte{0xff}, scalarSize)
+	want[31] = 0x0f
+	if got := s.Bytes(); !bytes.Equal(got, want) {
+		t.Fatalf("sampled scalar=%x want %x", got, want)
+	}
+}
+
 func TestScalarSamplingWrapsRandomnessReadFailure(t *testing.T) {
 	if _, err := sampleScalar(failingReader{err: io.ErrUnexpectedEOF}); !errors.Is(err, ErrRandomness) ||
 		errors.Is(err, ErrInvalidInput) ||
