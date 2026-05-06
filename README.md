@@ -34,11 +34,13 @@ all users or deployments. Bind stable, application-meaningful party identities
 into these fields.
 
 Provide a fresh, non-secret `SessionID` agreed by both parties for every
-session. Empty session IDs remain accepted because draft-21 only recommends
-uniqueness, but they weaken replay and transcript separation properties. If an
-outer protocol negotiates PAKE versions, ciphersuites, or whether CPace is used
-at all, that negotiation needs its own downgrade protection; this package does
-not authenticate negotiation it never sees.
+session. Empty session IDs are rejected by default because they weaken replay
+and transcript separation properties; that failure wraps both `ErrInvalidInput`
+and `ErrEmptySessionID`. `AllowEmptySessionID` exists only for draft-21
+compatibility tests or deliberately compatible profiles that accept the weaker
+empty-sid behavior. If an outer protocol negotiates PAKE versions, ciphersuites,
+or whether CPace is used at all, that negotiation needs its own downgrade
+protection; this package does not authenticate negotiation it never sees.
 
 `Initiator.Finish` and `Responder.Finish` are single-use calls. Passing a
 malformed message or a message that fails confirmation consumes the state and

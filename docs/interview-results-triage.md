@@ -156,7 +156,8 @@ Buckets:
 - High: `Config.Rand` — same as Q8 DECIDE.
 - Medium DECIDE: empty `SessionID` policy. Reject by default + opt-in escape
   hatch (e.g. `Config.AllowEmptySessionID`), or stay draft-permissive?
-  Currently permissive at `api.go:39-51` and documented as such in README.
+  Resolved after this triage: empty sids are rejected by default with
+  `Config.AllowEmptySessionID` as the explicit compatibility opt-in.
 - Medium DECIDE: confirmation tag role separation (add `"A"`/`"B"` label
   inside `confirmationTag` MAC input at `crypto.go:99-108`). Hardens against
   scalar/AD reflection but is a draft-compatibility break.
@@ -248,6 +249,8 @@ Order these decisions by blast radius and how many findings they unlock.
 2. **`SessionID` policy**
    - Stay draft-permissive and keep accepting empty sid.
    - Reject empty sid by default with an explicit compatibility escape hatch.
+   - Resolved after this triage: reject by default with
+     `Config.AllowEmptySessionID`.
 
 3. **`Session.Discard()`**
    - Add a public lifecycle method that clears `Session.isk` and makes future

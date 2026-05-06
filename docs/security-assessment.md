@@ -21,9 +21,11 @@ length, but Go slice allocation and caller-side password handling are not
 constant time.
 
 The draft recommends, but does not require, a unique session identifier. This
-package accepts an empty `SessionID` for draft compatibility, but callers should
-provide a fresh, non-secret, parties-agree-on sid for every session. Empty sids
-weaken replay and transcript separation properties.
+package rejects an empty `SessionID` by default; callers must provide a fresh,
+non-secret, parties-agree-on sid for every session. `AllowEmptySessionID`
+preserves draft-21 compatibility for tests or deliberate compatibility profiles,
+but empty sids weaken replay and transcript separation properties. Default
+empty-sid failures wrap both `ErrInvalidInput` and `ErrEmptySessionID`.
 
 Any outer application negotiation of PAKE version, ciphersuite, protocol mode,
 or whether CPace is used needs downgrade protection outside this package. The

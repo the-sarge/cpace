@@ -32,19 +32,21 @@ type Suite byte
 // Password, InitiatorID, and ResponderID must be non-empty. Context and
 // AssociatedData may be empty. Both parties must use the same role orientation:
 // InitiatorID is the party that called Start, and ResponderID is the party that
-// called Respond. SessionID may be empty because draft-21 only recommends a
-// unique sid, but callers should provide a fresh, non-secret,
-// parties-agree-on value for every session; an empty sid weakens replay and
-// transcript separation properties. Scalar randomness always comes from
+// called Respond. SessionID must be a fresh, non-secret, parties-agree-on value
+// for every session. Empty SessionID values are rejected by default because they
+// weaken replay and transcript separation properties. Set AllowEmptySessionID
+// only for draft-21 compatibility tests or profiles that have deliberately
+// accepted the weaker empty-sid behavior. Scalar randomness always comes from
 // crypto/rand.Reader. The AssociatedData field is ADa for Start and ADb for
 // Respond. All byte slices are copied by Start and Respond before use.
 type Config struct {
-	Password       []byte
-	InitiatorID    []byte
-	ResponderID    []byte
-	Context        []byte
-	SessionID      []byte
-	AssociatedData []byte
+	Password            []byte
+	InitiatorID         []byte
+	ResponderID         []byte
+	Context             []byte
+	SessionID           []byte
+	AssociatedData      []byte
+	AllowEmptySessionID bool
 }
 
 // Initiator is a single-use initiator state returned by Start.
@@ -275,6 +277,9 @@ func normalizeConfig(cfg Config) (normalizedConfig, error) {
 	}
 	if len(cfg.ResponderID) == 0 {
 		return normalizedConfig{}, fmt.Errorf("%w: empty responder id", ErrInvalidInput)
+	}
+	if len(cfg.SessionID) == 0 && !cfg.AllowEmptySessionID {
+		return normalizedConfig{}, fmt.Errorf("%w: %w", ErrInvalidInput, ErrEmptySessionID)
 	}
 	if len(cfg.Password) > maxFieldLength ||
 		len(cfg.InitiatorID) > maxFieldLength ||

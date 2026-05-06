@@ -6,6 +6,11 @@ var (
 	// ErrInvalidInput reports invalid local configuration or parameters.
 	ErrInvalidInput = errors.New("cpace: invalid input")
 
+	// ErrEmptySessionID reports an empty Config.SessionID without the explicit
+	// AllowEmptySessionID compatibility opt-in. The returned error also wraps
+	// ErrInvalidInput.
+	ErrEmptySessionID = errors.New("cpace: empty session id")
+
 	// ErrRandomness reports randomness-related failures, including random
 	// source read failures and repeated unusable scalar samples.
 	ErrRandomness = errors.New("cpace: randomness failure")

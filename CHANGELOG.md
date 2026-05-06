@@ -31,3 +31,5 @@
 - Remove public `Config.Rand`; `Start` and `Respond` now always draw scalar
   randomness from `crypto/rand.Reader`, with deterministic readers confined to
   package-internal tests and fuzzing.
+- Reject empty `SessionID` by default, add `ErrEmptySessionID`, and add
+  `AllowEmptySessionID` as an explicit draft-21 compatibility opt-in.

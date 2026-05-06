@@ -227,6 +227,7 @@ func TestInputValidation(t *testing.T) {
 		{"password", func(c *Config) { c.Password = nil }},
 		{"initiator", func(c *Config) { c.InitiatorID = nil }},
 		{"responder", func(c *Config) { c.ResponderID = nil }},
+		{"session id", func(c *Config) { c.SessionID = nil }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -254,7 +255,33 @@ func TestScalarSamplingWrapsRandomnessReadFailure(t *testing.T) {
 	}
 }
 
-func TestProtocolCompletesWithEmptySessionID(t *testing.T) {
+func TestProtocolRejectsEmptySessionIDByDefault(t *testing.T) {
+	cases := []struct {
+		name string
+		sid  []byte
+	}{
+		{"nil", nil},
+		{"empty", []byte{}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := testConfig()
+			cfg.SessionID = tc.sid
+			if _, _, err := startTestInitiator(cfg); !errors.Is(err, ErrInvalidInput) ||
+				!errors.Is(err, ErrEmptySessionID) {
+				t.Fatalf("Start err=%v", err)
+			}
+
+			msgA := encodeMessageA(tc.sid, bytes.Repeat([]byte{0x42}, pointSize), nil)
+			if _, _, err := respondTestResponder(cfg, msgA); !errors.Is(err, ErrInvalidInput) ||
+				!errors.Is(err, ErrEmptySessionID) {
+				t.Fatalf("Respond err=%v", err)
+			}
+		})
+	}
+}
+
+func TestProtocolAllowsEmptySessionIDWithCompatibilityFlag(t *testing.T) {
 	cases := []struct {
 		name    string
 		initSID []byte
@@ -264,18 +291,32 @@ func TestProtocolCompletesWithEmptySessionID(t *testing.T) {
 		{"empty empty", []byte{}, []byte{}},
 		{"nil empty", nil, []byte{}},
 		{"empty nil", []byte{}, nil},
+		{"non-empty flag enabled", []byte("sid"), []byte("sid")},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			initCfg := testConfig()
 			initCfg.SessionID = tc.initSID
+			initCfg.AllowEmptySessionID = true
 			initCfg.AssociatedData = []byte("ADa")
 			respCfg := testConfig()
 			respCfg.SessionID = tc.respSID
+			respCfg.AllowEmptySessionID = true
 			respCfg.AssociatedData = []byte("ADb")
 			sI, sR := completeExchange(t, initCfg, respCfg)
 			if !bytes.Equal(sI.TranscriptID(), sR.TranscriptID()) {
 				t.Fatalf("transcript IDs differ")
+			}
+			kI, err := sI.Export([]byte("label"), []byte("ctx"), 32)
+			if err != nil {
+				t.Fatal(err)
+			}
+			kR, err := sR.Export([]byte("label"), []byte("ctx"), 32)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(kI, kR) {
+				t.Fatal("exports differ")
 			}
 		})
 	}
@@ -283,27 +324,67 @@ func TestProtocolCompletesWithEmptySessionID(t *testing.T) {
 
 func TestProtocolRejectsAsymmetricSessionID(t *testing.T) {
 	cases := []struct {
-		name    string
-		initSID []byte
-		respSID []byte
+		name           string
+		initSID        []byte
+		respSID        []byte
+		allowInitEmpty bool
+		allowRespEmpty bool
 	}{
-		{"initiator non-empty responder nil", []byte("sid"), nil},
-		{"initiator nil responder non-empty", nil, []byte("sid")},
-		{"initiator non-empty responder empty", []byte("sid"), []byte{}},
-		{"initiator empty responder non-empty", []byte{}, []byte("sid")},
+		{
+			name:    "different non-empty",
+			initSID: []byte("initiator sid"),
+			respSID: []byte("responder sid"),
+		},
+		{
+			name:           "initiator empty compatibility responder non-empty",
+			initSID:        nil,
+			respSID:        []byte("sid"),
+			allowInitEmpty: true,
+		},
+		{
+			name:           "initiator non-empty responder empty compatibility",
+			initSID:        []byte("sid"),
+			respSID:        nil,
+			allowRespEmpty: true,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			initCfg := testConfig()
 			initCfg.SessionID = tc.initSID
+			initCfg.AllowEmptySessionID = tc.allowInitEmpty
 			respCfg := testConfig()
 			respCfg.SessionID = tc.respSID
+			respCfg.AllowEmptySessionID = tc.allowRespEmpty
 			_, msgA, err := startTestInitiator(initCfg)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if _, _, err := respondTestResponder(respCfg, msgA); !errors.Is(err, ErrMessage) {
 				t.Fatalf("Respond err=%v", err)
+			}
+		})
+	}
+}
+
+func TestProtocolAllowsNonEmptySessionIDWithAsymmetricCompatibilityFlag(t *testing.T) {
+	cases := []struct {
+		name           string
+		allowInitEmpty bool
+		allowRespEmpty bool
+	}{
+		{"initiator flag only", true, false},
+		{"responder flag only", false, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			initCfg := testConfig()
+			initCfg.AllowEmptySessionID = tc.allowInitEmpty
+			respCfg := testConfig()
+			respCfg.AllowEmptySessionID = tc.allowRespEmpty
+			sI, sR := completeExchange(t, initCfg, respCfg)
+			if !bytes.Equal(sI.TranscriptID(), sR.TranscriptID()) {
+				t.Fatalf("transcript IDs differ")
 			}
 		})
 	}

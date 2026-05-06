@@ -12,6 +12,10 @@
 // Scalar randomness always comes from crypto/rand.Reader; the package does not
 // accept caller-supplied randomness through the public API.
 //
+// Config.SessionID must be non-empty by default. Config.AllowEmptySessionID is
+// only for draft-21 compatibility tests or deliberately compatible profiles
+// that accept weaker replay and transcript separation.
+//
 // Both parties must use the same role orientation: InitiatorID identifies the
 // Start side, and ResponderID identifies the Respond side. Applications that
 // negotiate PAKE versions, suites, or protocol modes outside this package must

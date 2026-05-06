@@ -28,7 +28,7 @@ Each policy PR should include:
 | Area | Current behavior | Decision needed |
 | --- | --- | --- |
 | `Config.Rand` | Removed from the public API; scalar randomness always uses `crypto/rand.Reader`. | Done. Deterministic readers remain package-internal for tests and fuzzing only. |
-| Empty `SessionID` | Accepted for draft-21 compatibility and documented as weaker. | Keep draft-permissive behavior, or reject empty values by default with an explicit compatibility escape hatch. |
+| Empty `SessionID` | Rejected by default; `AllowEmptySessionID` preserves explicit draft-21 compatibility. | Done. Callers must opt into weaker empty-sid behavior deliberately. |
 | `Session.Discard()` | No public session-destruction method; internal consumed state is cleared best-effort. | Add a public lifecycle method that clears `Session.isk` and makes future `Export` fail, or keep the session API minimal. |
 | Peer associated data | Peer AD is bound into transcripts but not exposed through accessors. | Add accessors to reduce application-layer mistakes, or keep messages opaque. |
 | Confirmation tag role separation | Draft-compatible tag input is unchanged. | Keep draft-compatible tags, or add role labels as a package-profile hardening break. |
@@ -37,19 +37,15 @@ Each policy PR should include:
 
 ## Recommended PR Order
 
-1. Empty `SessionID` policy.
-   Decide whether draft compatibility remains the default or moves behind an
-   explicit compatibility option.
-
-2. Session lifecycle and peer-data API.
+1. Session lifecycle and peer-data API.
    Consider `Session.Discard()` and peer associated-data accessors together
    because both are public API surface changes.
 
-3. Framing and confirmation profile choices.
+2. Framing and confirmation profile choices.
    Decide `maxFieldLength` and confirmation tag role separation after the
    compatibility posture is explicit.
 
-4. Scalar sampling investigation.
+3. Scalar sampling investigation.
    Treat any change as a protocol-conformance project, not a mechanical
    refactor. Keep this separate from API policy changes.
 
