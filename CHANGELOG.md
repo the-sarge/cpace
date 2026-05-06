@@ -45,3 +45,10 @@
 - Close the policy/API decision phase in the project docs and shift release
   tracking to dependency review, long fuzzing, security/spec audit, and
   external review readiness.
+- Refresh dependency review with `govulncheck -test -show verbose ./...` and
+  advisory `gosec v2.26.1`; clean up the LEB128 parser to avoid integer
+  conversions flagged by gosec.
+- Make `task fuzz` disable the outer Go test timeout and allow explicit
+  `FUZZ_RACE=0` long campaigns after race-instrumented tests pass.
+- Record fuzz evidence for all 14 registered fuzz targets, including a local
+  smoke run and long ARM/Intel runs.

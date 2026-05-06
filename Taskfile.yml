@@ -7,6 +7,7 @@
 #
 # Fuzzing:
 #   task fuzz FUZZTIME=30s PARALLEL=2
+#   FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz
 
 version: "3"
 

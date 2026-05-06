@@ -35,3 +35,21 @@ This session shifts the active project plan to release readiness. The next work
 items are dependency review refresh, long fuzzing evidence, security/spec
 documentation audit, and external review handoff before any production-readiness
 claim.
+
+---
+
+## cpace.S3 - 2026-05-06 03:45 EDT
+
+**Main:** `e1d0c6d`
+**Board:** Dependency review and fuzz evidence for release readiness.
+**Planner:** Josh
+
+Combined the dependency-review refresh and long-fuzz evidence work into one
+release-readiness branch. The advisory gosec lane flagged LEB128 integer
+conversions, so this session records the parser cleanup and the clean rerun
+alongside `govulncheck -test -show verbose ./...` evidence.
+
+This session also starts recording fuzz evidence as a first-class artifact:
+local smoke coverage plus long runs for all registered targets on ARM and Intel
+hardware. The remaining release-readiness items are the security/spec audit and
+external review handoff.

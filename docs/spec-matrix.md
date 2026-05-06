@@ -29,8 +29,7 @@ Package-owned profile and extensions:
 Known gaps before a production release:
 
 - independent cryptographic review
-- broader fuzzing campaign beyond smoke targets in `.github/fuzz-targets.json`
-- dependency review sign-off
+- security/spec audit against the exact release candidate commit
 - external review of package-owned message framing
 - application integration guidance for any outer PAKE/version negotiation and
   downgrade protection
