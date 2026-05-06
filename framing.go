@@ -148,14 +148,14 @@ func (r *messageReader) readField(maxLen int, name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if n > uint64(maxLen) {
+	if n > maxLen {
 		return nil, fmt.Errorf("%w: %s field too large", ErrMessage, name)
 	}
-	if len(r.buf)-r.off < int(n) {
+	if len(r.buf)-r.off < n {
 		return nil, fmt.Errorf("%w: truncated %s field", ErrMessage, name)
 	}
-	out := clone(r.buf[r.off : r.off+int(n)])
-	r.off += int(n)
+	out := clone(r.buf[r.off : r.off+n])
+	r.off += n
 	return out, nil
 }
 
@@ -164,7 +164,7 @@ func (r *messageReader) readExactField(wantLen int, name string) ([]byte, error)
 	if err != nil {
 		return nil, err
 	}
-	if n != uint64(wantLen) {
+	if n != wantLen {
 		return nil, fmt.Errorf("%w: %s length", ErrMessage, name)
 	}
 	if len(r.buf)-r.off < wantLen {
@@ -175,17 +175,17 @@ func (r *messageReader) readExactField(wantLen int, name string) ([]byte, error)
 	return out, nil
 }
 
-func (r *messageReader) readLEB128() (uint64, error) {
-	var n uint64
+func (r *messageReader) readLEB128() (int, error) {
+	var n int
 	for i := 0; i < maxLEB128BytesForField; i++ {
 		if r.off >= len(r.buf) {
 			return 0, fmt.Errorf("%w: truncated LEB128", ErrMessage)
 		}
 		b := r.buf[r.off]
 		r.off++
-		n |= uint64(b&0x7f) << (7 * i)
+		n |= int(b&0x7f) << (7 * i)
 		if b&0x80 == 0 {
-			if i > 0 && n < 1<<uint(7*i) {
+			if i > 0 && n < 1<<(7*i) {
 				return 0, fmt.Errorf("%w: non-canonical LEB128", ErrMessage)
 			}
 			return n, nil

@@ -82,18 +82,22 @@ task check
 task check:changed
 task docs:check
 FUZZTIME=30s PARALLEL=2 task fuzz
+FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz
 ```
 
 Fuzz targets live in `.github/fuzz-targets.json`. Until self-hosted runners are
 available, GitHub-hosted pull-request CI is intentionally light: code changes
 run `go test ./...`, and Markdown-only PRs run docs validation without setting
 up Go. Run the full local gate, fuzzing, vulnerability scan, and advisory
-`gosec` scan locally before release-oriented changes.
+`gosec` scan locally before release-oriented changes. The default fuzz lane
+keeps the race detector on for smoke runs; use `FUZZ_RACE=0` for longer
+campaigns after `task check` has already covered race-instrumented tests.
 
 Release-readiness work should record exact evidence: commit SHA, command or
-workflow, duration for fuzzing, target count, and residual risks. The next
-planned readiness steps are dependency review refresh, long fuzz evidence,
-security/spec audit, and external review handoff.
+workflow, duration for fuzzing, target count, and residual risks. Dependency
+review evidence lives in `docs/dependency-review.md`; fuzz campaign evidence
+lives in `docs/fuzz-evidence.md`. The next planned readiness steps are
+security/spec audit and external review handoff.
 
 ```go
 initiator, msgA, err := cpace.Start(initCfg)

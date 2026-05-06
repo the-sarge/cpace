@@ -41,22 +41,20 @@ All rows below are closed and preserved as the policy/API decision record.
 
 ## Recommended PR Order
 
-1. Dependency review refresh.
-   Run `govulncheck -test -show verbose ./...`, run the advisory `gosec` lane,
-   and update `docs/dependency-review.md` with current findings.
-
-2. Long fuzz evidence.
-   Run every target in `.github/fuzz-targets.json` for more than five minutes
-   on release hardware or the manual long-fuzz workflow. Record commit, target
-   count, duration, and result.
-
-3. Security/spec audit.
+1. Security/spec audit.
    Review `docs/security-assessment.md` and `docs/spec-matrix.md` against the
    exact release candidate commit.
 
-4. External review package.
+2. External review package.
    Prepare reviewer handoff notes for draft-compatible behavior, package-owned
    framing/profile choices, unsupported scope, and remaining release blockers.
+
+## Completed Evidence
+
+| Area | Evidence | Residual risk |
+| --- | --- | --- |
+| Dependency review | `docs/dependency-review.md` records `govulncheck -test -show verbose ./...` and advisory `gosec v2.26.1` results for commit `06f21c51645f54e2b7bde7c5b538479463be5d0e`. | Repeat on the exact release tag if dependencies, toolchain, or parser/security-relevant code changes. |
+| Long fuzz evidence | `docs/fuzz-evidence.md` records all 14 registered targets on local smoke and long ARM/Intel runs for commit `06f21c51645f54e2b7bde7c5b538479463be5d0e`. | Repeat if parser, protocol, fuzz harness, dependency, or toolchain changes before release. |
 
 ## Release Readiness
 
@@ -76,6 +74,7 @@ Before any production-readiness claim:
 - CodeQL.
 - Capslock.
 - OSS-Fuzz.
+- Longer continuous fuzzing campaigns.
 - Offline Sage-derived extended vector dataset.
 - Allocation measurements on hot paths before adding permanent allocation
   tests.

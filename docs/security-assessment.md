@@ -95,8 +95,21 @@ add extra role-label inputs to the draft-21 confirmation MACs.
 - `github.com/gtank/ristretto255 v0.2.0`
 - `filippo.io/edwards25519 v1.2.0` as an indirect dependency
 
-Dependency review is not complete. Run `govulncheck -test ./...` before any
-release. Initial notes are recorded in `docs/dependency-review.md`.
+Dependency review was refreshed on 2026-05-06 at commit
+`06f21c51645f54e2b7bde7c5b538479463be5d0e`; see
+`docs/dependency-review.md`. `govulncheck -test -show verbose ./...` found no
+vulnerabilities, and `gosec v2.26.1` reported zero issues after the LEB128
+parser cleanup in that commit. Repeat the review against the exact release tag
+if any dependency, toolchain, or parser/security-relevant code changes before
+release.
+
+## Fuzzing
+
+Fuzz target evidence is recorded in `docs/fuzz-evidence.md`. The current
+release-readiness run covers all 14 targets registered in
+`.github/fuzz-targets.json` at commit
+`06f21c51645f54e2b7bde7c5b538479463be5d0e`, with a local smoke run and long
+ARM and Intel runs.
 
 ## Release Bar
 
@@ -107,7 +120,7 @@ Do not mark a release production-ready until:
 - parser and protocol fuzz targets have completed a meaningful run
 - every target in `.github/fuzz-targets.json` has run for more than five
   minutes on release hardware or the manual long-fuzz workflow
-- `govulncheck -test ./...` and `staticcheck ./...` pass
+- `govulncheck -test ./...`, advisory `gosec`, and `staticcheck ./...` pass
 - this assessment and `docs/spec-matrix.md` are reviewed
 - no critical or high independent review findings remain
 
