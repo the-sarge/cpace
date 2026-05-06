@@ -55,17 +55,21 @@ exchange. Deterministic readers are only appropriate in tests.
 
 ## Validation
 
-This repository uses `Taskfile.yml` as the local and CI validation facade:
+This repository uses `Taskfile.yml` as the local validation facade:
 
 ```sh
+task quick
 task check
+task check:changed
+task docs:check
 FUZZTIME=30s PARALLEL=2 task fuzz
 ```
 
-Fuzz targets live in `.github/fuzz-targets.json`. Pull-request CI runs the full
-check gate plus a short fuzz smoke pass; `.github/workflows/nightly-fuzz.yml`
-provides a manual long-fuzz matrix that uploads newly captured corpus files on
-failure.
+Fuzz targets live in `.github/fuzz-targets.json`. Until self-hosted runners are
+available, GitHub-hosted pull-request CI is intentionally light: code changes
+run `go test ./...`, and Markdown-only PRs run docs validation without setting
+up Go. Run the full local gate, fuzzing, vulnerability scan, and advisory
+`gosec` scan locally before release-oriented changes.
 
 ```go
 initiator, msgA, err := cpace.Start(initCfg)

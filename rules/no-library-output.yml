@@ -1,0 +1,24 @@
+id: no-library-output
+language: go
+severity: error
+rule:
+  any:
+    - pattern: fmt.Print($$$A)
+    - pattern: fmt.Printf($A, $$$B)
+    - pattern: fmt.Println($$$A)
+    - pattern: log.Print($$$A)
+    - pattern: log.Printf($A, $$$B)
+    - pattern: log.Println($$$A)
+    - pattern: log.Fatal($$$A)
+    - pattern: log.Fatalf($A, $$$B)
+    - pattern: log.Fatalln($$$A)
+    - pattern: log.Panic($$$A)
+    - pattern: log.Panicf($A, $$$B)
+    - pattern: log.Panicln($$$A)
+message: |
+  Library code should return errors instead of writing to stdout or stderr.
+files:
+  - "*.go"
+  - "**/*.go"
+ignores:
+  - "**/*_test.go"

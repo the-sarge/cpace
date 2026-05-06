@@ -25,3 +25,6 @@
   samples.
 - Document and test that `Finish` consumes protocol state even when parsing or
   confirmation fails.
+- Lighten GitHub-hosted CI before release, add docs-only PR validation, and add
+  local `quick`, `check:changed`, docs, formatting, and ast-grep validation
+  lanes.

@@ -2,8 +2,9 @@ name: Vulnerability Scan
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 9 * * 1'
+  # Keep vulnerability scans manual until self-hosted runners are available.
+  # schedule:
+  #   - cron: '0 9 * * 1'
 
 permissions:
   contents: read

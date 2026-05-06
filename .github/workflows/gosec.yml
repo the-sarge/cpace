@@ -1,13 +1,10 @@
 name: Gosec Advisory
 
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
   workflow_dispatch:
-  schedule:
-    - cron: '0 10 * * 1'
+  # Keep advisory security scans manual until self-hosted runners are available.
+  # schedule:
+  #   - cron: '0 10 * * 1'
 
 permissions:
   contents: read

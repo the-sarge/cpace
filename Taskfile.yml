@@ -1,7 +1,9 @@
 # Taskfile.yml - cpace validation targets
 #
-# Local gate:
+# Local lanes:
+#   task quick
 #   task check
+#   task check:changed
 #
 # Fuzzing:
 #   task fuzz FUZZTIME=30s PARALLEL=2
@@ -11,7 +13,11 @@ version: "3"
 output: group
 
 vars:
+  AST_GREP: '{{.AST_GREP | default "ast-grep"}}'
+  CMARK: '{{.CMARK | default "cmark"}}'
   GOSEC: '{{.GOSEC | default "gosec"}}'
+  GOFMT: '{{.GOFMT | default "gofmt"}}'
+  GOIMPORTS: '{{.GOIMPORTS | default "goimports"}}'
   GOVULNCHECK: '{{.GOVULNCHECK | default "govulncheck"}}'
   STATICCHECK: '{{.STATICCHECK | default "staticcheck"}}'
   FUZZTIME: '{{.FUZZTIME | default "30s"}}'
@@ -26,16 +32,81 @@ tasks:
     cmds:
       - go test ./...
 
+  quick-test:
+    desc: Run the lightweight local test lane
+    cmds:
+      - go test ./...
+
   test:race:
     desc: Run tests with the race detector
     cmds:
       - go test -race ./...
 
   lint:
+    desc: Run formatting, Go, and structural linters
+    cmds:
+      - task: lint:gofmt
+      - task: lint:goimports
+      - task: lint:go
+      - task: lint-ast-grep
+
+  lint:gofmt:
+    desc: Check gofmt formatting
+    cmds:
+      - |
+        unformatted="$({{.GOFMT}} -l $(git ls-files '*.go'))"
+        if [ -n "$unformatted" ]; then
+          echo "gofmt check failed. Run gofmt on:"
+          echo "$unformatted"
+          exit 1
+        fi
+
+  lint:goimports:
+    desc: Check import formatting
+    cmds:
+      - |
+        command -v {{.GOIMPORTS}} >/dev/null 2>&1 || {
+          echo "{{.GOIMPORTS}} not found; install goimports or set GOIMPORTS=/path/to/goimports"
+          exit 1
+        }
+      - |
+        unformatted="$({{.GOIMPORTS}} -l $(git ls-files '*.go'))"
+        if [ -n "$unformatted" ]; then
+          echo "goimports check failed. Run goimports on:"
+          echo "$unformatted"
+          exit 1
+        fi
+
+  lint:go:
     desc: Run Go vet and staticcheck
     cmds:
       - go vet ./...
       - "{{.STATICCHECK}} ./..."
+
+  lint-ast-grep:
+    desc: Run ast-grep structural linting rules
+    cmds:
+      - |
+        command -v {{.AST_GREP}} >/dev/null 2>&1 || {
+          echo "{{.AST_GREP}} not found; install ast-grep or set AST_GREP=/path/to/ast-grep"
+          exit 1
+        }
+      - "{{.AST_GREP}} scan --error"
+
+  docs:check:
+    desc: Validate tracked Markdown and whitespace
+    cmds:
+      - git diff --check
+      - |
+        md_files="$(git ls-files '*.md')"
+        if [ -z "$md_files" ]; then
+          exit 0
+        fi
+        command -v {{.CMARK}} >/dev/null 2>&1 || {
+          echo "{{.CMARK}} not found; install cmark or set CMARK=/path/to/cmark"
+          exit 1
+        }
+        {{.CMARK}} --validate-utf8 $md_files >/dev/null
 
   vuln:
     desc: Run govulncheck
@@ -47,9 +118,60 @@ tasks:
     cmds:
       - "{{.GOSEC}} ./..."
 
+  quick:
+    desc: Lightweight local iteration lane
+    cmds:
+      - task: lint:gofmt
+      - task: docs:check
+      - task: quick-test
+
+  check:changed:
+    desc: Run docs-only validation when only docs changed, otherwise run quick
+    cmds:
+      - |
+        set -euo pipefail
+        base="${BASE_REF:-origin/main}"
+        changed_files="$(
+          {
+            if git rev-parse --verify "$base" >/dev/null 2>&1; then
+              git diff --name-only "$base"...HEAD
+            fi
+            git diff --name-only
+            git diff --cached --name-only
+            git ls-files --others --exclude-standard
+          } | sort -u
+        )"
+
+        if [ -z "$changed_files" ]; then
+          echo "No changed files detected; running quick validation."
+          task quick
+          exit 0
+        fi
+
+        docs_only=true
+        while IFS= read -r path; do
+          [ -z "$path" ] && continue
+          case "$path" in
+            *.md|docs/*) ;;
+            *)
+              docs_only=false
+              break
+              ;;
+          esac
+        done <<< "$changed_files"
+
+        if [ "$docs_only" = "true" ]; then
+          echo "Docs-only changes detected; running docs validation."
+          task docs:check
+        else
+          echo "Code or workflow changes detected; running quick validation."
+          task quick
+        fi
+
   check:
     desc: Full local validation gate
     cmds:
+      - task: docs:check
       - task: test
       - task: test:race
       - task: lint

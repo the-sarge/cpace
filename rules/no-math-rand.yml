@@ -1,0 +1,12 @@
+id: no-math-rand
+language: go
+severity: error
+rule:
+  pattern: '"math/rand"'
+message: |
+  CPace production code must use cryptographic randomness, not math/rand.
+files:
+  - "*.go"
+  - "**/*.go"
+ignores:
+  - "**/*_test.go"
