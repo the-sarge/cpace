@@ -226,7 +226,7 @@ tasks:
             dir="$2"
             target="${entry%%|*}"
             pkg="${entry#*|}"
-            if out=$(go test -race -fuzz="$target" -fuzztime="$FUZZTIME" "$pkg" 2>&1); then
+            if out=$(go test -race -timeout=0 -fuzz="$target" -fuzztime="$FUZZTIME" "$pkg" 2>&1); then
               printf "=== PASS: %s ===\n" "$target" > "$dir/$target.log"
             else
               printf "=== FAIL: %s (%s) ===\n%s\n" "$target" "$pkg" "$out" > "$dir/$target.log"
