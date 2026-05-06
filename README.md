@@ -6,6 +6,11 @@ This repository implements `draft-irtf-cfrg-cpace-21` for the
 Status: auditable draft implementation. This code has not had independent
 cryptographic review and is not production-ready.
 
+Current work is release readiness, not new policy design. The public API and
+package-profile choices are frozen for review unless a new finding reopens a
+decision. Before any production-readiness claim, the release bar in
+`docs/security-assessment.md` must be satisfied.
+
 The public API exposes only an initiator-responder flow with mandatory explicit
 key confirmation:
 
@@ -84,6 +89,11 @@ available, GitHub-hosted pull-request CI is intentionally light: code changes
 run `go test ./...`, and Markdown-only PRs run docs validation without setting
 up Go. Run the full local gate, fuzzing, vulnerability scan, and advisory
 `gosec` scan locally before release-oriented changes.
+
+Release-readiness work should record exact evidence: commit SHA, command or
+workflow, duration for fuzzing, target count, and residual risks. The next
+planned readiness steps are dependency review refresh, long fuzz evidence,
+security/spec audit, and external review handoff.
 
 ```go
 initiator, msgA, err := cpace.Start(initCfg)

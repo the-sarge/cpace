@@ -1,29 +1,33 @@
 # Project Plan
 
-Status: living plan after the decision-free hardening workstreams landed in
-PRs #2-#8.
+Status: living release-readiness plan after the policy/API decisions landed in
+PRs #13-#17.
 
 This document tracks current work. Historical review triage remains in
 `docs/interview-results-triage.md`.
 
 ## Current Phase
 
-The next phase is policy and API decisions. Do not implement these as incidental
-cleanup: each item changes package semantics, compatibility, or caller
-responsibility.
+The current phase is release readiness. Public API and package-profile policy
+decisions are closed unless a new review finding reopens one. Do not describe
+the package as production-ready until the release bar below is satisfied and
+independent cryptographic review is complete.
 
-## Policy PR Shape
+## Release-Readiness PR Shape
 
-Each policy PR should include:
+Each release-readiness PR should include:
 
-- the decision being made and why the rejected alternatives are not being used;
-- the compatibility effect for existing callers and draft-21 vectors;
-- any migration note needed by downstream integrations;
-- focused tests for the changed behavior and unchanged compatibility paths;
-- README, changelog, and security/spec documentation updates when the public
-  contract changes.
+- the release-readiness gap being closed;
+- the exact commit, command, workflow, or review artifact used as evidence;
+- any residual risk or follow-up that remains after the PR;
+- README, changelog, security, and spec documentation updates when release
+  posture changes.
+- no public API or package-profile changes; reopen the policy phase first if a
+  new finding requires one.
 
-## Policy Decisions
+## Closed Policy Decisions
+
+All rows below are closed and preserved as the policy/API decision record.
 
 | Area | Current behavior | Decision needed |
 | --- | --- | --- |
@@ -37,8 +41,22 @@ Each policy PR should include:
 
 ## Recommended PR Order
 
-All current policy rows are closed. Move to release-readiness work unless a new
-review finding reopens a policy decision.
+1. Dependency review refresh.
+   Run `govulncheck -test -show verbose ./...`, run the advisory `gosec` lane,
+   and update `docs/dependency-review.md` with current findings.
+
+2. Long fuzz evidence.
+   Run every target in `.github/fuzz-targets.json` for more than five minutes
+   on release hardware or the manual long-fuzz workflow. Record commit, target
+   count, duration, and result.
+
+3. Security/spec audit.
+   Review `docs/security-assessment.md` and `docs/spec-matrix.md` against the
+   exact release candidate commit.
+
+4. External review package.
+   Prepare reviewer handoff notes for draft-compatible behavior, package-owned
+   framing/profile choices, unsupported scope, and remaining release blockers.
 
 ## Release Readiness
 

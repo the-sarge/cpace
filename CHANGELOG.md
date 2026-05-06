@@ -42,3 +42,6 @@
   public-share/tag lengths on the wire.
 - Keep draft-21 Ristretto255 scalar sampling via masked canonical 32-byte
   values and document why the `SetUniformBytes` alternative is not used.
+- Close the policy/API decision phase in the project docs and shift release
+  tracking to dependency review, long fuzzing, security/spec audit, and
+  external review readiness.
