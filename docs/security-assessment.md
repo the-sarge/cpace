@@ -35,11 +35,11 @@ each side puts itself first, the CI values differ and confirmation fails. Role
 labels such as `"client"` and `"server"` are not enough as global identities for
 all users or deployments; callers should bind stable party identities.
 
-Scalar sampling masks bits above group size 252 and rejects zero. This creates a
-secret-dependent loop only for the all-zero masked scalar case. That event has
-negligible probability with a uniform random reader, but the behavior should be
-reviewed for hostile or deterministic random sources. Sampling failure wraps
-`ErrRandomness`.
+Scalar randomness always comes from Go's `crypto/rand.Reader`; callers cannot
+inject a custom random reader through the public API. Scalar sampling masks bits
+above group size 252 and rejects zero. This creates a secret-dependent loop only
+for the all-zero masked scalar case. That event has negligible probability with
+the system random reader. Sampling failure wraps `ErrRandomness`.
 
 ## Memory Handling
 

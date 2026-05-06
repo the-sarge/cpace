@@ -27,7 +27,7 @@ Each policy PR should include:
 
 | Area | Current behavior | Decision needed |
 | --- | --- | --- |
-| `Config.Rand` | Public `io.Reader` hook accepted for scalar randomness; nil uses `crypto/rand.Reader`. | Keep public with stronger docs, remove from public API, or require an explicit unsafe/test opt-in for custom readers. |
+| `Config.Rand` | Removed from the public API; scalar randomness always uses `crypto/rand.Reader`. | Done. Deterministic readers remain package-internal for tests and fuzzing only. |
 | Empty `SessionID` | Accepted for draft-21 compatibility and documented as weaker. | Keep draft-permissive behavior, or reject empty values by default with an explicit compatibility escape hatch. |
 | `Session.Discard()` | No public session-destruction method; internal consumed state is cleared best-effort. | Add a public lifecycle method that clears `Session.isk` and makes future `Export` fail, or keep the session API minimal. |
 | Peer associated data | Peer AD is bound into transcripts but not exposed through accessors. | Add accessors to reduce application-layer mistakes, or keep messages opaque. |
@@ -37,23 +37,19 @@ Each policy PR should include:
 
 ## Recommended PR Order
 
-1. `Config.Rand` policy.
-   This has the largest impact on timing analysis, test hooks, and caller
-   footguns.
-
-2. Empty `SessionID` policy.
+1. Empty `SessionID` policy.
    Decide whether draft compatibility remains the default or moves behind an
    explicit compatibility option.
 
-3. Session lifecycle and peer-data API.
+2. Session lifecycle and peer-data API.
    Consider `Session.Discard()` and peer associated-data accessors together
    because both are public API surface changes.
 
-4. Framing and confirmation profile choices.
+3. Framing and confirmation profile choices.
    Decide `maxFieldLength` and confirmation tag role separation after the
    compatibility posture is explicit.
 
-5. Scalar sampling investigation.
+4. Scalar sampling investigation.
    Treat any change as a protocol-conformance project, not a mechanical
    refactor. Keep this separate from API policy changes.
 

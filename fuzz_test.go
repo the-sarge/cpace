@@ -81,16 +81,14 @@ func FuzzProtocolConsistency(f *testing.F) {
 			Context:        ctx,
 			SessionID:      sid,
 			AssociatedData: ada,
-			Rand:           &repeatingReader{buf: []byte{1}},
 		}
 		respCfg := initCfg
 		respCfg.AssociatedData = adb
-		respCfg.Rand = &repeatingReader{buf: []byte{2}}
-		initiator, msgA, err := Start(initCfg)
+		initiator, msgA, err := startTestInitiator(initCfg)
 		if err != nil {
 			t.Fatalf("Start failed for bounded valid config: %v", err)
 		}
-		responder, msgB, err := Respond(respCfg, msgA)
+		responder, msgB, err := respondTestResponder(respCfg, msgA)
 		if err != nil {
 			t.Fatalf("Respond failed for matching config: %v", err)
 		}
@@ -122,17 +120,15 @@ func FuzzProtocolMismatch(f *testing.F) {
 			Context:        ctx,
 			SessionID:      sid,
 			AssociatedData: ada,
-			Rand:           &repeatingReader{buf: []byte{1}},
 		}
 		respCfg := initCfg
 		respCfg.Context = append(clone(ctx), 0xff)
 		respCfg.AssociatedData = adb
-		respCfg.Rand = &repeatingReader{buf: []byte{2}}
-		initiator, msgA, err := Start(initCfg)
+		initiator, msgA, err := startTestInitiator(initCfg)
 		if err != nil {
 			t.Fatalf("Start failed for bounded valid config: %v", err)
 		}
-		_, msgB, err := Respond(respCfg, msgA)
+		_, msgB, err := respondTestResponder(respCfg, msgA)
 		if err != nil {
 			t.Fatalf("Respond failed before expected confirmation mismatch: %v", err)
 		}
@@ -158,7 +154,7 @@ func FuzzRespondWithFuzzedMessageA(f *testing.F) {
 			t.Skip()
 		}
 		cfg := fuzzResponderConfig()
-		_, msgB, err := Respond(cfg, messageA)
+		_, msgB, err := respondWithRandom(cfg, messageA, repeatingRand(0x22))
 		if err == nil {
 			if _, err := decodeMessageB(msgB); err != nil {
 				t.Fatalf("Respond returned malformed message B: %v", err)
@@ -182,7 +178,7 @@ func FuzzInitiatorFinishWithFuzzedMessageB(f *testing.F) {
 		if len(messageB) > fuzzProtocolInputCap {
 			t.Skip()
 		}
-		initiator, _, err := Start(fuzzInitiatorConfig())
+		initiator, _, err := startTestInitiator(fuzzInitiatorConfig())
 		if err != nil {
 			t.Fatalf("Start failed for fixed fuzz config: %v", err)
 		}
@@ -326,11 +322,11 @@ func FuzzMessageCRoundTrip(f *testing.F) {
 
 func makeFuzzExchange(tb testing.TB) (*Initiator, *Responder, *Session, []byte, []byte, []byte) {
 	tb.Helper()
-	initiator, msgA, err := Start(fuzzInitiatorConfig())
+	initiator, msgA, err := startTestInitiator(fuzzInitiatorConfig())
 	if err != nil {
 		tb.Fatalf("Start failed for fixed fuzz config: %v", err)
 	}
-	responder, msgB, err := Respond(fuzzResponderConfig(), msgA)
+	responder, msgB, err := respondTestResponder(fuzzResponderConfig(), msgA)
 	if err != nil {
 		tb.Fatalf("Respond failed for fixed fuzz config: %v", err)
 	}
@@ -344,14 +340,12 @@ func makeFuzzExchange(tb testing.TB) (*Initiator, *Responder, *Session, []byte, 
 func fuzzInitiatorConfig() Config {
 	cfg := testConfig()
 	cfg.AssociatedData = []byte("ADa")
-	cfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 	return cfg
 }
 
 func fuzzResponderConfig() Config {
 	cfg := testConfig()
 	cfg.AssociatedData = []byte("ADb")
-	cfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
 	return cfg
 }
 

@@ -50,8 +50,8 @@ transcript, not a complete channel binding for outer protocol negotiation.
 material from the confirmed ISK. It is not a source of fresh randomness; use
 specific labels and contexts for each exported key purpose.
 
-`Config.Rand`, when set, must be a CSPRNG that provides fresh entropy for every
-exchange. Deterministic readers are only appropriate in tests.
+Scalar randomness is always drawn from Go's `crypto/rand.Reader`. Callers do
+not provide randomness to `Start` or `Respond`.
 
 ## Validation
 

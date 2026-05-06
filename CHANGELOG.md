@@ -28,3 +28,6 @@
 - Lighten GitHub-hosted CI before release, add docs-only PR validation, and add
   local `quick`, `check:changed`, docs, formatting, and ast-grep validation
   lanes.
+- Remove public `Config.Rand`; `Start` and `Respond` now always draw scalar
+  randomness from `crypto/rand.Reader`, with deterministic readers confined to
+  package-internal tests and fuzzing.

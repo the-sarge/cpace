@@ -53,19 +53,56 @@ func testConfig() Config {
 	}
 }
 
-func TestConfirmedExchangeAndExport(t *testing.T) {
+func repeatingRand(fill byte) io.Reader {
+	return &repeatingReader{buf: bytes.Repeat([]byte{fill}, scalarSize)}
+}
+
+func startTestInitiator(cfg Config) (*Initiator, []byte, error) {
+	return startWithRandom(cfg, repeatingRand(0x11))
+}
+
+func respondTestResponder(cfg Config, messageA []byte) (*Responder, []byte, error) {
+	return respondWithRandom(cfg, messageA, repeatingRand(0x22))
+}
+
+func TestInternalRandomHelpersDefaultNilRandomness(t *testing.T) {
 	initCfg := testConfig()
 	initCfg.AssociatedData = []byte("ADa")
-	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 	respCfg := testConfig()
 	respCfg.AssociatedData = []byte("ADb")
-	respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
 
-	initiator, msgA, err := Start(initCfg)
+	initiator, msgA, err := startWithRandom(initCfg, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	responder, msgB, err := Respond(respCfg, msgA)
+	responder, msgB, err := respondWithRandom(respCfg, msgA, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	msgC, sI, err := initiator.Finish(msgB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sR, err := responder.Finish(msgC)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(sI.TranscriptID(), sR.TranscriptID()) {
+		t.Fatal("transcript ids differ")
+	}
+}
+
+func TestConfirmedExchangeAndExport(t *testing.T) {
+	initCfg := testConfig()
+	initCfg.AssociatedData = []byte("ADa")
+	respCfg := testConfig()
+	respCfg.AssociatedData = []byte("ADb")
+
+	initiator, msgA, err := startTestInitiator(initCfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,10 +133,9 @@ func TestConfirmedExchangeAndExport(t *testing.T) {
 func TestMutableInputsAreCopied(t *testing.T) {
 	initCfg := testConfig()
 	initCfg.AssociatedData = []byte("ADa")
-	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 	password := []byte("password")
 	initCfg.Password = password
-	initiator, msgA, err := Start(initCfg)
+	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,8 +148,7 @@ func TestMutableInputsAreCopied(t *testing.T) {
 
 	respCfg := testConfig()
 	respCfg.AssociatedData = []byte("ADb")
-	respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
-	responder, msgB, err := Respond(respCfg, msgA)
+	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,17 +164,15 @@ func TestMutableInputsAreCopied(t *testing.T) {
 func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 	initCfg := testConfig()
 	initCfg.AssociatedData = []byte("ADa")
-	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 	respCfg := testConfig()
 	respCfg.AssociatedData = []byte("ADb")
-	respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
 
-	initiator, msgA, err := Start(initCfg)
+	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
 	initiatorScalar := initiator.scalar
-	responder, msgB, err := Respond(respCfg, msgA)
+	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +232,7 @@ func TestInputValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := testConfig()
 			tc.edit(&cfg)
-			if _, _, err := Start(cfg); !errors.Is(err, ErrInvalidInput) {
+			if _, _, err := startTestInitiator(cfg); !errors.Is(err, ErrInvalidInput) {
 				t.Fatalf("Start err=%v", err)
 			}
 		})
@@ -207,20 +240,17 @@ func TestInputValidation(t *testing.T) {
 }
 
 func TestScalarSamplingRejectsRepeatedZero(t *testing.T) {
-	cfg := testConfig()
-	cfg.Rand = &repeatingReader{buf: []byte{0}}
-	if _, _, err := Start(cfg); !errors.Is(err, ErrRandomness) || errors.Is(err, ErrInvalidInput) {
-		t.Fatalf("Start err=%v", err)
+	if _, err := sampleScalar(&repeatingReader{buf: []byte{0}}); !errors.Is(err, ErrRandomness) ||
+		errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("sampleScalar err=%v", err)
 	}
 }
 
 func TestScalarSamplingWrapsRandomnessReadFailure(t *testing.T) {
-	cfg := testConfig()
-	cfg.Rand = failingReader{err: io.ErrUnexpectedEOF}
-	if _, _, err := Start(cfg); !errors.Is(err, ErrRandomness) ||
+	if _, err := sampleScalar(failingReader{err: io.ErrUnexpectedEOF}); !errors.Is(err, ErrRandomness) ||
 		errors.Is(err, ErrInvalidInput) ||
 		!errors.Is(err, io.ErrUnexpectedEOF) {
-		t.Fatalf("Start err=%v", err)
+		t.Fatalf("sampleScalar err=%v", err)
 	}
 }
 
@@ -240,11 +270,9 @@ func TestProtocolCompletesWithEmptySessionID(t *testing.T) {
 			initCfg := testConfig()
 			initCfg.SessionID = tc.initSID
 			initCfg.AssociatedData = []byte("ADa")
-			initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 			respCfg := testConfig()
 			respCfg.SessionID = tc.respSID
 			respCfg.AssociatedData = []byte("ADb")
-			respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
 			sI, sR := completeExchange(t, initCfg, respCfg)
 			if !bytes.Equal(sI.TranscriptID(), sR.TranscriptID()) {
 				t.Fatalf("transcript IDs differ")
@@ -268,15 +296,13 @@ func TestProtocolRejectsAsymmetricSessionID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initCfg := testConfig()
 			initCfg.SessionID = tc.initSID
-			initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 			respCfg := testConfig()
 			respCfg.SessionID = tc.respSID
-			respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
-			_, msgA, err := Start(initCfg)
+			_, msgA, err := startTestInitiator(initCfg)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if _, _, err := Respond(respCfg, msgA); !errors.Is(err, ErrMessage) {
+			if _, _, err := respondTestResponder(respCfg, msgA); !errors.Is(err, ErrMessage) {
 				t.Fatalf("Respond err=%v", err)
 			}
 		})
@@ -285,16 +311,14 @@ func TestProtocolRejectsAsymmetricSessionID(t *testing.T) {
 
 func TestConfirmationFailsOnBoundInputMismatch(t *testing.T) {
 	initCfg := testConfig()
-	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 	respCfg := testConfig()
 	respCfg.Context = []byte("different")
-	respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
 
-	initiator, msgA, err := Start(initCfg)
+	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, msgB, err := Respond(respCfg, msgA)
+	_, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -360,21 +384,19 @@ func TestTranscriptLockingMismatches(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			initCfg := testConfig()
 			initCfg.AssociatedData = []byte("ADa")
-			initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 			respCfg := testConfig()
 			respCfg.AssociatedData = []byte("ADb")
-			respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
 			if tc.editResp != nil {
 				tc.editResp(&respCfg)
 			}
-			initiator, msgA, err := Start(initCfg)
+			initiator, msgA, err := startTestInitiator(initCfg)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if tc.tamperA != nil {
 				msgA = tc.tamperA(msgA)
 			}
-			_, msgB, err := Respond(respCfg, msgA)
+			_, msgB, err := respondTestResponder(respCfg, msgA)
 			if tc.respondErr != nil {
 				if !errors.Is(err, tc.respondErr) {
 					t.Fatalf("Respond err=%v", err)
@@ -397,8 +419,7 @@ func TestTranscriptLockingMismatches(t *testing.T) {
 
 func TestMessageParserRejectsMalformed(t *testing.T) {
 	cfg := testConfig()
-	cfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
-	_, msgA, err := Start(cfg)
+	_, msgA, err := startTestInitiator(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -473,14 +494,12 @@ func TestMessageParsersRejectMalformedBAndC(t *testing.T) {
 
 func TestStateReuseAndConcurrentFinish(t *testing.T) {
 	initCfg := testConfig()
-	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 	respCfg := testConfig()
-	respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
-	initiator, msgA, err := Start(initCfg)
+	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	responder, msgB, err := Respond(respCfg, msgA)
+	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -514,8 +533,7 @@ func TestStateReuseAndConcurrentFinish(t *testing.T) {
 	}
 
 	// A fresh initiator produces the message C needed to exercise responder reuse.
-	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
-	initiator2, _, err := Start(initCfg)
+	initiator2, _, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -533,10 +551,9 @@ func TestStateReuseAndConcurrentFinish(t *testing.T) {
 
 func TestProtocolAbortsOnInvalidRistrettoEncoding(t *testing.T) {
 	cfg := testConfig()
-	cfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
 	invalid := mustLoadDraftInvalidVector(t)
 	badA := encodeMessageA([]byte("sid"), invalid.InvalidY1, nil)
-	if _, _, err := Respond(cfg, badA); !errors.Is(err, ErrAbort) {
+	if _, _, err := respondTestResponder(cfg, badA); !errors.Is(err, ErrAbort) {
 		t.Fatalf("Respond err=%v", err)
 	}
 }
@@ -553,15 +570,14 @@ func TestResponderPrevalidatesInvalidInitiatorShareBeforeRandomness(t *testing.T
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := testConfig()
-			rand := &countingFailingReader{err: io.ErrUnexpectedEOF}
-			cfg.Rand = rand
+			random := &countingFailingReader{err: io.ErrUnexpectedEOF}
 			badA := encodeMessageA([]byte("sid"), tc.ya, nil)
-			_, _, err := Respond(cfg, badA)
+			_, _, err := respondWithRandom(cfg, badA, random)
 			if !errors.Is(err, ErrAbort) || errors.Is(err, ErrRandomness) {
 				t.Fatalf("Respond err=%v", err)
 			}
-			if rand.reads != 0 {
-				t.Fatalf("Respond read randomness %d times before rejecting share", rand.reads)
+			if random.reads != 0 {
+				t.Fatalf("Respond read randomness %d times before rejecting share", random.reads)
 			}
 		})
 	}
@@ -579,8 +595,7 @@ func TestInitiatorAbortsOnInvalidResponderShare(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := testConfig()
-			cfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
-			initiator, _, err := Start(cfg)
+			initiator, _, err := startTestInitiator(cfg)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -594,8 +609,7 @@ func TestInitiatorAbortsOnInvalidResponderShare(t *testing.T) {
 
 func TestInitiatorReflectedShareFailsConfirmationNotAbort(t *testing.T) {
 	cfg := testConfig()
-	cfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
-	initiator, msgA, err := Start(cfg)
+	initiator, msgA, err := startTestInitiator(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -611,14 +625,12 @@ func TestInitiatorReflectedShareFailsConfirmationNotAbort(t *testing.T) {
 
 func TestResponderRejectsTamperedMessageC(t *testing.T) {
 	initCfg := testConfig()
-	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 	respCfg := testConfig()
-	respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
-	initiator, msgA, err := Start(initCfg)
+	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	responder, msgB, err := Respond(respCfg, msgA)
+	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -634,14 +646,12 @@ func TestResponderRejectsTamperedMessageC(t *testing.T) {
 
 func TestFinishConsumesStateOnParseFailure(t *testing.T) {
 	initCfg := testConfig()
-	initCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x11}, 32)}
 	respCfg := testConfig()
-	respCfg.Rand = &repeatingReader{buf: bytes.Repeat([]byte{0x22}, 32)}
-	initiator, msgA, err := Start(initCfg)
+	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	responder, msgB, err := Respond(respCfg, msgA)
+	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -672,11 +682,11 @@ func mustLoadDraftInvalidVector(t *testing.T) draftInvalidVector {
 
 func completeExchange(t *testing.T, initCfg, respCfg Config) (*Session, *Session) {
 	t.Helper()
-	initiator, msgA, err := Start(initCfg)
+	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	responder, msgB, err := Respond(respCfg, msgA)
+	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}

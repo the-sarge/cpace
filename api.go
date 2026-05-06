@@ -35,9 +35,9 @@ type Suite byte
 // called Respond. SessionID may be empty because draft-21 only recommends a
 // unique sid, but callers should provide a fresh, non-secret,
 // parties-agree-on value for every session; an empty sid weakens replay and
-// transcript separation properties. The AssociatedData field is ADa for Start
-// and ADb for Respond. All byte slices are copied by Start and Respond before
-// use.
+// transcript separation properties. Scalar randomness always comes from
+// crypto/rand.Reader. The AssociatedData field is ADa for Start and ADb for
+// Respond. All byte slices are copied by Start and Respond before use.
 type Config struct {
 	Password       []byte
 	InitiatorID    []byte
@@ -45,11 +45,6 @@ type Config struct {
 	Context        []byte
 	SessionID      []byte
 	AssociatedData []byte
-
-	// Rand supplies scalar randomness. If nil, crypto/rand.Reader is used.
-	// Custom readers must be CSPRNGs that provide fresh entropy for every
-	// exchange; deterministic readers are for tests only.
-	Rand io.Reader
 }
 
 // Initiator is a single-use initiator state returned by Start.
@@ -88,11 +83,17 @@ type normalizedConfig struct {
 	ci       []byte
 	sid      []byte
 	ad       []byte
-	rand     io.Reader
 }
 
 // Start creates initiator state and message A.
 func Start(cfg Config) (*Initiator, []byte, error) {
+	return startWithRandom(cfg, rand.Reader)
+}
+
+func startWithRandom(cfg Config, random io.Reader) (*Initiator, []byte, error) {
+	if random == nil {
+		random = rand.Reader
+	}
 	nc, err := normalizeConfig(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -103,7 +104,7 @@ func Start(cfg Config) (*Initiator, []byte, error) {
 	defer clearElement(g)
 	clearBytes(nc.password)
 	nc.password = nil
-	y, err := sampleScalar(nc.rand)
+	y, err := sampleScalar(random)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -124,6 +125,13 @@ func Start(cfg Config) (*Initiator, []byte, error) {
 // error from Respond does not authenticate the initiator; authentication is
 // established only by successful Finish calls.
 func Respond(cfg Config, messageA []byte) (*Responder, []byte, error) {
+	return respondWithRandom(cfg, messageA, rand.Reader)
+}
+
+func respondWithRandom(cfg Config, messageA []byte, random io.Reader) (*Responder, []byte, error) {
+	if random == nil {
+		random = rand.Reader
+	}
 	nc, err := normalizeConfig(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -144,7 +152,7 @@ func Respond(cfg Config, messageA []byte) (*Responder, []byte, error) {
 	defer clearElement(g)
 	clearBytes(nc.password)
 	nc.password = nil
-	y, err := sampleScalar(nc.rand)
+	y, err := sampleScalar(random)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -276,16 +284,11 @@ func normalizeConfig(cfg Config) (normalizedConfig, error) {
 		len(cfg.AssociatedData) > maxFieldLength {
 		return normalizedConfig{}, fmt.Errorf("%w: field too large", ErrInvalidInput)
 	}
-	r := cfg.Rand
-	if r == nil {
-		r = rand.Reader
-	}
 	return normalizedConfig{
 		password: clone(cfg.Password),
 		ci:       buildCI(cfg.InitiatorID, cfg.ResponderID, cfg.Context),
 		sid:      clone(cfg.SessionID),
 		ad:       clone(cfg.AssociatedData),
-		rand:     r,
 	}, nil
 }
 
