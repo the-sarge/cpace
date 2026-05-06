@@ -110,7 +110,7 @@ func FuzzProtocolMismatch(f *testing.F) {
 	f.Add([]byte("sid"), []byte("ctx"), []byte("ADa"), []byte("ADb"))
 	f.Add([]byte("sid2"), []byte{}, []byte{}, []byte{})
 	f.Fuzz(func(t *testing.T, sid, ctx, ada, adb []byte) {
-		if len(sid) == 0 || len(sid) > 1024 || len(ctx) > 1024 || len(ada) > 1024 || len(adb) > 1024 {
+		if len(sid) == 0 || len(sid) > maxSessionIDLength || len(ctx) >= maxContextLength || len(ada) > 1024 || len(adb) > 1024 {
 			t.Skip()
 		}
 		initCfg := Config{
