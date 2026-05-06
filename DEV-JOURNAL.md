@@ -70,3 +70,20 @@ This session records the audit as `docs/security-spec-audit.md`, removes the
 security/spec audit from the remaining release-readiness gaps, and leaves
 external review handoff plus independent cryptographic review as the remaining
 production-readiness blockers.
+
+---
+
+## cpace.S5 - 2026-05-06 14:49 EDT
+
+**Main:** `5c97ae6`
+**Board:** v0.1.0 draft-snapshot release preparation.
+**Planner:** Josh
+
+Prepared the first `v0.x` release snapshot after the project-owned
+release-readiness gaps were reduced to integration guidance and release
+hygiene. This session adds `docs/integration-guidance.md`, applies the
+BSD-3-Clause license, keeps the release positioning explicit as unaudited and
+not production-ready, and moves the changelog from `Unreleased` to `v0.1.0`.
+
+The remaining production-readiness blockers are external review of
+package-owned framing/CI/profile choices and independent cryptographic review.

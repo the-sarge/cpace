@@ -35,3 +35,7 @@ Unsupported scope:
 - symmetric mode
 - draft revisions other than draft-21
 - ciphersuites other than Ristretto255 with SHA-512
+
+Outer protocol negotiation, downgrade protection, and application channel
+binding are application responsibilities. See `docs/integration-guidance.md`
+for integration guidance.

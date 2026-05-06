@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.1.0 - 2026-05-06
+
 - Clarify that `Respond` success is not authentication; only successful
   `Initiator.Finish` and `Responder.Finish` calls return authenticated
   sessions.
@@ -55,3 +57,8 @@
 - Audit the security assessment and spec matrix against the merged
   release-readiness implementation and record the result in
   `docs/security-spec-audit.md`.
+- Add application integration guidance for outer PAKE/version negotiation,
+  downgrade protection, identity orientation, and CPace session outputs.
+- License the project under BSD-3-Clause.
+- Publish the first `v0.x` draft-21 snapshot. This release is not
+  production-ready.

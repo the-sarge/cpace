@@ -45,7 +45,9 @@ and `ErrEmptySessionID`. `AllowEmptySessionID` exists only for draft-21
 compatibility tests or deliberately compatible profiles that accept the weaker
 empty-sid behavior. If an outer protocol negotiates PAKE versions, ciphersuites,
 or whether CPace is used at all, that negotiation needs its own downgrade
-protection; this package does not authenticate negotiation it never sees.
+protection; this package does not authenticate negotiation it never sees. See
+`docs/integration-guidance.md` for outer negotiation and downgrade-protection
+guidance.
 
 `Initiator.Finish` and `Responder.Finish` are single-use calls. Passing a
 malformed message or a message that fails confirmation consumes the state and
@@ -97,8 +99,7 @@ Release-readiness work should record exact evidence: commit SHA, command or
 workflow, duration for fuzzing, target count, and residual risks. Dependency
 review evidence lives in `docs/dependency-review.md`; fuzz campaign evidence
 lives in `docs/fuzz-evidence.md`; security/spec audit evidence lives in
-`docs/security-spec-audit.md`. The next planned readiness step is external
-review handoff.
+`docs/security-spec-audit.md`.
 
 ```go
 initiator, msgA, err := cpace.Start(initCfg)
@@ -110,3 +111,7 @@ key, err := initSession.Export([]byte("application key"), nil, 32)
 
 Release policy: keep tags in the `v0.x` range until independent review is
 complete and the release bar in `docs/security-assessment.md` is satisfied.
+
+## License
+
+BSD-3-Clause. See `LICENSE`.
