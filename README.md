@@ -1,5 +1,7 @@
 # CPace for Go
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/the-sarge/cpace/badge)](https://scorecard.dev/viewer/?uri=github.com/the-sarge/cpace)
+
 This repository implements `draft-irtf-cfrg-cpace-21` for the
 `CPACE-RISTR255-SHA512` suite only.
 
