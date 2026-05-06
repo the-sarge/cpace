@@ -29,23 +29,19 @@ Each policy PR should include:
 | --- | --- | --- |
 | `Config.Rand` | Removed from the public API; scalar randomness always uses `crypto/rand.Reader`. | Done. Deterministic readers remain package-internal for tests and fuzzing only. |
 | Empty `SessionID` | Rejected by default; `AllowEmptySessionID` preserves explicit draft-21 compatibility. | Done. Callers must opt into weaker empty-sid behavior deliberately. |
-| `Session.Discard()` | No public session-destruction method; internal consumed state is cleared best-effort. | Add a public lifecycle method that clears `Session.isk` and makes future `Export` fail, or keep the session API minimal. |
-| Peer associated data | Peer AD is bound into transcripts but not exposed through accessors. | Add accessors to reduce application-layer mistakes, or keep messages opaque. |
+| Session lifecycle | `Session.Close` clears the session ISK best-effort and future `Export` calls fail with `ErrSessionClosed`. | Done. Non-secret metadata remains available after close. |
+| Peer metadata | `PeerAssociatedData` and `PeerID` expose copied metadata bound into the confirmed exchange. | Done. Local AD/ID accessors are deferred until a concrete caller need appears. |
 | Confirmation tag role separation | Draft-compatible tag input is unchanged. | Keep draft-compatible tags, or add role labels as a package-profile hardening break. |
 | `maxFieldLength` | Parser cap is 1 MiB. | Keep, lower, or make configurable. |
 | Scalar sampling | Masked canonical 32-byte sampling with zero retry. | Keep for draft conformance, or investigate a `SetUniformBytes`-based approach and prove compatibility/distribution properties. |
 
 ## Recommended PR Order
 
-1. Session lifecycle and peer-data API.
-   Consider `Session.Discard()` and peer associated-data accessors together
-   because both are public API surface changes.
-
-2. Framing and confirmation profile choices.
+1. Framing and confirmation profile choices.
    Decide `maxFieldLength` and confirmation tag role separation after the
    compatibility posture is explicit.
 
-3. Scalar sampling investigation.
+2. Scalar sampling investigation.
    Treat any change as a protocol-conformance project, not a mechanical
    refactor. Keep this separate from API policy changes.
 

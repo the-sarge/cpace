@@ -47,10 +47,12 @@ the system random reader. Sampling failure wraps `ErrRandomness`.
 
 All mutable public inputs and received message fields are copied. The
 implementation clears selected owned byte-slice temporaries, consumed scalar
-state, derived generator elements, and consumed responder state on a best-effort
-basis. The Go runtime does not guarantee secure zeroization, pinning, or
-avoidance of copies made by the compiler or garbage collector. This package
-does not claim resistance to a local memory disclosure adversary.
+state, derived generator elements, consumed responder state, and session key
+material on a best-effort basis. `Session.Close` clears the session-owned ISK
+and makes future `Export` calls fail with `ErrSessionClosed`. The Go runtime
+does not guarantee secure zeroization, pinning, or avoidance of copies made by
+the compiler or garbage collector. This package does not claim resistance to a
+local memory disclosure adversary.
 
 ## Key Access
 
@@ -58,7 +60,10 @@ Raw `K`, scalar values, and ISK are not exposed through the public API. Exported
 application material is derived from the confirmed ISK using HKDF-SHA512 and is
 deterministic for a given label and context; it is not fresh randomness or a
 randomness pool. A session is returned only after key confirmation succeeds.
-`Respond` success alone does not authenticate the peer.
+`Respond` success alone does not authenticate the peer. `Session.PeerID` and
+`Session.PeerAssociatedData` return metadata that each side configured locally
+and that the confirmed exchange proves both sides agreed on. `PeerID` is copied
+from `Config`, not parsed from peer-controlled wire data.
 
 ## Framing
 

@@ -33,3 +33,6 @@
   package-internal tests and fuzzing.
 - Reject empty `SessionID` by default, add `ErrEmptySessionID`, and add
   `AllowEmptySessionID` as an explicit draft-21 compatibility opt-in.
+- Add `Session.Close`, `ErrSessionClosed`, `PeerAssociatedData`, and `PeerID`;
+  closing a session clears session-owned key material best-effort and prevents
+  future `Export` calls.

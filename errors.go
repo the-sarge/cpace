@@ -21,6 +21,10 @@ var (
 	// ErrStateUsed reports an attempt to reuse a single-use protocol state.
 	ErrStateUsed = errors.New("cpace: state already used")
 
+	// ErrSessionClosed reports an attempt to export key material from a closed
+	// Session.
+	ErrSessionClosed = errors.New("cpace: session closed")
+
 	// ErrAbort reports a draft abort condition such as an invalid point or
 	// neutral-element Diffie-Hellman result.
 	ErrAbort = errors.New("cpace: protocol abort")

@@ -5,7 +5,9 @@ import (
 	"errors"
 	"io"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 type repeatingReader struct {
@@ -130,11 +132,266 @@ func TestConfirmedExchangeAndExport(t *testing.T) {
 	}
 }
 
+func TestSessionPeerMetadata(t *testing.T) {
+	initCfg := testConfig()
+	initCfg.AssociatedData = []byte("ADa")
+	respCfg := testConfig()
+	respCfg.AssociatedData = []byte("ADb")
+
+	sI, sR := completeExchange(t, initCfg, respCfg)
+	if got := sI.PeerAssociatedData(); !bytes.Equal(got, respCfg.AssociatedData) {
+		t.Fatalf("initiator peer AD=%q want %q", got, respCfg.AssociatedData)
+	}
+	if got := sR.PeerAssociatedData(); !bytes.Equal(got, initCfg.AssociatedData) {
+		t.Fatalf("responder peer AD=%q want %q", got, initCfg.AssociatedData)
+	}
+	if got := sI.PeerID(); !bytes.Equal(got, initCfg.ResponderID) {
+		t.Fatalf("initiator peer ID=%q want %q", got, initCfg.ResponderID)
+	}
+	if got := sR.PeerID(); !bytes.Equal(got, respCfg.InitiatorID) {
+		t.Fatalf("responder peer ID=%q want %q", got, respCfg.InitiatorID)
+	}
+
+	peerAD := sI.PeerAssociatedData()
+	peerAD[0] ^= 0xff
+	if bytes.Equal(sI.PeerAssociatedData(), peerAD) {
+		t.Fatal("PeerAssociatedData returned mutable session storage")
+	}
+	peerID := sR.PeerID()
+	peerID[0] ^= 0xff
+	if bytes.Equal(sR.PeerID(), peerID) {
+		t.Fatal("PeerID returned mutable session storage")
+	}
+
+	emptySI, emptySR := completeExchange(t, testConfig(), testConfig())
+	if got := emptySI.PeerAssociatedData(); len(got) != 0 {
+		t.Fatalf("initiator empty peer AD=%q want empty", got)
+	}
+	if got := emptySR.PeerAssociatedData(); len(got) != 0 {
+		t.Fatalf("responder empty peer AD=%q want empty", got)
+	}
+}
+
+func TestSessionClose(t *testing.T) {
+	initCfg := testConfig()
+	initCfg.AssociatedData = []byte("ADa")
+	respCfg := testConfig()
+	respCfg.AssociatedData = []byte("ADb")
+
+	sI, _ := completeExchange(t, initCfg, respCfg)
+	transcriptID := sI.TranscriptID()
+	peerAD := sI.PeerAssociatedData()
+	peerID := sI.PeerID()
+	if _, err := sI.Export([]byte("label"), []byte("ctx"), 32); err != nil {
+		t.Fatal(err)
+	}
+	if err := sI.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := sI.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if sI.state.isk != nil {
+		t.Fatal("session retained ISK after Close")
+	}
+	if _, err := sI.Export([]byte("label"), []byte("ctx"), 32); !errors.Is(err, ErrSessionClosed) {
+		t.Fatalf("Export after Close err=%v", err)
+	}
+	if !bytes.Equal(sI.TranscriptID(), transcriptID) {
+		t.Fatal("TranscriptID changed after Close")
+	}
+	if !bytes.Equal(sI.PeerAssociatedData(), peerAD) {
+		t.Fatal("PeerAssociatedData changed after Close")
+	}
+	if !bytes.Equal(sI.PeerID(), peerID) {
+		t.Fatal("PeerID changed after Close")
+	}
+}
+
+func TestSessionValueCopiesShareCloseState(t *testing.T) {
+	sI, _ := completeExchange(t, testConfig(), testConfig())
+	copied := *sI
+	if _, err := copied.Export([]byte("label"), []byte("ctx"), 32); err != nil {
+		t.Fatal(err)
+	}
+	if err := sI.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := copied.Export([]byte("label"), []byte("ctx"), 32); !errors.Is(err, ErrSessionClosed) {
+		t.Fatalf("Export from copied closed session err=%v", err)
+	}
+	if err := copied.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNilSessionClose(t *testing.T) {
+	var s *Session
+	if err := s.Close(); !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("Close nil err=%v", err)
+	}
+	if got := s.PeerAssociatedData(); got != nil {
+		t.Fatalf("nil PeerAssociatedData=%q want nil", got)
+	}
+	if got := s.PeerID(); got != nil {
+		t.Fatalf("nil PeerID=%q want nil", got)
+	}
+}
+
+func TestSessionCloseConcurrentExport(t *testing.T) {
+	sI, _ := completeExchange(t, testConfig(), testConfig())
+	const workers = 8
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	ready := make(chan struct{}, workers)
+	errs := make(chan error, workers)
+	var closed atomic.Int64
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			reportedReady := false
+			for {
+				_, err := sI.Export([]byte("label"), []byte("ctx"), 32)
+				switch {
+				case err == nil:
+					if !reportedReady {
+						ready <- struct{}{}
+						reportedReady = true
+					}
+				case errors.Is(err, ErrSessionClosed):
+					closed.Add(1)
+					return
+				default:
+					errs <- err
+					return
+				}
+			}
+		}()
+	}
+	close(start)
+	for i := 0; i < workers; i++ {
+		select {
+		case <-ready:
+		case err := <-errs:
+			t.Fatalf("unexpected Export err=%v", err)
+		case <-time.After(2 * time.Second):
+			t.Fatal("timed out waiting for concurrent exports")
+		}
+	}
+	if err := sI.Close(); err != nil {
+		t.Fatal(err)
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Fatalf("unexpected Export err=%v", err)
+	}
+	if got := closed.Load(); got != workers {
+		t.Fatalf("ErrSessionClosed count=%d want %d", got, workers)
+	}
+}
+
+func TestSessionCloseConcurrentClose(t *testing.T) {
+	sI, _ := completeExchange(t, testConfig(), testConfig())
+	const workers = 16
+	var wg sync.WaitGroup
+	errs := make(chan error, workers)
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := sI.Close(); err != nil {
+				errs <- err
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Fatalf("Close err=%v", err)
+	}
+	if sI.state.isk != nil {
+		t.Fatal("session retained ISK after concurrent Close")
+	}
+}
+
+func TestSessionMetadataConcurrentClose(t *testing.T) {
+	initCfg := testConfig()
+	initCfg.AssociatedData = []byte("ADa")
+	respCfg := testConfig()
+	respCfg.AssociatedData = []byte("ADb")
+	sI, _ := completeExchange(t, initCfg, respCfg)
+	transcriptID := sI.TranscriptID()
+	peerAD := sI.PeerAssociatedData()
+	peerID := sI.PeerID()
+
+	const workers = 8
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	ready := make(chan struct{}, workers)
+	stop := make(chan struct{})
+	errs := make(chan string, workers)
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			reportedReady := false
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				if !bytes.Equal(sI.TranscriptID(), transcriptID) {
+					errs <- "TranscriptID changed"
+					return
+				}
+				if !bytes.Equal(sI.PeerAssociatedData(), peerAD) {
+					errs <- "PeerAssociatedData changed"
+					return
+				}
+				if !bytes.Equal(sI.PeerID(), peerID) {
+					errs <- "PeerID changed"
+					return
+				}
+				if !reportedReady {
+					ready <- struct{}{}
+					reportedReady = true
+				}
+			}
+		}()
+	}
+	close(start)
+	for i := 0; i < workers; i++ {
+		select {
+		case <-ready:
+		case msg := <-errs:
+			t.Fatal(msg)
+		case <-time.After(2 * time.Second):
+			t.Fatal("timed out waiting for metadata readers")
+		}
+	}
+	if err := sI.Close(); err != nil {
+		t.Fatal(err)
+	}
+	close(stop)
+	wg.Wait()
+	close(errs)
+	for msg := range errs {
+		t.Fatal(msg)
+	}
+}
+
 func TestMutableInputsAreCopied(t *testing.T) {
 	initCfg := testConfig()
 	initCfg.AssociatedData = []byte("ADa")
 	password := []byte("password")
+	initiatorPeerID := []byte("responder")
 	initCfg.Password = password
+	initCfg.ResponderID = initiatorPeerID
 	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
 		t.Fatal(err)
@@ -145,19 +402,34 @@ func TestMutableInputsAreCopied(t *testing.T) {
 	for i := range initCfg.AssociatedData {
 		initCfg.AssociatedData[i] ^= 0xff
 	}
+	for i := range initiatorPeerID {
+		initiatorPeerID[i] ^= 0xff
+	}
 
 	respCfg := testConfig()
 	respCfg.AssociatedData = []byte("ADb")
+	responderPeerID := []byte("initiator")
+	respCfg.InitiatorID = responderPeerID
 	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
-	msgC, _, err := initiator.Finish(msgB)
+	for i := range responderPeerID {
+		responderPeerID[i] ^= 0xff
+	}
+	msgC, sI, err := initiator.Finish(msgB)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := responder.Finish(msgC); err != nil {
+	sR, err := responder.Finish(msgC)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if got := sI.PeerID(); !bytes.Equal(got, []byte("responder")) {
+		t.Fatalf("initiator peer ID=%q after caller mutation", got)
+	}
+	if got := sR.PeerID(); !bytes.Equal(got, []byte("initiator")) {
+		t.Fatalf("responder peer ID=%q after caller mutation", got)
 	}
 }
 
@@ -203,7 +475,7 @@ func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 	if !allZero(responderTranscript) {
 		t.Fatal("responder-owned transcript was not cleared")
 	}
-	if allZero(sI.isk) || allZero(sR.isk) {
+	if allZero(sI.state.isk) || allZero(sR.state.isk) {
 		t.Fatal("returned session ISK was cleared through an alias")
 	}
 	kI, err := sI.Export([]byte("label"), []byte("ctx"), 32)

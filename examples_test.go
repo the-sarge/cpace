@@ -38,6 +38,16 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
+	defer func() {
+		if err := initSession.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	defer func() {
+		if err := respSession.Close(); err != nil {
+			panic(err)
+		}
+	}()
 
 	initKey, _ := initSession.Export([]byte("application key"), nil, 32)
 	respKey, _ := respSession.Export([]byte("application key"), nil, 32)

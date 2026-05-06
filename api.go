@@ -58,6 +58,7 @@ type Initiator struct {
 	sid    []byte
 	ya     []byte
 	ada    []byte
+	peerID []byte
 }
 
 // Responder is a single-use responder state returned by Respond.
@@ -72,19 +73,31 @@ type Responder struct {
 	adb        []byte
 	isk        []byte
 	transcript []byte
+	peerID     []byte
 }
 
-// Session is an explicitly confirmed CPace session.
+// Session is an explicitly confirmed CPace session. Copies of a Session share
+// the same close state and secret key material.
 type Session struct {
-	isk          []byte
+	state        *sessionState
 	transcriptID []byte
+	peerAD       []byte
+	peerID       []byte
+}
+
+type sessionState struct {
+	mu     sync.Mutex
+	closed bool
+	isk    []byte
 }
 
 type normalizedConfig struct {
-	password []byte
-	ci       []byte
-	sid      []byte
-	ad       []byte
+	password    []byte
+	initiatorID []byte
+	responderID []byte
+	ci          []byte
+	sid         []byte
+	ad          []byte
 }
 
 // Start creates initiator state and message A.
@@ -118,6 +131,7 @@ func startWithRandom(cfg Config, random io.Reader) (*Initiator, []byte, error) {
 		sid:    clone(nc.sid),
 		ya:     clone(ya),
 		ada:    clone(nc.ad),
+		peerID: clone(nc.responderID),
 	}
 	return st, msg, nil
 }
@@ -178,6 +192,7 @@ func respondWithRandom(cfg Config, messageA []byte, random io.Reader) (*Responde
 		adb:        clone(nc.ad),
 		isk:        isk,
 		transcript: tr,
+		peerID:     clone(nc.initiatorID),
 	}
 	return st, msg, nil
 }
@@ -215,7 +230,7 @@ func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
 	}
 	tagA := confirmationTag(isk, i.sid, i.ya, i.ada)
 	msgC := encodeMessageC(tagA)
-	sess := newSession(isk, tr)
+	sess := newSession(isk, tr, b.adb, i.peerID)
 	clearBytes(isk)
 	return msgC, sess, nil
 }
@@ -244,7 +259,7 @@ func (r *Responder) Finish(messageC []byte) (*Session, error) {
 	if !hmac.Equal(expectedA, c.tag) {
 		return nil, ErrConfirmationFailed
 	}
-	sess := newSession(r.isk, r.transcript)
+	sess := newSession(r.isk, r.transcript, r.ada, r.peerID)
 	return sess, nil
 }
 
@@ -290,10 +305,12 @@ func normalizeConfig(cfg Config) (normalizedConfig, error) {
 		return normalizedConfig{}, fmt.Errorf("%w: field too large", ErrInvalidInput)
 	}
 	return normalizedConfig{
-		password: clone(cfg.Password),
-		ci:       buildCI(cfg.InitiatorID, cfg.ResponderID, cfg.Context),
-		sid:      clone(cfg.SessionID),
-		ad:       clone(cfg.AssociatedData),
+		password:    clone(cfg.Password),
+		initiatorID: clone(cfg.InitiatorID),
+		responderID: clone(cfg.ResponderID),
+		ci:          buildCI(cfg.InitiatorID, cfg.ResponderID, cfg.Context),
+		sid:         clone(cfg.SessionID),
+		ad:          clone(cfg.AssociatedData),
 	}, nil
 }
 
@@ -311,9 +328,14 @@ func buildCI(initiatorID, responderID, context []byte) []byte {
 	)
 }
 
-func newSession(isk, transcript []byte) *Session {
+func newSession(isk, transcript, peerAD, peerID []byte) *Session {
 	sidOut := sha512.Sum512(append([]byte("CPaceSidOutput"), transcript...))
-	return &Session{isk: clone(isk), transcriptID: sidOut[:]}
+	return &Session{
+		state:        &sessionState{isk: clone(isk)},
+		transcriptID: sidOut[:],
+		peerAD:       clone(peerAD),
+		peerID:       clone(peerID),
+	}
 }
 
 func clone(in []byte) []byte {

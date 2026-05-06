@@ -50,7 +50,13 @@ requires restarting the exchange.
 transcript, not a complete channel binding for outer protocol negotiation.
 `Session.Export` derives deterministic, domain-separated application key
 material from the confirmed ISK. It is not a source of fresh randomness; use
-specific labels and contexts for each exported key purpose.
+specific labels and contexts for each exported key purpose. `Session.Close`
+performs best-effort cleanup of the session key material and makes future
+`Export` calls fail with `ErrSessionClosed`; non-secret metadata accessors
+remain available after close. `Session.PeerAssociatedData` returns the exact
+peer AD bound into the confirmed exchange. `Session.PeerID` returns the
+caller-configured peer identity that was bound into CI and confirmed by the
+exchange; it is not parsed from peer-controlled wire data.
 
 Scalar randomness is always drawn from Go's `crypto/rand.Reader`. Callers do
 not provide randomness to `Start` or `Respond`.

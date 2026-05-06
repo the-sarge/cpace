@@ -16,6 +16,10 @@
 // only for draft-21 compatibility tests or deliberately compatible profiles
 // that accept weaker replay and transcript separation.
 //
+// Session.Close performs best-effort cleanup of session key material and makes
+// future Export calls fail. PeerAssociatedData and PeerID expose copied,
+// non-secret metadata bound into the confirmed exchange.
+//
 // Both parties must use the same role orientation: InitiatorID identifies the
 // Start side, and ResponderID identifies the Respond side. Applications that
 // negotiate PAKE versions, suites, or protocol modes outside this package must
