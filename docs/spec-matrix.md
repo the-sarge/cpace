@@ -9,7 +9,7 @@ Target: `draft-irtf-cfrg-cpace-21`, published April 23, 2026.
 | `generator_string(DSI,PRS,CI,sid,s_in_bytes)` with SHA-512 block size 128 | `generatorString` | `TestRistrettoDraft21Vectors` |
 | `G_Ristretto255.DSI = "CPaceRistretto255"` | `dsiRistretto255` | `TestRistrettoDraft21Vectors` |
 | Hash generator string to 64 bytes and use Ristretto element derivation | `calculateGenerator` | `TestRistrettoDraft21Vectors` |
-| Sample scalars by masking bits above group size 252 | `sampleScalar` | public exchange tests; release needs statistical review |
+| Sample scalars by masking bits above group size 252 | `sampleScalar`; this keeps the draft-21 Ristretto255 recommendation rather than the draft's allowed uniform-sampling alternative with zero rejection/retry | `TestScalarSamplingMasksDraftRistrettoBits`, public exchange tests; release needs statistical review |
 | `scalar_mult_vfy` aborts on decode failure or neutral output | `scalarMultVFY`, protocol abort paths | `TestScalarMultVFYDraftInvalidVectors`, `TestProtocolAbortsOnInvalidRistrettoEncoding`, embedded B.3.11 JSON fixture |
 | Compute ISK from `lv_cat(DSI_ISK,sid,K)||transcript_ir(...)` | `deriveISK` | `TestRistrettoDraft21Vectors`; embedded B.3.9 JSON fixture pinned to the draft-decoded SHA-256 |
 | Add explicit key confirmation with MAC key derived from ISK | `confirmationTag`, `Initiator.Finish`, `Responder.Finish`; tags remain draft-compatible with no package-added role labels | confirmed exchange and mismatch tests |

@@ -40,3 +40,5 @@
   field cap with non-configurable per-field caps: 4 KiB for passwords and IDs,
   1 KiB for context and session IDs, 64 KiB for associated data, and exact
   public-share/tag lengths on the wire.
+- Keep draft-21 Ristretto255 scalar sampling via masked canonical 32-byte
+  values and document why the `SetUniformBytes` alternative is not used.

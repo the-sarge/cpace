@@ -39,9 +39,16 @@ all users or deployments; callers should bind stable party identities.
 
 Scalar randomness always comes from Go's `crypto/rand.Reader`; callers cannot
 inject a custom random reader through the public API. Scalar sampling masks bits
-above group size 252 and rejects zero. This creates a secret-dependent loop only
-for the all-zero masked scalar case. That event has negligible probability with
-the system random reader. Sampling failure wraps `ErrRandomness`.
+above group size 252, parses the result as a canonical scalar, and rejects zero.
+The mask makes the canonical parse error path defensive; it should be
+unreachable unless the sampling code changes. The zero check creates a
+secret-dependent loop only for the all-zero masked scalar case. That event has
+negligible probability with the system random reader. Sampling failure wraps
+`ErrRandomness`. The package keeps this draft-21 Ristretto255 recommendation
+for profile compatibility. Using the ristretto255 library's `SetUniformBytes`
+plus zero rejection/retry would be an allowed draft alternative, but it consumes
+64 random bytes and reduces modulo the scalar order, changing deterministic
+behavior and defining a different package profile.
 
 ## Memory Handling
 
