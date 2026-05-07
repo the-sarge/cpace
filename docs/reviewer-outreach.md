@@ -20,6 +20,10 @@ The review handoff is here:
 
 `https://github.com/the-sarge/cpace/blob/main/docs/external-review-handoff.md`
 
+The threat model is here:
+
+`https://github.com/the-sarge/cpace/blob/main/docs/threat-model.md`
+
 The most useful review focus would be:
 
 - package-owned context-info construction and role/identity orientation;
@@ -30,6 +34,12 @@ The most useful review focus would be:
 - whether the CI, dependency, fuzz, and signed-release evidence is sufficient
   for an auditable prerelease while independent cryptographic review remains a
   blocker.
+
+The public tracking issues for those review areas are:
+
+- `https://github.com/the-sarge/cpace/issues/29`
+- `https://github.com/the-sarge/cpace/issues/30`
+- `https://github.com/the-sarge/cpace/issues/31`
 
 The latest public prerelease is `v0.1.1`, an SSH-signed annotated tag with CI
 and security-process hardening only. It does not claim production readiness.

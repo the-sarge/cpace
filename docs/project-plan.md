@@ -61,6 +61,8 @@ All rows below are closed and preserved as the policy/API decision record.
 | Integration guidance | `docs/integration-guidance.md` documents outer PAKE/version negotiation, downgrade-protection, identity-orientation, and session-output guidance. | External reviewers should still evaluate whether this guidance is sufficient for real integrations. |
 | CI hardening | `v0.1.1` is a signed annotated prerelease tag at commit `74b82cbc65a1ea6186f2732749c9c5e5b03eecc3`. Tag-triggered Release Validation passed `Check`, `Race`, `Govulncheck`, and `Gosec` with SARIF upload in workflow run `25465518681`. Public background signal now includes CodeQL, OpenSSF Scorecard, Staticcheck Advisory, Actionlint, cross-platform smoke, scheduled vulnerability scanning, scheduled gosec, and scheduled fuzz regression. | CI evidence supports auditable prerelease hygiene, not production readiness. Keep release tags signed, watch scheduled lanes, and keep external and cryptographic review as release blockers. |
 | External review handoff | `docs/external-review-handoff.md` summarizes supported scope, package-owned choices, evidence, review questions, and remaining release blockers for external reviewers. | The handoff is a review input, not a completed review. Findings still need to be tracked and resolved. |
+| Threat model | `docs/threat-model.md` records assets, in-scope attackers, non-goals, security boundaries, and reviewer focus areas. | This is a self-authored review input, not an external assessment. Reviewers should check that the model matches real integration risks. |
+| Release checklist | `docs/release-checklist.md` records exact-candidate validation, evidence refresh, signed-tag, release-validation, and GitHub-release steps. | The checklist must be executed against a future candidate before making stronger release-readiness claims. |
 
 ## Release Readiness
 
@@ -71,6 +73,7 @@ Before any production-readiness claim:
 - repeat dependency review with `govulncheck -test -show verbose ./...`;
 - review `docs/security-assessment.md` and `docs/spec-matrix.md` against the
   exact release commit;
+- execute the exact-candidate process in `docs/release-checklist.md`;
 - complete external review of package-owned framing and profile choices;
 - obtain independent cryptographic review.
 

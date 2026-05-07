@@ -4,6 +4,8 @@
 
 - Add external review handoff notes, public contribution guidance, issue
   templates, a pull-request template, and reviewer outreach notes.
+- Add threat-model and release-checklist docs for external review and future
+  exact-candidate evidence refresh.
 
 ## v0.1.1 - 2026-05-06
 

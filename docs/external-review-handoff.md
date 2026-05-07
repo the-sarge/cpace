@@ -25,12 +25,15 @@ cryptographic review before any production-ready claim.
 - `docs/security-assessment.md` for the current security self-assessment.
 - `docs/spec-matrix.md` for the draft-21 requirement mapping.
 - `docs/security-spec-audit.md` for the latest internal security/spec audit.
+- `docs/threat-model.md` for assets, attackers, non-goals, and security
+  boundaries.
 - `docs/integration-guidance.md` for outer negotiation, downgrade protection,
   identity orientation, and session-output guidance.
 - `docs/dependency-review.md` for dependency and vulnerability scan evidence.
 - `docs/fuzz-evidence.md` for local smoke and long-fuzz campaign evidence.
 - `docs/ci-policy.md` for hosted-runner policy, advisory lanes, long-fuzz
   evidence, and signed release tags.
+- `docs/release-checklist.md` for exact-candidate release evidence steps.
 
 ## Implemented Scope
 
