@@ -18,6 +18,7 @@
 - Document support scope and duration for `v0.x` prereleases.
 - Add governance, CI, test-update, SCA/SAST threshold, VEX, SBOM, multi-repo,
   and attack-surface policy docs for OpenSSF review.
+- Clarify SSH allowed-signers setup for release tag verification.
 
 ## v0.1.1 - 2026-05-06
 

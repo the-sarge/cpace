@@ -6,6 +6,41 @@ release artifact is the repository content reachable from the signed tag.
 
 ## Verify A Release Tag
 
+Git verifies SSH signatures against an allowed signers file. If this is the
+first time verifying this project's SSH-signed tags, create a project-specific
+allowed signers file from the maintainer's public GitHub SSH keys:
+
+```sh
+mkdir -p ~/.config/git
+curl -fsSL https://github.com/the-sarge.keys |
+  awk 'NF { print "the-sarge@the-sarge.com " $0 }' \
+  > ~/.config/git/cpace-allowed-signers
+```
+
+Review the key fingerprints:
+
+```sh
+ssh-keygen -lf ~/.config/git/cpace-allowed-signers
+```
+
+Then either verify with that file for this command:
+
+```sh
+git -c gpg.ssh.allowedSignersFile="$HOME/.config/git/cpace-allowed-signers" \
+  verify-tag vX.Y.Z
+```
+
+or configure it as the default SSH allowed signers file:
+
+```sh
+git config --global gpg.ssh.allowedSignersFile \
+  ~/.config/git/cpace-allowed-signers
+```
+
+If you already maintain a global allowed signers file, append the generated
+`the-sarge@the-sarge.com` entries to that file instead of replacing your
+existing Git configuration.
+
 Fetch tags and verify the tag signature:
 
 ```sh
@@ -14,7 +49,11 @@ git verify-tag vX.Y.Z
 ```
 
 Expected output includes a good SSH signature for
-`the-sarge@the-sarge.com`.
+`the-sarge@the-sarge.com`, such as:
+
+```text
+Good "git" signature for the-sarge@the-sarge.com with ED25519 key SHA256:...
+```
 
 The expected release signer identity is:
 

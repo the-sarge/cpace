@@ -26,6 +26,10 @@ Each VEX entry should include:
 - review date and reviewer;
 - links to advisories, tool output, pull requests, or release notes.
 
+When the first real VEX entry is needed, prefer adding a machine-readable
+OpenVEX or CycloneDX VEX artifact alongside the human-readable summary here so
+downstream SCA tools can consume the decision.
+
 ## Entry Template
 
 ```text

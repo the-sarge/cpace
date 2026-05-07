@@ -9,6 +9,12 @@ paths, or embargoed findings in public issues or pull requests. Public issues
 are appropriate for non-sensitive bugs, documentation gaps, external review
 questions, and release-readiness tracking.
 
+## Implementation Status
+
+This repository is an unaudited implementation of an active Internet-Draft:
+`draft-irtf-cfrg-cpace-21`, published April 23, 2026. Do not describe it as
+production-ready until independent cryptographic review is complete.
+
 ## Coordinated Vulnerability Disclosure
 
 The project follows coordinated vulnerability disclosure for confirmed or
@@ -68,10 +74,6 @@ Rotation guidelines:
   access.
 - If a secret is exposed, revoke and replace it before publishing details, then
   assess whether a private vulnerability report or security advisory is needed.
-
-This repository is an unaudited implementation of an active Internet-Draft:
-`draft-irtf-cfrg-cpace-21`, published April 23, 2026. Do not describe it as
-production-ready until independent cryptographic review is complete.
 
 ## Supported Versions
 

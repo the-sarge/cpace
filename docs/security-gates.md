@@ -48,7 +48,8 @@ non-exploitability rationale in `docs/vex.md` instead of silently ignoring it.
 
 SAST covers CodeQL, `gosec`, ast-grep security rules, and manual review of
 security-sensitive code paths. Staticcheck is treated as quality and
-maintainability signal unless a finding affects security behavior.
+maintainability signal unless a maintainer determines that a finding affects
+security behavior.
 
 The following findings are violations:
 
