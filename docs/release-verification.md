@@ -92,3 +92,7 @@ hashes before using the assets.
 
 GitHub may display auto-generated source archives for tags. Treat the signed Git
 tag as the canonical authenticity mechanism for source releases.
+
+## Support Scope
+
+Release support scope and duration are documented in `SECURITY.md`.

@@ -79,6 +79,18 @@ No production-ready version is supported yet. Until the release bar in
 `docs/security-assessment.md` is satisfied, tags must remain in the `v0.x`
 range and should be treated as draft implementation snapshots.
 
+Release support scope and duration:
+
+- `v0.x` prereleases are supported only for security reporting, vulnerability
+  triage, and best-effort fixes for the latest published prerelease.
+- Older `v0.x` prereleases are superseded when a newer prerelease is published;
+  users should upgrade to the latest prerelease before reporting non-sensitive
+  bugs.
+- No `v0.x` prerelease has a guaranteed maintenance duration or production
+  support window.
+- A production-ready support policy will be defined before any `v1.0.0`
+  release or production-readiness claim.
+
 ## Release Readiness
 
 Before any production-readiness claim, the project must complete long fuzzing,
