@@ -104,7 +104,8 @@ Release-readiness work should record exact evidence: commit SHA, command or
 workflow, duration for fuzzing, target count, and residual risks. Dependency
 review evidence lives in `docs/dependency-review.md`; fuzz campaign evidence
 lives in `docs/fuzz-evidence.md`; security/spec audit evidence lives in
-`docs/security-spec-audit.md`.
+`docs/security-spec-audit.md`. External reviewer scope and review questions
+are summarized in `docs/external-review-handoff.md`.
 
 ```go
 initiator, msgA, err := cpace.Start(initCfg)
@@ -116,6 +117,7 @@ key, err := initSession.Export([]byte("application key"), nil, 32)
 
 Release policy: keep tags in the `v0.x` range until independent review is
 complete and the release bar in `docs/security-assessment.md` is satisfied.
+See `CONTRIBUTING.md` before opening public issues or pull requests.
 
 ## License
 

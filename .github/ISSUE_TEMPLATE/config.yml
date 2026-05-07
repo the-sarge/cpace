@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/the-sarge/cpace/security/advisories/new
+    about: Report vulnerabilities or sensitive security findings privately.
+  - name: Security policy
+    url: https://github.com/the-sarge/cpace/blob/main/SECURITY.md
+    about: Read supported scope, private reporting channels, and release policy.

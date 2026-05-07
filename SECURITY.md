@@ -4,6 +4,11 @@ Report security issues privately before opening a public issue. Email
 `the-sarge@the-sarge.com`, or use GitHub private vulnerability reporting for
 `the-sarge/cpace` if it is enabled.
 
+Do not include vulnerability details, suspected secret leaks, private exploit
+paths, or embargoed findings in public issues or pull requests. Public issues
+are appropriate for non-sensitive bugs, documentation gaps, external review
+questions, and release-readiness tracking.
+
 This repository is an unaudited implementation of an active Internet-Draft:
 `draft-irtf-cfrg-cpace-21`, published April 23, 2026. Do not describe it as
 production-ready until independent cryptographic review is complete.
