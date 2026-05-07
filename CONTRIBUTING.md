@@ -64,6 +64,19 @@ task check
 For release-oriented changes, also follow `docs/ci-policy.md` and record
 evidence in the relevant docs.
 
+## Tests For Major Changes
+
+Major changes should add or update automated tests for the affected behavior.
+This includes changes to the public API, protocol flow, parser/framing logic,
+context or identity binding, key derivation, session lifecycle, dependencies,
+toolchain, CI/release process, fuzz harnesses, and security-relevant
+documentation claims.
+
+If a major change cannot be covered directly by an automated test, the pull
+request must explain why and include the substitute evidence used for review,
+such as a workflow run, command transcript, fuzz result, or external review
+artifact.
+
 ## Review Expectations
 
 Treat CPace behavior, binary framing, context/identity binding, randomness,

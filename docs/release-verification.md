@@ -90,6 +90,10 @@ assets, each asset must be signed directly or included in a signed manifest that
 lists cryptographic hashes for every asset. Verify those signatures or manifest
 hashes before using the assets.
 
+Future compiled assets must also ship with an SBOM as described in
+`docs/release-checklist.md`. Verify that the release notes identify the SBOM
+location before using compiled assets.
+
 GitHub may display auto-generated source archives for tags. Treat the signed Git
 tag as the canonical authenticity mechanism for source releases.
 

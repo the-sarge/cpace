@@ -96,6 +96,41 @@ untrusted code on hosted runners. Security, fuzzing, static-analysis, and
 release-validation workflows provide background and release evidence. Long
 fuzzing remains maintainer-controlled evidence rather than a required PR gate.
 
+## Attack Surface Analysis
+
+Critical code paths and interactions:
+
+- Public API and configuration validation: `Start`, `Respond`,
+  `Initiator.Finish`, `Responder.Finish`, and `Session.Export` are the primary
+  caller entry points. Validation rejects missing passwords, wrong role
+  orientation, empty session IDs unless explicitly allowed, oversized fields,
+  closed sessions, and malformed protocol messages.
+- Context and identity binding: package-owned context-info construction binds
+  the draft version, suite, role orientation, party identities, caller context,
+  and session ID. Integration mistakes here can produce authentication failure
+  or weak outer-channel binding, so docs require stable application identities
+  and outer downgrade protection.
+- Wire decoding and framing: message parsers handle attacker-controlled bytes.
+  The framing layer uses a package format byte, suite byte, role byte,
+  canonical length-value fields, exact public-share and tag lengths, per-field
+  caps, and trailing-data rejection.
+- Ristretto point and scalar handling: peer public shares and generated group
+  elements cross the cryptographic boundary. Invalid points are rejected, scalar
+  randomness comes from `crypto/rand.Reader`, and draft-21 scalar sampling is
+  documented in the spec matrix.
+- Key confirmation, exporter, and session lifecycle: confirmation tags
+  authenticate the exchange before `Session` is returned. `Session.Export`
+  derives domain-separated application key material, and `Session.Close`
+  performs best-effort cleanup of session-owned key material.
+- Dependency boundary: the implementation relies on Go, the standard library,
+  `github.com/gtank/ristretto255`, and `filippo.io/edwards25519`. Dependency
+  changes require refreshed dependency review, SCA handling, and release
+  evidence before stronger release claims.
+- CI and release pipeline: public PRs run untrusted code on hosted runners with
+  read-only permissions. Release evidence depends on protected `main`,
+  protected `v*` tags, DCO validation, signed annotated tags, SCA/SAST review,
+  release validation, and maintainer-controlled long fuzz evidence.
+
 ## Review Focus
 
 External reviewers should evaluate whether the package-owned context-info

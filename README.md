@@ -108,7 +108,9 @@ lives in `docs/fuzz-evidence.md`; security/spec audit evidence lives in
 `docs/security-spec-audit.md`. External reviewer scope and review questions
 are summarized in `docs/external-review-handoff.md`; security boundaries are
 summarized in `docs/threat-model.md`. Downstream release verification
-instructions live in `docs/release-verification.md`.
+instructions live in `docs/release-verification.md`. Project governance,
+security-gate, and VEX policies live in `docs/governance.md`,
+`docs/security-gates.md`, and `docs/vex.md`.
 
 ```go
 initiator, msgA, err := cpace.Start(initCfg)

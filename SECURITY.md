@@ -84,12 +84,18 @@ Release support scope and duration:
 - `v0.x` prereleases are supported only for security reporting, vulnerability
   triage, and best-effort fixes for the latest published prerelease.
 - Older `v0.x` prereleases are superseded when a newer prerelease is published;
-  users should upgrade to the latest prerelease before reporting non-sensitive
-  bugs.
+  security updates for an older `v0.x` prerelease end when the newer prerelease
+  is published.
 - No `v0.x` prerelease has a guaranteed maintenance duration or production
   support window.
 - A production-ready support policy will be defined before any `v1.0.0`
   release or production-readiness claim.
+
+## Security Finding Thresholds
+
+Policies for SCA findings, SAST findings, malicious dependencies, pre-release
+security gates, and VEX records are documented in `docs/security-gates.md` and
+`docs/vex.md`.
 
 ## Release Readiness
 
