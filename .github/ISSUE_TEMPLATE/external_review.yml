@@ -1,0 +1,58 @@
+name: External review finding
+description: Record a public external review note or release-readiness blocker.
+title: "Review: "
+labels: ["external review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only for public, non-sensitive review notes. Report
+        vulnerabilities privately through the channels in SECURITY.md.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Context-info construction and identity orientation
+        - Binary wire framing
+        - Field-size limits
+        - Empty SessionID policy
+        - Scalar sampling and invalid-point handling
+        - Confirmation, exporter, or session lifecycle
+        - CI, dependency, fuzz, or release evidence
+        - Documentation or integration guidance
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: finding
+    attributes:
+      label: Finding
+      description: What should be changed, clarified, or reviewed further?
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Explain the reasoning, references, or threat model.
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Release impact
+      options:
+        - Blocks production-readiness claim
+        - Should resolve before next prerelease
+        - Documentation clarification
+        - Question / needs maintainer decision
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link relevant files, lines, commits, commands, or review notes.
+    validations:
+      required: false

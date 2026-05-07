@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- Add external review handoff notes, public contribution guidance, issue
+  templates, a pull-request template, and reviewer outreach notes.
+
+## v0.1.1 - 2026-05-06
+
+- Publish a CI/security-process hardening prerelease with no Go API, protocol,
+  or dependency changes from `v0.1.0`.
+- Add tag-triggered release validation covering tests, race tests,
+  `govulncheck`, and `gosec`.
+- Add CodeQL, OpenSSF Scorecard, Staticcheck Advisory, Actionlint, and
+  cross-platform smoke workflows.
+- Upload gosec SARIF to GitHub Code Scanning and keep Code Scanning open
+  alerts at zero after false-positive/noise triage.
+- Tighten workflow permissions, keep third-party actions SHA-pinned, and keep
+  release tags as signed annotated tags.
+- Clarify public fuzz evidence and ignore private local scratch/planning files.
+
 ## v0.1.0 - 2026-05-06
 
 - Clarify that `Respond` success is not authentication; only successful
