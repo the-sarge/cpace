@@ -6,11 +6,18 @@ those checks.
 
 ## Current Automation
 
-Current automated signal:
+Pull-request gates:
 
 - required PR `Check` runs tests for code changes and docs validation for
   docs-only changes;
 - DCO validation checks every PR commit for a `Signed-off-by` trailer;
+- `Dependency Gate` runs SCA tooling on pull requests and must pass before
+  merge once the status check is enabled in branch protection;
+- `SAST Gate` runs SAST tooling on pull requests and must pass before merge
+  once the status check is enabled in branch protection.
+
+Additional automated signal:
+
 - CodeQL runs on Go pull requests, pushes to `main`, schedule, and manual
   dispatch;
 - Staticcheck Advisory runs on Go pull requests, schedule, and manual dispatch;
@@ -20,15 +27,15 @@ Current automated signal:
 - Release Validation runs tests, race tests, `govulncheck`, and `gosec` for
   `v*` tags and manual dispatch.
 
-The repository does not yet claim that every codebase change is blocked by a
-dedicated SCA/SAST security gate. Promoting those checks to required PR gates is
-a separate branch-protection and workflow decision.
+The `Dependency Gate` and `SAST Gate` workflows intentionally do not use
+workflow path filters. Required checks must report a status on every pull
+request; otherwise a skipped required workflow can block review with no result.
 
 ## SCA Threshold
 
 SCA covers dependency vulnerability, malicious-dependency, and license findings
-from `govulncheck`, Dependabot/GitHub dependency alerts, manual dependency
-review, and any future dependency-review workflow.
+from `govulncheck`, GitHub Dependency Review, Dependabot/GitHub dependency
+alerts, manual dependency review, and any future dependency-review workflow.
 
 The following findings are violations:
 
@@ -43,6 +50,12 @@ The following findings are violations:
 Violations should be fixed by upgrading, replacing, removing, or isolating the
 dependency. If a vulnerability does not affect this project, record the
 non-exploitability rationale in `docs/vex.md` instead of silently ignoring it.
+
+The required `Dependency Gate` status check runs GitHub Dependency Review,
+`go mod verify`, and `govulncheck -test ./...` on pull requests. It blocks
+newly introduced high or critical vulnerable dependencies, disallowed licenses
+for new dependencies, module download-integrity failures, and reachable
+vulnerabilities found by `govulncheck`.
 
 ## SAST Threshold
 
@@ -67,6 +80,11 @@ Violations should be fixed before merge when they affect the changed code, and
 must be fixed before release unless they are documented as false positives or
 non-exploitable. Suppressions should be narrow, reviewable, and linked to the
 evidence explaining why they are safe.
+
+The required `SAST Gate` status check runs `gosec -tests ./...` on pull
+requests and blocks merge when gosec reports a security weakness. Same-repo
+runs also upload SARIF to Code Scanning for triage; fork PRs skip SARIF upload
+to avoid granting write permissions to untrusted code.
 
 ## Pre-Release Policy
 
