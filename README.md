@@ -120,7 +120,8 @@ key, err := initSession.Export([]byte("application key"), nil, 32)
 Release policy: keep tags in the `v0.x` range until independent review is
 complete and the release bar in `docs/security-assessment.md` is satisfied.
 Use `docs/release-checklist.md` for future release candidates. See
-`CONTRIBUTING.md` before opening public issues or pull requests.
+`CONTRIBUTING.md` before opening public issues or pull requests; commits must
+include DCO signoffs.
 
 ## License
 

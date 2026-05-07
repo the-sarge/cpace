@@ -37,6 +37,22 @@ Keep pull requests narrow. A release-readiness PR should include:
 - residual risk or follow-up that remains;
 - documentation updates when release posture changes.
 
+Every commit must certify the Developer Certificate of Origin in `DCO` with a
+`Signed-off-by` trailer. Use:
+
+```sh
+git commit -s
+```
+
+If you already made the latest commit, amend it with:
+
+```sh
+git commit --amend --no-edit -s
+```
+
+For a multi-commit PR, every commit needs its own signoff. GitHub web-based
+commits are configured to add signoffs automatically.
+
 Run the appropriate local validation before opening a PR:
 
 ```sh
