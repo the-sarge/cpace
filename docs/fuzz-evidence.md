@@ -4,49 +4,64 @@ Date: 2026-05-08
 
 Target module: `github.com/the-sarge/cpace`
 
-Evidence code commit: `955855b58424a8868d318096149be615bb3989da`
+Evidence code commit: `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
 
 Registered fuzz targets: 14 from `.github/fuzz-targets.json`
 
 ## Command
 
-- `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz`
+- `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=2 task fuzz`
 
-## Candidate Long Run
+## Candidate Paired Long Runs
 
-Host: `mbp128.local`
+The Go 1.26.3 security release changed the toolchain baseline after the earlier
+Go 1.26.2 evidence. These paired maintainer-machine runs refresh all registered
+targets under Go 1.26.3 on ARM and Intel hosts.
 
-Platform: `darwin/arm64`
+| Host | Platform | Toolchain | Started | Finished | Result |
+| --- | --- | --- | --- | --- | --- |
+| `m4mini.local` | `Darwin/arm64` | Go 1.26.3, Task 3.50.0 | `2026-05-08T09:09:50Z` | `2026-05-08T16:09:59Z` | PASS: all 14 targets, `RC=0` |
+| `iMacPro.local` | `Darwin/x86_64` | Go 1.26.3, Task 3.50.0 | `2026-05-08T09:09:50Z` | `2026-05-08T16:10:10Z` | PASS: all 14 targets, `RC=0` |
 
-Toolchain: Go 1.26.2, Task 3.50.0
+With 14 targets, `PARALLEL=2`, and `FUZZTIME=1h`, the command executes seven
+target batches. The recorded wall-clock duration is about seven hours on each
+host, matching the expected schedule and confirming that every target ran the
+full `FUZZTIME=1h`. `FUZZ_RACE=0` leaves race detection to `task check` and
+uses the long campaign for input-space exploration. `GOMAXPROCS=4` keeps each
+fuzzing subprocess from oversubscribing the host.
 
-Started: `2026-05-08T02:34:04Z`
+Both logs recorded the full target pass set:
 
-Finished: `2026-05-08T03:30:17Z`
-
-Command: `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz`
-
-Result: PASS: all 14 registered fuzz targets.
-
-With 14 targets and `PARALLEL=2`, the command executes seven target batches.
-The recorded wall-clock duration is about 56 minutes, matching seven 8-minute
-batches and confirming that every target ran the full `FUZZTIME=8m`, above the
-five-minute release-bar minimum. `FUZZ_RACE=0` leaves race detection to
-`task check` and uses the long campaign for input-space exploration.
-`GOMAXPROCS=4` keeps each fuzzing subprocess from oversubscribing the host.
-
-Run note: the local timestamp-capture wrapper returned non-zero after the fuzz
-task completed because it attempted to assign to zsh's read-only `status`
-parameter. The `task fuzz` output itself recorded 14 `=== PASS:` target lines
-and `All 14 fuzz targets passed`; the wrapper issue happened after the fuzz
-campaign completed and is not treated as a fuzz failure. Future ad hoc
-wrappers should use a variable such as `rc`, not `status`.
+```text
+=== PASS: FuzzDecodeMessageA ===
+=== PASS: FuzzDecodeMessageB ===
+=== PASS: FuzzDecodeMessageC ===
+=== PASS: FuzzDraftInvalidVectorJSONLoader ===
+=== PASS: FuzzDraftVectorJSONLoader ===
+=== PASS: FuzzInitiatorFinishWithFuzzedMessageB ===
+=== PASS: FuzzMessageARoundTrip ===
+=== PASS: FuzzMessageBRoundTrip ===
+=== PASS: FuzzMessageCRoundTrip ===
+=== PASS: FuzzProtocolConsistency ===
+=== PASS: FuzzProtocolMismatch ===
+=== PASS: FuzzRespondWithFuzzedMessageA ===
+=== PASS: FuzzResponderFinishWithFuzzedMessageC ===
+=== PASS: FuzzScalarMultVFY ===
+All 14 fuzz targets passed
+```
 
 ## Historical Long Runs
 
-The previous paired ARM/Intel long campaign remains useful historical evidence,
-but it is exact to commit `06f21c51645f54e2b7bde7c5b538479463be5d0e` and does
-not cover the PR #40 fuzz-harness refactor or OSS-Fuzz seed-guard changes.
+The previous Go 1.26.2 refresh remains useful historical signal, but it has
+been superseded by the paired Go 1.26.3 candidate runs above.
+
+| Host | Platform | Commit | Toolchain | Started | Finished | Command | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `mbp128.local` | `darwin/arm64` | `955855b58424a8868d318096149be615bb3989da` | Go 1.26.2, Task 3.50.0 | `2026-05-08T02:34:04Z` | `2026-05-08T03:30:17Z` | `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz` | PASS: all 14 targets |
+
+The earlier paired ARM/Intel long campaign remains historical evidence exact to
+commit `06f21c51645f54e2b7bde7c5b538479463be5d0e`. It does not cover the PR #40
+fuzz-harness refactor or OSS-Fuzz seed-guard changes.
 
 | Host | Platform | Started | Finished | Command | Result |
 | --- | --- | --- | --- | --- | --- |
@@ -65,13 +80,12 @@ the later expansion to 14 targets.
 
 ## Residual Risk
 
-The 2026-05-08 candidate run refreshes long-fuzz evidence for the merged PR #40
-code commit on local `darwin/arm64`. It is not paired Intel evidence and does
-not replace continuous fuzzing. Repeat long fuzzing if parser, protocol, fuzz
-harness, dependency, or toolchain changes land before a release tag. Rerun on
-an Intel host if cross-architecture release evidence is required. This refresh
-is sufficient for the current external-review packet; paired Intel evidence
-would strengthen a future exact-release-candidate packet.
+The 2026-05-08 Go 1.26.3 candidate runs refresh paired ARM/Intel long-fuzz
+evidence for the current package code on `main`. They do not replace continuous
+fuzzing or upstream OSS-Fuzz coverage. Repeat long fuzzing if parser, protocol,
+fuzz harness, dependency, or toolchain changes land before a release tag. This
+refresh is sufficient for the current external-review packet; exact release
+candidates still need evidence recorded against the exact candidate commit.
 
 The 4-hour split campaign is strong historical signal for the seven-target
 registry at commit `07ff1e9265c2e003e6dc7d37754c8b2185f03286`, but it is not

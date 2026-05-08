@@ -87,3 +87,123 @@ not production-ready, and moves the changelog from `Unreleased` to `v0.1.0`.
 
 The remaining production-readiness blockers are external review of
 package-owned framing/CI/profile choices and independent cryptographic review.
+
+---
+
+## cpace.S6 - 2026-05-06 18:31 EDT
+
+**Main:** `74b82cb`
+**Board:** `v0.1.1` CI hardening snapshot shipped.
+**Planner:** Josh
+
+Closed the first CI-hardening pass after the draft-snapshot release. PRs #22
+through #27 added the public hosted CI posture around required checks, CodeQL,
+OpenSSF Scorecard, Staticcheck Advisory, Actionlint, cross-platform smoke,
+scheduled vulnerability scanning, scheduled gosec, scheduled fuzz regression,
+and release validation.
+
+This session also published the signed annotated `v0.1.1` prerelease tag as a
+CI and security-process hardening snapshot. The tag remained explicitly scoped
+to release hygiene and evidence, not a production-readiness claim.
+
+---
+
+## cpace.S7 - 2026-05-07 02:27 EDT
+
+**Main:** `39ccb58`
+**Board:** External-review handoff, governance, and required gates prepared.
+**Planner:** Josh
+
+Moved from CI hardening into reviewer-readiness and project governance. PR #28
+added the external-review handoff, and the follow-up public-hygiene and
+release-planning work cleaned up reviewer-facing docs, release checklist
+language, public contact handling, and OpenSSF badge posture.
+
+PRs #37 through #39 added DCO, coordinated vulnerability disclosure, and
+branch-protection-ready Dependency Gate and SAST Gate workflows. At this point
+the project had the public process scaffolding for external review, but the
+remaining release blockers stayed unchanged: independent cryptographic review,
+external review of package-owned choices, and exact-candidate evidence refresh
+after review-driven changes.
+
+---
+
+## cpace.S8 - 2026-05-07 22:25 EDT
+
+**Main:** `955855b`
+**Board:** Review-readiness tooling and evidence merged.
+**Planner:** Josh
+
+Closed the review-readiness tooling batch in PR #40. The project gained
+allocation-reporting benchmarks for the full round trip, individual protocol
+phases, exporters, and parser/message paths; additional godoc examples for
+export, transcript IDs, close behavior, and confirmation-failure handling; a
+Capslock capability-analysis report; and an `ossfuzz/` staging directory for
+all fourteen native Go fuzz targets.
+
+This session kept the public API and runtime package implementation unchanged.
+The change was deliberately evidence-oriented: improve what reviewers can run,
+inspect, and cite without resetting the package behavior under review.
+
+---
+
+## cpace.S9 - 2026-05-08 03:40 EDT
+
+**Main:** `737bc56`
+**Board:** Fuzz evidence refreshed; OSS-Fuzz upstream review is open.
+**Planner:** Josh
+
+PR #41 refreshed the fuzz-evidence packet after PR #40 merged and after the
+OSS-Fuzz submission was opened upstream as `google/oss-fuzz#15480`. The
+candidate evidence now records the merged PR #40 code commit, preserves the
+older paired ARM/Intel runs as historical evidence, and states the residual
+single-architecture risk plainly instead of relabeling older runs as current.
+
+The OSS-Fuzz handoff is now staged locally and open upstream with CLA, header,
+and helper-build checks green. Today also started paired one-hour
+maintainer-machine fuzz campaigns on `m4mini.local` and `imacpro` against
+`737bc56`, and corrected the README badge from the numeric OSPS Baseline
+endpoint to the OpenSSF Best Practices `passing` endpoint.
+
+---
+
+## cpace.S10 - 2026-05-08 11:55 EDT
+
+**Main:** `737bc56`
+**Board:** Go 1.26.3 toolchain security release impact assessed.
+**Planner:** Josh
+
+Go 1.26.3 was released on 2026-05-07 with security fixes in the Go command,
+the pack tool, several standard-library packages, and bug fixes including
+`crypto/fips140`. We treated this as a release-evidence trigger because CPace
+uses Go crypto internals that transitively include `crypto/fips140`, and the
+current dependency, fuzz, and Capslock evidence was recorded under Go 1.26.2.
+
+The code impact check found no source change required. Under Go 1.26.3,
+`go list -deps ./...` did not show use of the web/template/mail packages named
+in the release note, and `task check` passed, including tests, race tests,
+`go vet`, Staticcheck, ast-grep, and `govulncheck -test ./...`.
+
+The earlier one-hour fuzz attempts from today were discarded as Go 1.26.2 or
+potentially mixed-toolchain evidence. Both maintainer machines now report Go
+1.26.3, and clean paired one-hour campaigns were restarted against `737bc56`.
+The follow-up plan is to refresh fuzz evidence, dependency/gosec evidence, and
+Capslock under Go 1.26.3 before treating the evidence packet as current again.
+
+---
+
+## cpace.S11 - 2026-05-08 12:37 EDT
+
+**Main:** `737bc56`
+**Board:** Go 1.26.3 evidence refresh completed for current `main`.
+**Planner:** Josh
+
+Completed the Go 1.26.3 evidence refresh after the paired maintainer-machine
+fuzz campaigns finished cleanly on `m4mini.local` and `imacpro`. Both hosts ran
+all 14 registered fuzz targets for `FUZZTIME=1h` with `PARALLEL=2` and
+recorded `RC=0`.
+
+The dependency review, pinned gosec command, Capslock report, and security/spec
+self-audit were refreshed from a clean detached worktree at `737bc56` under Go
+1.26.3. No source-code changes were needed. `go fix` modernization remains
+tracked separately in issue #42 so it does not blur this evidence-only refresh.

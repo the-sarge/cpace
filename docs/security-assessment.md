@@ -1,7 +1,7 @@
 # Security Assessment
 
 Status: self-assessment for an auditable draft implementation. Reviewed
-against commit `4a8f629e59f0cc5c8f9351abacfa511fe6e4f441` on 2026-05-06;
+against commit `737bc56ffba81e2df5e9caa0df1ff180bfdb594b` on 2026-05-08;
 see `docs/security-spec-audit.md`.
 
 ## Cryptographic Scope
@@ -97,21 +97,20 @@ add extra role-label inputs to the draft-21 confirmation MACs.
 - `github.com/gtank/ristretto255 v0.2.0`
 - `filippo.io/edwards25519 v1.2.0` as an indirect dependency
 
-Dependency review was refreshed on 2026-05-06 at commit
-`06f21c51645f54e2b7bde7c5b538479463be5d0e`; see
+Dependency review was refreshed on 2026-05-08 at commit
+`737bc56ffba81e2df5e9caa0df1ff180bfdb594b` under Go 1.26.3; see
 `docs/dependency-review.md`. `govulncheck -test -show verbose ./...` found no
-vulnerabilities, and `gosec v2.26.1` reported zero issues after the LEB128
-parser cleanup in that commit. Repeat the review against the exact release tag
-if any dependency, toolchain, or parser/security-relevant code changes before
-release.
+vulnerabilities, and the pinned `gosec@v2.26.1` command reported zero issues.
+Repeat the review against the exact release tag if any dependency, toolchain,
+or parser/security-relevant code changes before release.
 
 ## Fuzzing
 
 Fuzz target evidence is recorded in `docs/fuzz-evidence.md`. The current
 release-readiness run covers all 14 targets registered in
 `.github/fuzz-targets.json` at commit
-`06f21c51645f54e2b7bde7c5b538479463be5d0e`, with a local smoke run and long
-ARM and Intel runs.
+`737bc56ffba81e2df5e9caa0df1ff180bfdb594b`, with paired one-hour Go 1.26.3
+long runs on ARM and Intel maintainer machines.
 
 ## Release Bar
 
