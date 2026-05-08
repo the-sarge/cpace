@@ -34,6 +34,10 @@ Hosted CI runs on these events:
 
 Maintainer-controlled long fuzzing is run outside the required PR gate and
 recorded in `docs/fuzz-evidence.md` when it supports a release-readiness claim.
+For exact release candidates and toolchain-security refreshes, preserve raw
+logs, transcripts, or immutable workflow artifacts with checksums under
+`docs/evidence/` or link to the immutable workflow artifact from the evidence
+docs.
 
 ## PR Gates
 
@@ -78,7 +82,9 @@ Release-oriented changes should still run the full local gate, dependency
 review, SCA/SAST gates, advisory security scans, and maintainer-controlled long
 fuzzing before a release tag. Record exact evidence in the project evidence
 docs: commit SHA, command or workflow, fuzz duration, target count, and
-residual risk.
+residual risk. Raw or immutable artifacts are required for exact release
+candidates and recommended for external-review refreshes when they are cheap to
+capture.
 
 Release tags should remain signed annotated tags. Downstream consumers should
 be able to verify each release tag with `git verify-tag`.

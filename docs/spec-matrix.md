@@ -3,7 +3,7 @@
 Target: `draft-irtf-cfrg-cpace-21`, published April 23, 2026.
 
 Audit: reviewed against implementation commit
-`4a8f629e59f0cc5c8f9351abacfa511fe6e4f441` on 2026-05-06; see
+`737bc56ffba81e2df5e9caa0df1ff180bfdb594b` on 2026-05-08; see
 `docs/security-spec-audit.md`.
 
 | Draft requirement | Implementation | Tests |

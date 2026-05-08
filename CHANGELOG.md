@@ -32,6 +32,16 @@
   validate them with the local OSS-Fuzz helper flow.
 - Open the upstream OSS-Fuzz onboarding PR and refresh local ARM64 long-fuzz
   evidence for the merged review-readiness commit.
+- Refresh dependency, gosec, Capslock, security/spec, and paired ARM/Intel
+  one-hour fuzz evidence under Go 1.26.3 after the Go toolchain security
+  release, with raw transcripts and SHA-256 digests.
+- Document the calibrated evidence-artifact policy for release candidates,
+  toolchain-security refreshes, and lighter external-review refreshes.
+- Switch the README badge from the OpenSSF Baseline endpoint to the OpenSSF
+  Best Practices `passing` endpoint.
+- Move private local planning/interview/review artifacts into the private
+  `the-sarge/meta` archive and remove stale public-repo ignore rules for those
+  root files.
 
 ## v0.1.1 - 2026-05-06
 

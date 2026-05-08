@@ -1,18 +1,19 @@
 # Capslock Report
 
-Date: 2026-05-07
+Date: 2026-05-08
 
 Target module: `github.com/the-sarge/cpace`
 
-Package-code baseline: `39ccb58f827d88f6742628c1fadf9375539fb017`
+Package-code baseline: `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
 
 Status: external-review evidence. Capslock is experimental static capability
 analysis; this report is review signal, not a release gate.
 
-PR #40 added benchmarks, examples, documentation, and OSS-Fuzz staging files
-without changing the package implementation call graph. This report remains
-useful capability-review signal for the current external-review packet. See
-Residual Risk for rerun triggers.
+This report refreshes the earlier Go 1.26.2 Capslock evidence after the Go
+1.26.3 security toolchain release. The refresh was run from a clean detached
+worktree at the package-code baseline.
+
+Transcript: `docs/evidence/go1263-20260508/local-analysis.log`
 
 ## Tool
 
@@ -24,7 +25,7 @@ Result:
 
 ```text
 capslock version v0.3.2
-compiled with Go version go1.26.2
+compiled with Go version go1.26.3
 includes Go tools version v0.43.0
 ```
 
@@ -43,6 +44,27 @@ Analyzed packages:
 
 ARBITRARY_EXECUTION: 6 references
 UNANALYZED: 5 references
+```
+
+Verbose output preserved the same capability classes and example call paths:
+
+```text
+ARBITRARY_EXECUTION: 6 references (6 direct, 0 transitive)
+Example callpath:
+  github.com/the-sarge/cpace.Respond
+  api.go:147:26:github.com/the-sarge/cpace.respondWithRandom
+  api.go:187:25:github.com/the-sarge/cpace.confirmationTag
+  crypto.go:152:15:crypto/hmac.New
+  hmac.go:48:25:crypto/internal/fips140only.Enforced
+  fips140only.go:20:25:crypto/fips140.Enforced
+  enforcement.go:37:31:crypto/fips140.isBypassed
+
+UNANALYZED: 5 references (5 direct, 0 transitive)
+Example callpath:
+  github.com/the-sarge/cpace.Start
+  api.go:108:24:github.com/the-sarge/cpace.startWithRandom
+  api.go:125:24:github.com/the-sarge/cpace.sampleScalar
+  crypto.go:61:27:io.ReadFull
 ```
 
 The package does not directly expose filesystem, network, subprocess, dynamic

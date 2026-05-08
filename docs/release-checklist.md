@@ -51,6 +51,12 @@ Record host, platform, Go version, Task version, command, start/end UTC,
 target count, candidate commit, result, and residual risk in
 `docs/fuzz-evidence.md`.
 
+For release candidates and toolchain-security refreshes, preserve raw logs or
+transcripts under `docs/evidence/<candidate-or-toolchain-or-date>/` with
+SHA-256 digests. For lighter external-review refreshes, committed summaries
+are acceptable when they do not make a stronger release-readiness claim, but
+prefer raw artifacts when collecting them is low-friction.
+
 If wrapping the command to capture timestamps and logs, avoid shell built-in
 names such as zsh's read-only `status`; use a variable such as `rc` for the
 command exit code.
@@ -64,6 +70,11 @@ Refresh the evidence docs when the candidate changes security-relevant state:
 - `docs/security-spec-audit.md` for review of `docs/security-assessment.md` and
   `docs/spec-matrix.md` against the exact candidate.
 - `docs/project-plan.md` for release-readiness status and remaining blockers.
+
+When a Go toolchain update triggers the refresh, explicitly record whether
+draft/RFC vector outputs were checked for cross-toolchain bit identity. If the
+previous toolchain is unavailable, state that limitation instead of implying
+bit-identical behavior from current-toolchain tests alone.
 
 ## 5. SCA, SAST, And VEX Review
 

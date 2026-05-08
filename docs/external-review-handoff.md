@@ -4,9 +4,11 @@ Date: 2026-05-08
 
 Target module: `github.com/the-sarge/cpace`
 
-Reference tag: `v0.1.1`
+Last released tag: `v0.1.1`
 
-Reference commit: `74b82cbc65a1ea6186f2732749c9c5e5b03eecc3`
+Last released commit: `74b82cbc65a1ea6186f2732749c9c5e5b03eecc3`
+
+Current evidence baseline: `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
 
 Status: auditable draft implementation. This package has not had independent
 cryptographic review and is not production-ready.
@@ -32,6 +34,8 @@ cryptographic review before any production-ready claim.
 - `docs/dependency-review.md` for dependency and vulnerability scan evidence.
 - `docs/fuzz-evidence.md` for local smoke and long-fuzz campaign evidence.
 - `docs/capslock-report.md` for static capability-analysis evidence.
+- `docs/evidence/go1263-20260508/` for raw Go 1.26.3 transcript files and
+  SHA-256 digests.
 - `docs/performance.md` for local benchmark and allocation-measurement guidance.
 - `docs/ci-policy.md` for hosted-runner policy, advisory lanes, long-fuzz
   evidence, and signed release tags.
@@ -86,17 +90,18 @@ The `v0.1.1` prerelease contains CI and documentation hardening only. It does
 not change the Go API, protocol behavior, or dependencies from the earlier
 draft snapshot.
 
-Dependency evidence is recorded for commit
-`06f21c51645f54e2b7bde7c5b538479463be5d0e`. Long-fuzz evidence was refreshed on
-local `darwin/arm64` for merged PR #40 code commit
-`955855b58424a8868d318096149be615bb3989da`. Repeat dependency review, long
-fuzzing, and security/spec audit against the exact release candidate before any
-production-readiness claim, or sooner if protocol, parser/framing, fuzz harness,
-dependency, toolchain, or package-profile docs change.
+Go 1.26.3 dependency, gosec, long-fuzz, Capslock, and security/spec evidence is
+recorded for current `main` package-code commit
+`737bc56ffba81e2df5e9caa0df1ff180bfdb594b`. The paired long-fuzz refresh ran
+all 14 registered targets for `FUZZTIME=1h` on local ARM and Intel maintainer
+machines. Repeat dependency review, long fuzzing, Capslock, and security/spec
+audit against the exact release candidate before any production-readiness
+claim, or sooner if protocol, parser/framing, fuzz harness, dependency,
+toolchain, or package-profile docs change.
 
 Capslock capability-analysis evidence is recorded in
-`docs/capslock-report.md` for main commit
-`39ccb58f827d88f6742628c1fadf9375539fb017`.
+`docs/capslock-report.md` for
+`737bc56ffba81e2df5e9caa0df1ff180bfdb594b`.
 
 OSS-Fuzz onboarding is open upstream in `google/oss-fuzz#15480`. The upstream
 PR helper build, header check, and Google CLA check passed; merge is waiting on
