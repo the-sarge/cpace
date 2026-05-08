@@ -9,9 +9,10 @@ Package-code baseline: `39ccb58f827d88f6742628c1fadf9375539fb017`
 Status: external-review evidence. Capslock is experimental static capability
 analysis; this report is review signal, not a release gate.
 
-This change set adds benchmarks, examples, documentation, and OSS-Fuzz staging
-files without changing the package implementation call graph. Rerun Capslock
-after committing if exact-candidate evidence is needed.
+PR #40 added benchmarks, examples, documentation, and OSS-Fuzz staging files
+without changing the package implementation call graph. This report remains
+useful capability-review signal for the current external-review packet. See
+Residual Risk for rerun triggers.
 
 ## Tool
 

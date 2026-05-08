@@ -56,7 +56,7 @@ All rows below are closed and preserved as the policy/API decision record.
 | Area | Evidence | Residual risk |
 | --- | --- | --- |
 | Dependency review | `docs/dependency-review.md` records `govulncheck -test -show verbose ./...` and advisory `gosec v2.26.1` results for commit `06f21c51645f54e2b7bde7c5b538479463be5d0e`. | Repeat on the exact release tag if dependencies, toolchain, or parser/security-relevant code changes. |
-| Long fuzz evidence | `docs/fuzz-evidence.md` records all 14 registered targets on local smoke and long ARM/Intel runs for commit `06f21c51645f54e2b7bde7c5b538479463be5d0e`. | Repeat if parser, protocol, fuzz harness, dependency, or toolchain changes before release. |
+| Long fuzz evidence | `docs/fuzz-evidence.md` records all 14 registered targets on a local `darwin/arm64` long run for merged PR #40 code commit `955855b58424a8868d318096149be615bb3989da`; earlier paired ARM/Intel runs remain historical evidence for commit `06f21c51645f54e2b7bde7c5b538479463be5d0e`. | Repeat if parser, protocol, fuzz harness, dependency, or toolchain changes before release. Rerun on Intel if paired cross-architecture evidence is required. |
 | Security/spec audit | `docs/security-spec-audit.md` records review of `docs/security-assessment.md` and `docs/spec-matrix.md` against implementation commit `4a8f629e59f0cc5c8f9351abacfa511fe6e4f441`. | Repeat if protocol code, parser/framing code, package-profile docs, dependencies, toolchain, or the targeted draft revision changes. |
 | Integration guidance | `docs/integration-guidance.md` documents outer PAKE/version negotiation, downgrade-protection, identity-orientation, and session-output guidance. | External reviewers should still evaluate whether this guidance is sufficient for real integrations. |
 | CI hardening | `v0.1.1` is a signed annotated prerelease tag at commit `74b82cbc65a1ea6186f2732749c9c5e5b03eecc3`. Tag-triggered Release Validation passed `Check`, `Race`, `Govulncheck`, and `Gosec` with SARIF upload in workflow run `25465518681`. Public background signal now includes CodeQL, OpenSSF Scorecard, Staticcheck Advisory, Actionlint, cross-platform smoke, scheduled vulnerability scanning, scheduled gosec, and scheduled fuzz regression. | CI evidence supports auditable prerelease hygiene, not production readiness. Keep release tags signed, watch scheduled lanes, and keep external and cryptographic review as release blockers. |
@@ -65,7 +65,7 @@ All rows below are closed and preserved as the policy/API decision record.
 | Release checklist | `docs/release-checklist.md` records exact-candidate validation, evidence refresh, signed-tag, release-validation, and GitHub-release steps. | The checklist must be executed against a future candidate before making stronger release-readiness claims. |
 | Capslock capability analysis | `docs/capslock-report.md` records Capslock `v0.3.2` results for main commit `39ccb58f827d88f6742628c1fadf9375539fb017`. | Capslock is experimental review signal, not a release gate. Repeat if dependencies, imports, randomness, HKDF/HMAC usage, or the Go toolchain change. |
 | Performance benchmarks | `bench_test.go` and `task bench` cover full round trips, protocol phases, exporters, and message encoding/decoding with `-benchmem`. | Benchmark results are local comparison evidence, not release gates. Record host, Go version, exact command, and commit when sharing numbers. |
-| OSS-Fuzz staging | `ossfuzz/` stages upstream project files for all 14 native Go fuzz targets. Local `build_fuzzers` and `check_build` validation passed with the repository mounted into a temporary `google/oss-fuzz` checkout on 2026-05-07. | Upstream onboarding still requires copying these files to `google/oss-fuzz/projects/cpace` and opening the OSS-Fuzz PR. |
+| OSS-Fuzz integration | `ossfuzz/` stages upstream project files for all 14 native Go fuzz targets. Local `build_fuzzers` and `check_build` validation passed with the repository mounted into a temporary `google/oss-fuzz` checkout on 2026-05-07. Upstream PR `google/oss-fuzz#15480` is open; CLA, header-check, and the upstream PR helper build passed on 2026-05-08. | Upstream onboarding still requires upstream review, merge, and follow-up monitoring after OSS-Fuzz starts running the project. |
 
 ## Release Readiness
 
@@ -82,6 +82,5 @@ Before any production-readiness claim:
 
 ## Later Investigation
 
-- OSS-Fuzz upstream onboarding.
 - Longer continuous fuzzing campaigns.
 - Offline Sage-derived extended vector dataset.

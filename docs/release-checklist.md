@@ -51,6 +51,10 @@ Record host, platform, Go version, Task version, command, start/end UTC,
 target count, candidate commit, result, and residual risk in
 `docs/fuzz-evidence.md`.
 
+If wrapping the command to capture timestamps and logs, avoid shell built-in
+names such as zsh's read-only `status`; use a variable such as `rc` for the
+command exit code.
+
 ## 4. Evidence Refresh
 
 Refresh the evidence docs when the candidate changes security-relevant state:

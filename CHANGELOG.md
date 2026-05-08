@@ -30,6 +30,8 @@
 - Add Capslock capability-analysis evidence for the external-review packet.
 - Stage OSS-Fuzz project files for the existing native Go fuzz targets and
   validate them with the local OSS-Fuzz helper flow.
+- Open the upstream OSS-Fuzz onboarding PR and refresh local ARM64 long-fuzz
+  evidence for the merged review-readiness commit.
 
 ## v0.1.1 - 2026-05-06
 

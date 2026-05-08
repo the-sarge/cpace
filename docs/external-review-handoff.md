@@ -1,6 +1,6 @@
 # External Review Handoff
 
-Date: 2026-05-06
+Date: 2026-05-08
 
 Target module: `github.com/the-sarge/cpace`
 
@@ -86,17 +86,21 @@ The `v0.1.1` prerelease contains CI and documentation hardening only. It does
 not change the Go API, protocol behavior, or dependencies from the earlier
 draft snapshot.
 
-Dependency and long-fuzz evidence are recorded for commit
-`06f21c51645f54e2b7bde7c5b538479463be5d0e`. The later changes before `v0.1.1`
-were comments, documentation, workflow hardening, and repository hygiene. Repeat
-dependency review, long fuzzing, and security/spec audit against the exact
-release candidate before any production-readiness claim, or sooner if protocol,
-parser/framing, fuzz harness, dependency, toolchain, or package-profile docs
-change.
+Dependency evidence is recorded for commit
+`06f21c51645f54e2b7bde7c5b538479463be5d0e`. Long-fuzz evidence was refreshed on
+local `darwin/arm64` for merged PR #40 code commit
+`955855b58424a8868d318096149be615bb3989da`. Repeat dependency review, long
+fuzzing, and security/spec audit against the exact release candidate before any
+production-readiness claim, or sooner if protocol, parser/framing, fuzz harness,
+dependency, toolchain, or package-profile docs change.
 
 Capslock capability-analysis evidence is recorded in
 `docs/capslock-report.md` for main commit
 `39ccb58f827d88f6742628c1fadf9375539fb017`.
+
+OSS-Fuzz onboarding is open upstream in `google/oss-fuzz#15480`. The upstream
+PR helper build, header check, and Google CLA check passed; merge is waiting on
+upstream review.
 
 ## Review Questions
 
