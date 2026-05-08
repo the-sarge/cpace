@@ -26,10 +26,8 @@ func generatorString(dsi, prs, ci, sid []byte, sInBytes int) []byte {
 	// The trailing subtraction accounts for the length byte of the zero-padding
 	// field. For this draft-21 suite, ZPAD is shorter than 128 bytes, so its
 	// LEB128 length prefix is exactly one byte.
-	zpadLen := sInBytes - len(prependLen(prs)) - len(prependLen(dsi)) - 1
-	if zpadLen < 0 {
-		zpadLen = 0
-	}
+	rawZPADLen := sInBytes - len(prependLen(prs)) - len(prependLen(dsi)) - 1
+	zpadLen := max(rawZPADLen, 0)
 	return lvCat(dsi, prs, make([]byte, zpadLen), ci, sid)
 }
 
@@ -57,7 +55,7 @@ func clearElement(e *ristretto255.Element) {
 func sampleScalar(r io.Reader) (*ristretto255.Scalar, error) {
 	var b [scalarSize]byte
 	defer clearBytes(b[:])
-	for attempts := 0; attempts < maxScalarTries; attempts++ {
+	for range maxScalarTries {
 		if _, err := io.ReadFull(r, b[:]); err != nil {
 			return nil, fmt.Errorf("%w: scalar randomness: %w", ErrRandomness, err)
 		}

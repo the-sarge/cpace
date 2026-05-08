@@ -8,7 +8,12 @@ Last released tag: `v0.1.1`
 
 Last released commit: `74b82cbc65a1ea6186f2732749c9c5e5b03eecc3`
 
-Current evidence baseline: `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
+Current recorded evidence baseline:
+`737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
+
+Evidence status: historical after the Go 1.26 `go fix` modernization until
+dependency, fuzz, Capslock, and security/spec evidence is refreshed against the
+post-merge package-code commit.
 
 Status: auditable draft implementation. This package has not had independent
 cryptographic review and is not production-ready.
@@ -91,10 +96,12 @@ not change the Go API, protocol behavior, or dependencies from the earlier
 draft snapshot.
 
 Go 1.26.3 dependency, gosec, long-fuzz, Capslock, and security/spec evidence is
-recorded for current `main` package-code commit
+recorded for package-code commit
 `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`. The paired long-fuzz refresh ran
 all 14 registered targets for `FUZZTIME=1h` on local ARM and Intel maintainer
-machines. Repeat dependency review, long fuzzing, Capslock, and security/spec
+machines. The Go 1.26 `go fix` modernization touches `crypto.go` and
+`framing.go`, so that evidence becomes historical after the modernization
+merges. Repeat dependency review, long fuzzing, Capslock, and security/spec
 audit against the exact release candidate before any production-readiness
 claim, or sooner if protocol, parser/framing, fuzz harness, dependency,
 toolchain, or package-profile docs change.

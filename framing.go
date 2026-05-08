@@ -177,7 +177,7 @@ func (r *messageReader) readExactField(wantLen int, name string) ([]byte, error)
 
 func (r *messageReader) readLEB128() (int, error) {
 	var n int
-	for i := 0; i < maxLEB128BytesForField; i++ {
+	for i := range int(maxLEB128BytesForField) {
 		if r.off >= len(r.buf) {
 			return 0, fmt.Errorf("%w: truncated LEB128", ErrMessage)
 		}

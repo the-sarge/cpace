@@ -42,6 +42,10 @@
 - Move private local planning/interview/review artifacts into the private
   `the-sarge/meta` archive and remove stale public-repo ignore rules for those
   root files.
+- Apply Go 1.26 `go fix` modernizations to internal crypto/framing loops and
+  concurrent tests, with no intended Go API, wire/protocol, dependency, or
+  vector behavior change. Exact-current release evidence must be refreshed
+  before tagging because the change touches crypto/framing source.
 
 ## v0.1.1 - 2026-05-06
 

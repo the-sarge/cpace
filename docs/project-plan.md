@@ -53,6 +53,11 @@ All rows below are closed and preserved as the policy/API decision record.
 
 ## Completed Evidence
 
+The Go 1.26 `go fix` modernization touches `crypto.go` and `framing.go`. Until
+dependency, long-fuzz, Capslock, and security/spec evidence is refreshed against
+the post-merge package-code commit, evidence rows tied to `737bc56` are
+historical signal rather than exact-current release-candidate evidence.
+
 | Area | Evidence | Residual risk |
 | --- | --- | --- |
 | Dependency review | `docs/dependency-review.md` records `govulncheck -test -show verbose ./...` and pinned `gosec@v2.26.1` results under Go 1.26.3 for commit `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`; raw transcript is in `docs/evidence/go1263-20260508/`. | Repeat on the exact release tag if dependencies, toolchain, or parser/security-relevant code changes. |

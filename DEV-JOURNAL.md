@@ -211,3 +211,26 @@ The PR follow-up committed raw transcripts and SHA-256 digests under
 `docs/evidence/go1263-20260508/` and documented the calibrated artifact policy
 for release candidates, toolchain-security refreshes, and lighter review
 updates.
+
+---
+
+## cpace.S12 - 2026-05-08 14:24 EDT
+
+**Main:** `fa70f28`
+**Board:** Go 1.26 `go fix` modernization evaluated.
+**Planner:** Josh
+
+Started the post-evidence `go fix` follow-up from clean `main` after PR #43
+merged. The Go 1.26.3 `go fix` diff is mechanical: use the built-in `max` for
+the generator-string zero-padding clamp, use integer `range` loops in scalar
+sampling and LEB128 parsing, and modernize concurrent tests to
+`sync.WaitGroup.Go`.
+
+Because the diff touches `crypto.go` and `framing.go`, the prior Go 1.26.3
+long-fuzz, dependency, Capslock, and security/spec evidence remains valuable
+historical signal but should not be treated as exact-current release-candidate
+evidence after this branch merges. Local validation for the modernization
+branch passed `task check`, pinned `gosec@v2.26.1`, and a short all-target fuzz
+smoke with `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=30s PARALLEL=2 task fuzz`.
+After PR review, the touched concurrency tests also passed
+`go test -race -count=200`.

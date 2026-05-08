@@ -207,10 +207,8 @@ func TestSessionCloseConcurrentExport(t *testing.T) {
 	ready := make(chan struct{}, workers)
 	errs := make(chan error, workers)
 	var closed atomic.Int64
-	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range workers {
+		wg.Go(func() {
 			<-start
 			reportedReady := false
 			for {
@@ -229,10 +227,10 @@ func TestSessionCloseConcurrentExport(t *testing.T) {
 					return
 				}
 			}
-		}()
+		})
 	}
 	close(start)
-	for i := 0; i < workers; i++ {
+	for range workers {
 		select {
 		case <-ready:
 		case err := <-errs:
@@ -259,14 +257,12 @@ func TestSessionCloseConcurrentClose(t *testing.T) {
 	const workers = 16
 	var wg sync.WaitGroup
 	errs := make(chan error, workers)
-	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range workers {
+		wg.Go(func() {
 			if err := sI.Close(); err != nil {
 				errs <- err
 			}
-		}()
+		})
 	}
 	wg.Wait()
 	close(errs)
@@ -294,10 +290,8 @@ func TestSessionMetadataConcurrentClose(t *testing.T) {
 	ready := make(chan struct{}, workers)
 	stop := make(chan struct{})
 	errs := make(chan string, workers)
-	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range workers {
+		wg.Go(func() {
 			<-start
 			reportedReady := false
 			for {
@@ -323,10 +317,10 @@ func TestSessionMetadataConcurrentClose(t *testing.T) {
 					reportedReady = true
 				}
 			}
-		}()
+		})
 	}
 	close(start)
-	for i := 0; i < workers; i++ {
+	for range workers {
 		select {
 		case <-ready:
 		case msg := <-errs:
@@ -920,15 +914,14 @@ func TestStateReuseAndConcurrentFinish(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	const finishers = 2
 	var wg sync.WaitGroup
-	errs := make(chan error, 2)
-	for i := 0; i < 2; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	errs := make(chan error, finishers)
+	for range finishers {
+		wg.Go(func() {
 			_, _, err := initiator.Finish(msgB)
 			errs <- err
-		}()
+		})
 	}
 	wg.Wait()
 	close(errs)

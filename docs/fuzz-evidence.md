@@ -89,11 +89,14 @@ the later expansion to 14 targets.
 ## Residual Risk
 
 The 2026-05-08 Go 1.26.3 candidate runs refresh paired ARM/Intel long-fuzz
-evidence for the current package code on `main`. They do not replace continuous
-fuzzing or upstream OSS-Fuzz coverage. Repeat long fuzzing if parser, protocol,
-fuzz harness, dependency, or toolchain changes land before a release tag. This
-refresh is sufficient for the current external-review packet; exact release
-candidates still need evidence recorded against the exact candidate commit.
+evidence for package-code commit
+`737bc56ffba81e2df5e9caa0df1ff180bfdb594b`. They do not replace continuous
+fuzzing or upstream OSS-Fuzz coverage. The Go 1.26 `go fix` modernization
+touches `crypto.go` and `framing.go`, so these runs become historical after
+that modernization merges. Repeat long fuzzing if parser, protocol, fuzz
+harness, dependency, or toolchain changes land before a release tag. Exact
+release candidates still need evidence recorded against the exact candidate
+commit.
 
 The 4-hour split campaign is strong historical signal for the seven-target
 registry at commit `07ff1e9265c2e003e6dc7d37754c8b2185f03286`, but it is not
