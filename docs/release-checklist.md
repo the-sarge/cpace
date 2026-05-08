@@ -52,10 +52,10 @@ target count, candidate commit, result, and residual risk in
 `docs/fuzz-evidence.md`.
 
 For release candidates and toolchain-security refreshes, preserve raw logs or
-transcripts under `docs/evidence/<candidate-or-date>/` with SHA-256 digests.
-For lighter external-review refreshes, committed summaries are acceptable when
-they do not make a stronger release-readiness claim, but prefer raw artifacts
-when collecting them is low-friction.
+transcripts under `docs/evidence/<candidate-or-toolchain-or-date>/` with
+SHA-256 digests. For lighter external-review refreshes, committed summaries
+are acceptable when they do not make a stronger release-readiness claim, but
+prefer raw artifacts when collecting them is low-friction.
 
 If wrapping the command to capture timestamps and logs, avoid shell built-in
 names such as zsh's read-only `status`; use a variable such as `rc` for the

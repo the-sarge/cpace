@@ -65,6 +65,11 @@ The Go 1.26.3 release note included security fixes in the `go` command, the
 `crypto/fips140`. CPace does not import the named web/template/mail packages;
 it does transitively use Go crypto internals, so dependency, fuzz, and Capslock
 evidence was refreshed under Go 1.26.3. No package source change was required.
+A Go 1.26.2-to-1.26.3 draft/RFC vector bit-identity comparison was not
+performed for this refresh because the prior Go 1.26.2 toolchains were no
+longer retained on the maintainer machines after upgrade. This refresh relies
+on the Go 1.26.3 `task check` run, which reran the existing draft/RFC vector
+assertions under the refreshed toolchain.
 
 ## Residual Risk
 

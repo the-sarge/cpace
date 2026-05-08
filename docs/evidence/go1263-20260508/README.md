@@ -5,8 +5,9 @@ Date: 2026-05-08
 Package-code baseline: `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
 
 These files preserve the raw local evidence used by the Go 1.26.3 refresh
-summaries in `docs/dependency-review.md`, `docs/fuzz-evidence.md`, and
-`docs/capslock-report.md`.
+summaries in [`../../dependency-review.md`](../../dependency-review.md),
+[`../../fuzz-evidence.md`](../../fuzz-evidence.md), and
+[`../../capslock-report.md`](../../capslock-report.md).
 
 ## Files
 
@@ -14,8 +15,23 @@ summaries in `docs/dependency-review.md`, `docs/fuzz-evidence.md`, and
 | --- | --- |
 | `fuzz-m4mini.log` | Raw `task fuzz` wrapper log from `m4mini.local` for the paired one-hour ARM run. |
 | `fuzz-imacpro.log` | Raw `task fuzz` wrapper log from `iMacPro.local` for the paired one-hour Intel run. |
+| `fuzz-worktree-status.log` | Supplemental clean-worktree status, commit, Go version, Task version, and `go env GOOS GOARCH` checks for both fuzz worktrees. |
 | `local-analysis.log` | Local clean-worktree transcript for Go version, clean status, module list, `govulncheck`, pinned `gosec`, and Capslock commands. |
 | `SHA256SUMS` | SHA-256 digests for the transcript files above. |
+
+## Verification
+
+On macOS:
+
+```sh
+shasum -a 256 -c SHA256SUMS
+```
+
+On Linux:
+
+```sh
+sha256sum -c SHA256SUMS
+```
 
 ## Notes
 

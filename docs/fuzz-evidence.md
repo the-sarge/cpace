@@ -34,7 +34,9 @@ Raw maintainer-machine logs and SHA-256 digests are committed under
 `docs/evidence/go1263-20260508/`. The `task fuzz` logs preserve host, commit,
 Go version, Task version, command, timestamps, return code, and the synthesized
 per-target PASS set, but they do not preserve Go's per-target fuzz counter
-output.
+output. `fuzz-worktree-status.log` records the detached `HEAD`, clean
+`git status --short --branch`, successful `git diff --exit-code --stat`, Go
+version, Task version, and `go env GOOS GOARCH` for both fuzz worktrees.
 
 Both logs recorded the full target pass set:
 

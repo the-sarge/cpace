@@ -199,11 +199,15 @@ Capslock under Go 1.26.3 before treating the evidence packet as current again.
 **Planner:** Josh
 
 Completed the Go 1.26.3 evidence refresh after the paired maintainer-machine
-fuzz campaigns finished cleanly on `m4mini.local` and `iMacPro.local`. Both hosts ran
-all 14 registered fuzz targets for `FUZZTIME=1h` with `PARALLEL=2` and
-recorded `RC=0`.
+fuzz campaigns finished cleanly on `m4mini.local` and `iMacPro.local`. Both
+hosts ran all 14 registered fuzz targets for `FUZZTIME=1h` with `PARALLEL=2`
+and recorded `RC=0`.
 
 The dependency review, pinned gosec command, Capslock report, and security/spec
 self-audit were refreshed from a clean detached worktree at `737bc56` under Go
 1.26.3. No source-code changes were needed. `go fix` modernization remains
 tracked separately in issue #42 so it does not blur this evidence-only refresh.
+The PR follow-up committed raw transcripts and SHA-256 digests under
+`docs/evidence/go1263-20260508/` and documented the calibrated artifact policy
+for release candidates, toolchain-security refreshes, and lighter review
+updates.
