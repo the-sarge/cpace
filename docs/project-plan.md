@@ -46,7 +46,13 @@ All rows below are closed and preserved as the policy/API decision record.
    draft-compatible behavior, package-owned framing/profile choices, unsupported
    scope, current evidence, and remaining release blockers. Track findings in
    focused follow-up PRs.
-2. Exact-candidate evidence refresh.
+2. Evidence-process hardening for issue #44.
+   Land the reusable evidence-bundle policy and cross-toolchain vector-stability
+   checklist before the next exact-candidate refresh. Keep the issue open until
+   the next candidate packet includes raw artifacts or immutable workflow links,
+   checksums, and the vector-stability result or an explicit unavailable-toolchain
+   rationale.
+3. Exact-candidate evidence refresh.
    After any review-driven changes, repeat dependency review, long fuzzing, and
    security/spec audit against the exact release-candidate commit before making
    any stronger readiness claim.

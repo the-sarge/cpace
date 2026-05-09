@@ -35,7 +35,23 @@ go run github.com/securego/gosec/v2/cmd/gosec@v2.26.1 ./...
 Record command versions and results in the relevant evidence docs if the
 candidate is making a stronger release-readiness claim.
 
-## 3. Long Fuzz Evidence
+## 3. Evidence Bundle
+
+Before refreshing summary docs, choose the evidence mode for the candidate:
+
+- immutable GitHub Actions or manual workflow artifacts tied to the exact
+  commit;
+- committed raw transcripts under `docs/evidence/<candidate-or-date>/` with
+  `SHA256SUMS`;
+- both, when practical.
+
+For exact-candidate releases and toolchain-security refreshes, prefer raw
+artifacts over handwritten summaries. Follow `docs/evidence/README.md` for the
+bundle shape, required metadata, checksum verification, and optional detached
+signature handling. Summary docs may explain evidence, but the evidence packet
+should preserve the raw logs or immutable workflow links.
+
+## 4. Long Fuzz Evidence
 
 Run every registered fuzz target from `.github/fuzz-targets.json` against the
 exact candidate commit. Use maintainer-controlled machines or trusted
@@ -51,17 +67,17 @@ Record host, platform, Go version, Task version, command, start/end UTC,
 target count, candidate commit, result, and residual risk in
 `docs/fuzz-evidence.md`.
 
-For release candidates and toolchain-security refreshes, preserve raw logs or
-transcripts under `docs/evidence/<candidate-or-toolchain-or-date>/` with
-SHA-256 digests. For lighter external-review refreshes, committed summaries
-are acceptable when they do not make a stronger release-readiness claim, but
-prefer raw artifacts when collecting them is low-friction.
+For release candidates and toolchain-security refreshes, preserve raw logs,
+workflow artifact links, or both according to the evidence-bundle policy. For
+lighter external-review refreshes, committed summaries are acceptable when they
+do not make a stronger release-readiness claim, but prefer raw artifacts when
+collecting them is low-friction.
 
 If wrapping the command to capture timestamps and logs, avoid shell built-in
 names such as zsh's read-only `status`; use a variable such as `rc` for the
 command exit code.
 
-## 4. Evidence Refresh
+## 5. Evidence Refresh
 
 Refresh the evidence docs when the candidate changes security-relevant state:
 
@@ -71,19 +87,21 @@ Refresh the evidence docs when the candidate changes security-relevant state:
   `docs/spec-matrix.md` against the exact candidate.
 - `docs/project-plan.md` for release-readiness status and remaining blockers.
 
-When a Go toolchain update triggers the refresh, explicitly record whether
-draft/RFC vector outputs were checked for cross-toolchain bit identity. If the
-previous toolchain is unavailable, state that limitation instead of implying
-bit-identical behavior from current-toolchain tests alone.
+When a Go toolchain update triggers the refresh, run the vector-stability lane
+from `docs/evidence/README.md` under the old and new Go toolchains when both
+are available. Preserve the raw logs and explicitly record whether the vector
+results are bit-identical. If the previous toolchain is unavailable, state that
+limitation instead of implying bit-identical behavior from current-toolchain
+tests alone.
 
-## 5. SCA, SAST, And VEX Review
+## 6. SCA, SAST, And VEX Review
 
 Apply the thresholds in `docs/security-gates.md` before tagging. Do not publish
 a release with unresolved SCA or SAST violations unless the finding is fixed,
 declared non-exploitable in `docs/vex.md`, or otherwise suppressed with a
 documented rationale that reviewers can inspect.
 
-## 6. Release Asset Scope And SBOM
+## 7. Release Asset Scope And SBOM
 
 Current releases do not attach compiled software assets. The canonical source
 release artifact is the repository content reachable from the signed annotated
@@ -99,7 +117,7 @@ must cover the asset hashes or signed manifest described in
 Do not publish a release containing compiled assets until the SBOM is generated
 and attached or otherwise made available from the release notes.
 
-## 7. Source Repository Scope
+## 8. Source Repository Scope
 
 Current releases are built from this single source repository.
 
@@ -110,7 +128,7 @@ protection, dependency review, SAST/SCA handling, secret management, release
 signing, and vulnerability disclosure. Record the subproject repositories and
 their evidence before tagging.
 
-## 8. GitHub Checks
+## 9. GitHub Checks
 
 Before tagging, confirm:
 
@@ -120,7 +138,7 @@ Before tagging, confirm:
 - Scorecard results are current enough for the release posture being claimed;
 - branch and tag protections are active.
 
-## 9. Signed Tag
+## 10. Signed Tag
 
 Create a signed annotated tag:
 
@@ -133,7 +151,7 @@ git push origin vX.Y.Z
 Do not force-update a release tag. If a tag is wrong, document the mistake and
 cut a new tag.
 
-## 10. Release Validation
+## 11. Release Validation
 
 After pushing the tag, wait for the tag-triggered Release Validation workflow.
 It must pass:
@@ -145,7 +163,7 @@ It must pass:
 
 Confirm Code Scanning has no unexpected open alerts after SARIF ingestion.
 
-## 11. Publish Release
+## 12. Publish Release
 
 Create the GitHub release or prerelease. Notes should state:
 
