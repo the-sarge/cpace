@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.1.2 - 2026-05-08
+
 - Add external review handoff notes, public contribution guidance, issue
   templates, a pull-request template, and reviewer outreach notes.
 - Add threat-model and release-checklist docs for external review and future
@@ -44,8 +46,9 @@
   root files.
 - Apply Go 1.26 `go fix` modernizations to internal crypto/framing loops and
   concurrent tests, with no intended Go API, wire/protocol, dependency, or
-  vector behavior change. Exact-current release evidence must be refreshed
-  before tagging because the change touches crypto/framing source.
+  vector behavior change.
+- Refresh exact-current v0.1.2 candidate dependency, gosec, Capslock,
+  security/spec, and paired ARM/Intel one-hour fuzz evidence.
 
 ## v0.1.1 - 2026-05-06
 

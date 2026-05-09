@@ -4,16 +4,16 @@ Date: 2026-05-08
 
 Target module: `github.com/the-sarge/cpace`
 
-Package-code baseline: `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
+Package-code baseline: `2e09774f171dde8c62763d6e35a258b0fef88801`
 
 Status: external-review evidence. Capslock is experimental static capability
 analysis; this report is review signal, not a release gate.
 
-This report refreshes the earlier Go 1.26.2 Capslock evidence after the Go
-1.26.3 security toolchain release. The refresh was run from a clean detached
-worktree at the package-code baseline.
+This report refreshes the Go 1.26.3 Capslock evidence after the Go 1.26
+`go fix` modernization touched `crypto.go` and `framing.go`. The refresh was
+run from a clean detached worktree at the package-code baseline.
 
-Transcript: `docs/evidence/go1263-20260508/local-analysis.log`
+Transcript: `docs/evidence/v012-candidate-20260508/local-analysis.log`
 
 ## Tool
 
@@ -54,7 +54,7 @@ Example callpath:
   github.com/the-sarge/cpace.Respond
   api.go:147:26:github.com/the-sarge/cpace.respondWithRandom
   api.go:187:25:github.com/the-sarge/cpace.confirmationTag
-  crypto.go:152:15:crypto/hmac.New
+  crypto.go:150:15:crypto/hmac.New
   hmac.go:48:25:crypto/internal/fips140only.Enforced
   fips140only.go:20:25:crypto/fips140.Enforced
   enforcement.go:37:31:crypto/fips140.isBypassed
@@ -64,7 +64,7 @@ Example callpath:
   github.com/the-sarge/cpace.Start
   api.go:108:24:github.com/the-sarge/cpace.startWithRandom
   api.go:125:24:github.com/the-sarge/cpace.sampleScalar
-  crypto.go:61:27:io.ReadFull
+  crypto.go:59:27:io.ReadFull
 ```
 
 The package does not directly expose filesystem, network, subprocess, dynamic

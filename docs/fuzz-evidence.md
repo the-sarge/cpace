@@ -4,7 +4,7 @@ Date: 2026-05-08
 
 Target module: `github.com/the-sarge/cpace`
 
-Evidence code commit: `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
+Evidence code commit: `2e09774f171dde8c62763d6e35a258b0fef88801`
 
 Registered fuzz targets: 14 from `.github/fuzz-targets.json`
 
@@ -14,14 +14,15 @@ Registered fuzz targets: 14 from `.github/fuzz-targets.json`
 
 ## Candidate Paired Long Runs
 
-The Go 1.26.3 security release changed the toolchain baseline after the earlier
-Go 1.26.2 evidence. These paired maintainer-machine runs refresh all registered
-targets under Go 1.26.3 on ARM and Intel hosts.
+The Go 1.26 `go fix` modernization touched `crypto.go` and `framing.go` after
+the earlier Go 1.26.3 evidence. These paired maintainer-machine runs refresh all
+registered targets under Go 1.26.3 on ARM and Intel hosts for the v0.1.2
+package-code candidate.
 
 | Host | Platform | Toolchain | Started | Finished | Result |
 | --- | --- | --- | --- | --- | --- |
-| `m4mini.local` | `darwin/arm64` | Go 1.26.3, Task 3.50.0 | `2026-05-08T09:09:50Z` | `2026-05-08T16:09:59Z` | PASS: all 14 targets, `RC=0` |
-| `iMacPro.local` | `darwin/amd64` | Go 1.26.3, Task 3.50.0 | `2026-05-08T09:09:50Z` | `2026-05-08T16:10:10Z` | PASS: all 14 targets, `RC=0` |
+| `m4mini.local` | `darwin/arm64` | Go 1.26.3, Task 3.50.0 | `2026-05-08T19:05:29Z` | `2026-05-09T02:05:36Z` | PASS: all 14 targets, `RC=0` |
+| `iMacPro.local` | `darwin/amd64` | Go 1.26.3, Task 3.50.0 | `2026-05-08T19:05:28Z` | `2026-05-09T02:05:38Z` | PASS: all 14 targets, `RC=0` |
 
 With 14 targets, `PARALLEL=2`, and `FUZZTIME=1h`, the command executes seven
 one-hour target batches. The recorded wall-clock duration on each host matches
@@ -31,12 +32,11 @@ and uses the long campaign for input-space exploration. `GOMAXPROCS=4` keeps
 each fuzzing subprocess from oversubscribing the host.
 
 Raw maintainer-machine logs and SHA-256 digests are committed under
-`docs/evidence/go1263-20260508/`. The `task fuzz` logs preserve host, commit,
-Go version, Task version, command, timestamps, return code, and the synthesized
-per-target PASS set, but they do not preserve Go's per-target fuzz counter
-output. `fuzz-worktree-status.log` records the detached `HEAD`, clean
-`git status --short --branch`, successful `git diff --exit-code --stat`, Go
-version, Task version, and `go env GOOS GOARCH` for both fuzz worktrees.
+`docs/evidence/v012-candidate-20260508/`. The `task fuzz` logs preserve host,
+commit, clean detached worktree status, successful `git diff --exit-code
+--stat`, Go version, Task version, `go env GOOS GOARCH`, command, timestamps,
+return code, and the synthesized per-target PASS set, but they do not preserve
+Go's per-target fuzz counter output.
 
 Both logs recorded the full target pass set:
 
@@ -60,8 +60,17 @@ All 14 fuzz targets passed
 
 ## Historical Long Runs
 
-The previous Go 1.26.2 refresh remains useful historical signal, but it has
-been superseded by the paired Go 1.26.3 candidate runs above.
+The previous Go 1.26.3 refresh remains useful historical signal, but it has
+been superseded by the paired v0.1.2 candidate runs above because PR #45 touched
+`crypto.go` and `framing.go`.
+
+| Host | Platform | Commit | Toolchain | Started | Finished | Command | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `m4mini.local` | `darwin/arm64` | `737bc56ffba81e2df5e9caa0df1ff180bfdb594b` | Go 1.26.3, Task 3.50.0 | `2026-05-08T09:09:50Z` | `2026-05-08T16:09:59Z` | `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=2 task fuzz` | PASS: all 14 targets |
+| `iMacPro.local` | `darwin/amd64` | `737bc56ffba81e2df5e9caa0df1ff180bfdb594b` | Go 1.26.3, Task 3.50.0 | `2026-05-08T09:09:50Z` | `2026-05-08T16:10:10Z` | `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=2 task fuzz` | PASS: all 14 targets |
+
+The previous Go 1.26.2 refresh also remains useful historical signal, but it
+has been superseded by later paired Go 1.26.3 candidate runs.
 
 | Host | Platform | Commit | Toolchain | Started | Finished | Command | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -88,15 +97,13 @@ the later expansion to 14 targets.
 
 ## Residual Risk
 
-The 2026-05-08 Go 1.26.3 candidate runs refresh paired ARM/Intel long-fuzz
-evidence for package-code commit
-`737bc56ffba81e2df5e9caa0df1ff180bfdb594b`. They do not replace continuous
-fuzzing or upstream OSS-Fuzz coverage. The Go 1.26 `go fix` modernization
-touches `crypto.go` and `framing.go`, so these runs become historical after
-that modernization merges. Repeat long fuzzing if parser, protocol, fuzz
-harness, dependency, or toolchain changes land before a release tag. Exact
-release candidates still need evidence recorded against the exact candidate
-commit.
+The 2026-05-08/09 Go 1.26.3 candidate runs refresh paired ARM/Intel long-fuzz
+evidence for v0.1.2 package-code candidate
+`2e09774f171dde8c62763d6e35a258b0fef88801`. They do not replace continuous
+fuzzing or upstream OSS-Fuzz coverage. Repeat long fuzzing if parser, protocol,
+fuzz harness, dependency, or toolchain changes land before a release tag. Exact
+production-readiness candidates still need evidence recorded against the exact
+candidate commit and completion of the remaining release blockers.
 
 The 4-hour split campaign is strong historical signal for the seven-target
 registry at commit `07ff1e9265c2e003e6dc7d37754c8b2185f03286`, but it is not

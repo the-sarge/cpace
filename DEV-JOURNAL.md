@@ -234,3 +234,23 @@ branch passed `task check`, pinned `gosec@v2.26.1`, and a short all-target fuzz
 smoke with `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=30s PARALLEL=2 task fuzz`.
 After PR review, the touched concurrency tests also passed
 `go test -race -count=200`.
+
+---
+
+## cpace.S13 - 2026-05-08 22:07 EDT
+
+**Main:** `2e09774`
+**Board:** v0.1.2 candidate evidence refreshed.
+**Planner:** Josh
+
+After PR #45 merged, treated merge commit `2e09774` as the v0.1.2 package-code
+candidate and refreshed the evidence packet without additional package-code
+changes. Local clean-worktree analysis under Go 1.26.3 passed `task check`,
+`go mod verify`, verbose `govulncheck`, pinned `gosec@v2.26.1`, and Capslock
+`v0.3.2`.
+
+Paired maintainer-machine fuzz campaigns ran all 14 registered targets with
+`FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=2 task fuzz` on `m4mini.local`
+and `iMacPro.local`. Both logs recorded `RC=0` and the full target PASS set.
+Raw transcripts and SHA-256 digests are preserved under
+`docs/evidence/v012-candidate-20260508/`.

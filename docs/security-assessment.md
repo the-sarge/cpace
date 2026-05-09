@@ -1,7 +1,7 @@
 # Security Assessment
 
 Status: self-assessment for an auditable draft implementation. Reviewed
-against commit `737bc56ffba81e2df5e9caa0df1ff180bfdb594b` on 2026-05-08;
+against commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08;
 see `docs/security-spec-audit.md`.
 
 ## Cryptographic Scope
@@ -98,22 +98,19 @@ add extra role-label inputs to the draft-21 confirmation MACs.
 - `filippo.io/edwards25519 v1.2.0` as an indirect dependency
 
 Dependency review was refreshed on 2026-05-08 at commit
-`737bc56ffba81e2df5e9caa0df1ff180bfdb594b` under Go 1.26.3; see
+`2e09774f171dde8c62763d6e35a258b0fef88801` under Go 1.26.3; see
 `docs/dependency-review.md`. `govulncheck -test -show verbose ./...` found no
 vulnerabilities, and the pinned `gosec@v2.26.1` command reported zero issues.
-The Go 1.26 `go fix` modernization touches crypto/framing source, so this
-dependency and SAST evidence becomes historical after that modernization merges.
 Repeat the review against the exact release tag if any dependency, toolchain, or
 parser/security-relevant code changes before release.
 
 ## Fuzzing
 
-Fuzz target evidence is recorded in `docs/fuzz-evidence.md`. The latest paired
+Fuzz target evidence is recorded in `docs/fuzz-evidence.md`. The current paired
 release-readiness run covers all 14 targets registered in
-`.github/fuzz-targets.json` at pre-modernization commit
-`737bc56ffba81e2df5e9caa0df1ff180bfdb594b`, with paired one-hour Go 1.26.3
-long runs on ARM and Intel maintainer machines. Repeat long fuzzing against the
-exact candidate after the Go 1.26 `go fix` modernization merges.
+`.github/fuzz-targets.json` at commit
+`2e09774f171dde8c62763d6e35a258b0fef88801`, with paired one-hour Go 1.26.3
+long runs on ARM and Intel maintainer machines.
 
 ## Release Bar
 

@@ -4,26 +4,26 @@ Date: 2026-05-08
 
 Target module: `github.com/the-sarge/cpace`
 
-Implementation baseline: `737bc56ffba81e2df5e9caa0df1ff180bfdb594b`
+Implementation baseline: `2e09774f171dde8c62763d6e35a258b0fef88801`
 
-Documentation/evidence baseline: PR #43 head or merge commit containing this
-file.
+Documentation/evidence baseline: v0.1.2 evidence PR head or merge commit
+containing this file.
 
 Toolchain: Go 1.26.3
 
-Evidence transcript: `docs/evidence/go1263-20260508/local-analysis.log`
+Evidence transcript: `docs/evidence/v012-candidate-20260508/local-analysis.log`
 
 Draft source: `draft-irtf-cfrg-cpace-21`
 (`https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-cpace-21`)
 
 ## Scope
 
-This audit checked the PR #43 versions of `docs/security-assessment.md` and
-`docs/spec-matrix.md` against the implementation baseline, tests, refreshed Go
-1.26.3 release evidence, and the draft-21 text. It is a documentation and
-conformance audit, not an independent cryptographic review. This is a
-self-audit by the project maintainer, distinct from independent cryptographic
-review or external review.
+This audit checked the v0.1.2 evidence PR versions of
+`docs/security-assessment.md` and `docs/spec-matrix.md` against the
+implementation baseline, tests, refreshed Go 1.26.3 release evidence, and the
+draft-21 text. It is a documentation and conformance audit, not an independent
+cryptographic review. This is a self-audit by the project maintainer, distinct
+from independent cryptographic review or external review.
 
 The audit covered:
 
@@ -34,15 +34,15 @@ The audit covered:
 - invalid-share handling and parser rejection behavior;
 - test/vector/fuzz/dependency/Capslock evidence referenced by the
   release-readiness docs;
-- Go 1.26.3 toolchain impact after the 2026-05-07 security release.
+- Go 1.26 `go fix` modernization impact after PR #45.
 
 ## Result
 
 No security/spec drift was found at the implementation baseline.
 
-`task check` passes under Go 1.26.3 for PR #43. The clean-worktree evidence
-transcript records dependency, gosec, and Capslock commands at the
-implementation baseline.
+`task check` passes under Go 1.26.3 for the v0.1.2 candidate. The
+clean-worktree evidence transcript records dependency, gosec, and Capslock
+commands at the implementation baseline.
 
 The security assessment and spec matrix accurately describe the current
 implementation:
@@ -63,13 +63,13 @@ implementation:
 The Go 1.26.3 release note included security fixes in the `go` command, the
 `pack` tool, and several standard-library packages, plus bug fixes including
 `crypto/fips140`. CPace does not import the named web/template/mail packages;
-it does transitively use Go crypto internals, so dependency, fuzz, and Capslock
-evidence was refreshed under Go 1.26.3. No package source change was required.
-A Go 1.26.2-to-1.26.3 draft/RFC vector bit-identity comparison was not
-performed for this refresh because the prior Go 1.26.2 toolchains were no
-longer retained on the maintainer machines after upgrade. This refresh relies
-on the Go 1.26.3 `task check` run, which reran the existing draft/RFC vector
-assertions under the refreshed toolchain.
+it does transitively use Go crypto internals, so evidence remains recorded
+under Go 1.26.3. PR #45 then applied mechanical Go 1.26 `go fix`
+modernizations in `crypto.go`, `framing.go`, and concurrent tests. The
+generator-string clamp, scalar-sampling loop bound, and LEB128 loop bound are
+unchanged in meaning, and `task check` reran the existing draft/RFC vector
+assertions at the implementation baseline. No Go API, wire/protocol,
+dependency, or vector behavior change was found.
 
 ## Residual Risk
 
