@@ -71,6 +71,14 @@ unchanged in meaning, and `task check` reran the existing draft/RFC vector
 assertions at the implementation baseline. No Go API, wire/protocol,
 dependency, or vector behavior change was found.
 
+### Toolchain Vector Stability
+
+For this v0.1.2 audit, draft/RFC vector assertions were rerun under Go 1.26.3.
+Separate old-toolchain and new-toolchain vector logs were not recorded because
+the explicit evidence policy was added after this evidence packet. Future
+toolchain-triggered refreshes should record old/new vector-stability results
+here, or explicitly state why the previous toolchain was unavailable.
+
 ## Residual Risk
 
 External review of package-owned CI/framing/profile choices remains open.

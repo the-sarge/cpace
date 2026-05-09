@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a reusable evidence-bundle policy and cross-toolchain vector-stability
+  checklist for future exact-candidate evidence refreshes.
 - Update external-review handoff and reviewer outreach notes to point at the
   published `v0.1.2` prerelease.
 
