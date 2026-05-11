@@ -110,7 +110,11 @@ Fuzz target evidence is recorded in `docs/fuzz-evidence.md`. The current paired
 release-readiness run covers all 14 targets registered in
 `.github/fuzz-targets.json` at commit
 `2e09774f171dde8c62763d6e35a258b0fef88801`, with paired one-hour Go 1.26.3
-long runs on ARM and Intel maintainer machines.
+long runs on ARM and Intel maintainer machines. Supplemental `v0.1.2` tag soak
+evidence at commit `4e661bc1f925ebedf1f270668129d85bab73e468` ran
+`FUZZTIME=4h` across all 14 targets on ARM and Intel hosts; ARM passed all
+targets, while the Intel all-target run ended with a `FuzzProtocolConsistency`
+deadline failure followed by a clean same-host 4-hour targeted rerun.
 
 ## Release Bar
 

@@ -1,0 +1,110 @@
+# CPace v0.1.2 supplemental soak fuzz transcript
+host=m4mini.local
+target_tag=v0.1.2
+target_commit=4e661bc1f925ebedf1f270668129d85bab73e468
+worktree=/Users/josh/code/fuzz/cpace-v012-soak-m4mini-20260509T044300Z/repo
+started_utc=2026-05-09T04:42:35Z
+
+checked_out_commit=4e661bc1f925ebedf1f270668129d85bab73e468
+## HEAD (no branch)
+go version go1.26.3 darwin/arm64
+goos=darwin
+goarch=arm64
+3.50.0
+
+command=FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=4h PARALLEL=2 task fuzz
+
+task: [fuzz] set -euo pipefail
+command -v jq >/dev/null 2>&1 || {
+  echo "jq not found; install jq to run task fuzz"
+  exit 1
+}
+
+fuzztime="4h"
+case "$fuzztime" in
+  ""|0|0s|0m|0h|-*)
+    echo "FUZZTIME must be a positive Go duration (got: '$fuzztime')"
+    exit 1
+    ;;
+esac
+
+parallel="${PARALLEL:-}"
+if [ -z "$parallel" ]; then
+  ncores="$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)"
+  parallel=$(( ncores / 2 ))
+  if [ "$parallel" -lt 1 ]; then
+    parallel=1
+  fi
+fi
+case "$parallel" in
+  ''|*[!0-9]*|0*)
+    echo "PARALLEL must be a positive integer (got: '$parallel')"
+    exit 1
+    ;;
+esac
+
+target_count="$(jq 'length' .github/fuzz-targets.json)"
+if [ "$target_count" -lt 1 ]; then
+  echo ".github/fuzz-targets.json contains no targets"
+  exit 1
+fi
+
+race="${FUZZ_RACE:-1}"
+case "$race" in
+  0|1) ;;
+  *)
+    echo "FUZZ_RACE must be 0 or 1 (got: '$race')"
+    exit 1
+    ;;
+esac
+
+echo "Running $target_count fuzz targets (PARALLEL=$parallel, FUZZTIME=$fuzztime, FUZZ_RACE=$race)"
+log_dir="$(mktemp -d)"
+trap 'rm -rf "$log_dir"' EXIT
+
+jq -r '.[] | "\(.target)|\(.package)"' .github/fuzz-targets.json | \
+  xargs -P "$parallel" -I{} bash -c '
+    entry="$1"
+    dir="$2"
+    target="${entry%%|*}"
+    pkg="${entry#*|}"
+    race_args=()
+    if [ "${FUZZ_RACE:-1}" != "0" ]; then
+      race_args=(-race)
+    fi
+    if out=$(go test "${race_args[@]}" -timeout=0 -fuzz="$target" -fuzztime="$FUZZTIME" "$pkg" 2>&1); then
+      printf "=== PASS: %s ===\n" "$target" > "$dir/$target.log"
+    else
+      printf "=== FAIL: %s (%s) ===\n%s\n" "$target" "$pkg" "$out" > "$dir/$target.log"
+      : > "$dir/$target.fail"
+    fi
+  ' _ {} "$log_dir"
+
+for log in "$log_dir"/*.log; do
+  [ -f "$log" ] || continue
+  cat "$log"
+done
+if ls "$log_dir"/*.fail >/dev/null 2>&1; then
+  exit 1
+fi
+echo "All $target_count fuzz targets passed"
+
+Running 14 fuzz targets (PARALLEL=2, FUZZTIME=4h, FUZZ_RACE=0)
+=== PASS: FuzzDecodeMessageA ===
+=== PASS: FuzzDecodeMessageB ===
+=== PASS: FuzzDecodeMessageC ===
+=== PASS: FuzzDraftInvalidVectorJSONLoader ===
+=== PASS: FuzzDraftVectorJSONLoader ===
+=== PASS: FuzzInitiatorFinishWithFuzzedMessageB ===
+=== PASS: FuzzMessageARoundTrip ===
+=== PASS: FuzzMessageBRoundTrip ===
+=== PASS: FuzzMessageCRoundTrip ===
+=== PASS: FuzzProtocolConsistency ===
+=== PASS: FuzzProtocolMismatch ===
+=== PASS: FuzzRespondWithFuzzedMessageA ===
+=== PASS: FuzzResponderFinishWithFuzzedMessageC ===
+=== PASS: FuzzScalarMultVFY ===
+All 14 fuzz targets passed
+
+finished_utc=2026-05-10T08:42:44Z
+rc=0

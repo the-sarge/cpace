@@ -41,6 +41,9 @@ cryptographic review before any production-ready claim.
 - `docs/capslock-report.md` for static capability-analysis evidence.
 - `docs/evidence/v012-candidate-20260508/` for raw v0.1.2 candidate transcript
   files and SHA-256 digests.
+- `docs/evidence/v012-soak-20260509/` for raw v0.1.2 supplemental fuzz soak
+  transcripts and SHA-256 digests, including the iMacPro all-target non-pass
+  and clean same-host targeted `FuzzProtocolConsistency` rerun.
 - `docs/performance.md` for local benchmark and allocation-measurement guidance.
 - `docs/ci-policy.md` for hosted-runner policy, advisory lanes, long-fuzz
   evidence, and signed release tags.
@@ -99,9 +102,12 @@ Go 1.26.3 dependency, gosec, long-fuzz, Capslock, and security/spec evidence is
 recorded for v0.1.2 package-code candidate
 `2e09774f171dde8c62763d6e35a258b0fef88801`. The paired long-fuzz refresh ran
 all 14 registered targets for `FUZZTIME=1h` on local ARM and Intel maintainer
-machines after the Go 1.26 `go fix` modernization. Repeat dependency review,
-long fuzzing, Capslock, and security/spec audit against the exact release
-candidate before any production-readiness claim, or sooner if protocol,
+machines after the Go 1.26 `go fix` modernization. Supplemental `v0.1.2` tag
+soak evidence ran all 14 targets with `FUZZTIME=4h` on ARM and Intel; ARM
+passed, while Intel had an all-target `FuzzProtocolConsistency` deadline
+failure followed by a clean same-host 4-hour targeted rerun. Repeat dependency
+review, long fuzzing, Capslock, and security/spec audit against the exact
+release candidate before any production-readiness claim, or sooner if protocol,
 parser/framing, fuzz harness, dependency, toolchain, or package-profile docs
 change.
 
