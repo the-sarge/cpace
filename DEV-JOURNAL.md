@@ -272,3 +272,37 @@ Validation run `25588835119`, and the package-code evidence baseline
 No package code or evidence artifact changed in this follow-up. The release
 remains an auditable prerelease and not a production-readiness claim; external
 review and independent cryptographic review remain the blockers.
+
+---
+
+## Go supply-chain hardening staged - 2026-05-17 15:36 EDT
+
+**Main:** `8fc41e0cdb98`
+**Actor:** Codex
+
+**Summary**
+
+Recorded the Go checksum-bypass response and supply-chain hardening follow-up. Local remediation confirmed the base Go toolchain is `go1.26.3`, rebuilt dependency checksum state with `rm go.sum`, `go mod tidy`, and `go mod verify`, and found no `go.mod` or `go.sum` diff from that revalidation.
+
+**Completed**
+
+- Added `toolchain go1.26.3` while leaving `go 1.26` as the module compatibility floor.
+- Added `Report Go environment` steps after every `actions/setup-go` invocation so CI logs capture `go version` and `go env GOTOOLCHAIN GOPROXY GOSUMDB`.
+- Added explicit `actions/setup-go` coverage before CodeQL autobuild.
+- Committed the CI hardening as `fee711b` on branch `harden-go-toolchain-ci` and pushed `origin/harden-go-toolchain-ci`; direct push to protected `main` was rejected as expected.
+- Created an OmniFocus project `code/the-sarge/cpace` with 35 tasks covering the hardening PR, Actions policy, branch protection, secret scanning, OSS-Fuzz pinning, release provenance, maintainer credential hygiene, and ongoing dependency/toolchain verification.
+
+**Validation**
+
+- `go mod verify`
+- `go test ./...`
+- `git diff --check`
+- `go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12`
+
+**Next**
+
+- Open a PR from `harden-go-toolchain-ci` to `main`: `https://github.com/the-sarge/cpace/pull/new/harden-go-toolchain-ci`.
+- Enable repository or organization Actions SHA-pinning enforcement and restrict allowed Actions; current repo API reported `allowed_actions=all` and `sha_pinning_required=false`.
+- Require at least one approving PR review on `main`; current branch protection has required checks but no required PR review.
+- Enable additional secret scanning options if available: non-provider patterns and validity checks.
+- Replace `go install github.com/AdamKorcz/go-118-fuzz-build@latest` in `ossfuzz/build.sh` with a pinned version or commit pseudo-version, then revalidate OSS-Fuzz builds.
