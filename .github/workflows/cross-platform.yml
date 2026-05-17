@@ -41,6 +41,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Report Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN GOPROXY GOSUMDB
+
       - name: Build
         run: go build ./...
 

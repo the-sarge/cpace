@@ -32,6 +32,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Report Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN GOPROXY GOSUMDB
+
       - name: Install gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@v2.26.1
 

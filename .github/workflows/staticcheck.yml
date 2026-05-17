@@ -37,6 +37,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Report Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN GOPROXY GOSUMDB
+
       - name: Install staticcheck
         run: go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
 

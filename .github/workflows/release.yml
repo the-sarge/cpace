@@ -30,6 +30,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Report Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN GOPROXY GOSUMDB
+
       - name: Run tests
         run: go test ./...
 
@@ -49,6 +54,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Report Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN GOPROXY GOSUMDB
+
       - name: Run race tests
         run: go test -race ./...
 
@@ -67,6 +77,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Report Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN GOPROXY GOSUMDB
 
       - name: Install task
         run: go install github.com/go-task/task/v3/cmd/task@v3.50.0
@@ -95,6 +110,11 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Report Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN GOPROXY GOSUMDB
 
       - name: Install task
         run: go install github.com/go-task/task/v3/cmd/task@v3.50.0

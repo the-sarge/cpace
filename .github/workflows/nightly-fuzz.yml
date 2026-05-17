@@ -52,6 +52,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Report Go environment
+        run: |
+          go version
+          go env GOTOOLCHAIN GOPROXY GOSUMDB
+
       - name: Snapshot corpus state
         shell: bash
         run: touch "${RUNNER_TEMP}/fuzz-start-${{ matrix.target }}"
