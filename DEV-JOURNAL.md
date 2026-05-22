@@ -306,3 +306,33 @@ Recorded the Go checksum-bypass response and supply-chain hardening follow-up. L
 - Require at least one approving PR review on `main`; current branch protection has required checks but no required PR review.
 - Enable additional secret scanning options if available: non-provider patterns and validity checks.
 - Replace `go install github.com/AdamKorcz/go-118-fuzz-build@latest` in `ossfuzz/build.sh` with a pinned version or commit pseudo-version, then revalidate OSS-Fuzz builds.
+
+---
+
+## Autoscaled fuzz workflow merged - 2026-05-22 01:52 EDT
+
+**Main:** `2f88a41635f5`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR #52, `Autoscaled Fuzz`, into `main` as merge commit `2f88a41635f54de93ca7136de7592d56adf9f7e2`. The PR adds a self-hosted autoscaled fuzz lane with GitHub-hosted input validation, actionlint runner-label configuration, CI policy updates for the self-hosted lane, and hardened `task fuzz` handling for dispatch-provided `FUZZTIME`.
+
+**Completed**
+
+- Added `.github/workflows/autoscaled-fuzz.yml` with a `validate_inputs` preflight job on GitHub-hosted runners and an autoscaled fuzz job gated to scheduled runs or main-branch manual dispatch.
+- Added `.github/actionlint.yaml` and updated the Actionlint trigger so workflow config changes are linted.
+- Hardened `Taskfile.yml` so `FUZZTIME` is read from the environment instead of templated into shell source.
+- Documented the autoscaled lane, runner trust boundary, runner tool contract, default race-fuzz behavior, and timeout-budget assumptions in `docs/ci-policy.md`.
+- Ran `ras review-loop 52`; it fixed the merge-blocking review findings and ended with a clean review gate at signed head `d0ba412c226b92bb186394ffdcfda4e83f3af27d`.
+
+**Validation**
+
+- PR checks on the signed, rebased branch passed: Actionlint, Check, DCO, Dependency Gate, and SAST Gate.
+- `gosec` advisory check completed as neutral/skipped for this PR.
+- `ras review-loop 52` reported final status `done` with no merge-blocking work remaining.
+
+**Next**
+
+- Consider the review-loop low/nit follow-ups before relying on the lane for release evidence: broader local `FUZZTIME` forms, more timeout headroom, a `PARALLEL` sanity cap, and a clearer non-main dispatch notice.
+- Capture the first scheduled autoscaled `FUZZ_RACE=1` run as evidence before citing the new lane as release-readiness signal.
