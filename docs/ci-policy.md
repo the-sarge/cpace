@@ -109,9 +109,9 @@ scheduled runs and manual dispatches from `refs/heads/main` before the runner is
 requested. That restriction is the trusted `main`-only scheduled/manual mode
 required for self-hosted capacity.
 
-The autoscaled runner image must provide `bash`, `find`, `jq`, and `sed`; the
-workflow checks these tools before reporting the fuzz plan or invoking
-`task fuzz`. Go and Task are installed by the workflow itself.
+The autoscaled runner image must provide `bash`, `find`, `jq`, `sed`, `sort`,
+and `touch`; the workflow checks these tools before reporting the fuzz plan or
+invoking `task fuzz`. Go and Task are installed by the workflow itself.
 
 Any additional self-hosted lane must either be ephemeral with one job per
 runner instance, or restricted to trusted `main`-only scheduled and manual

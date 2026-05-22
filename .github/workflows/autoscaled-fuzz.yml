@@ -53,7 +53,7 @@ jobs:
         run: |
           set -eu
           missing=""
-          for tool in bash find jq sed; do
+          for tool in bash find jq sed sort touch; do
             if ! command -v "$tool" >/dev/null 2>&1; then
               missing="${missing} ${tool}"
             fi
