@@ -97,6 +97,6 @@ jobs:
           path: ${{ steps.corpus.outputs.files }}
           retention-days: 14
 
-      - name: Fail job on fuzz regression
+      - name: Fail job if fuzz step failed
         if: steps.fuzz.outcome == 'failure'
         run: exit 1

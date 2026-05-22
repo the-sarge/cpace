@@ -197,9 +197,25 @@ tasks:
           exit 1
         }
 
-        fuzztime="{{.FUZZTIME}}"
+        fuzztime="${FUZZTIME}"
         case "$fuzztime" in
-          ""|0|0s|0m|0h|-*)
+          *[smh])
+            fuzztime_value="${fuzztime%?}"
+            ;;
+          *)
+            echo "FUZZTIME must be a positive Go duration (got: '$fuzztime')"
+            exit 1
+            ;;
+        esac
+        case "$fuzztime_value" in
+          ''|*[!0-9]*)
+            echo "FUZZTIME must be a positive Go duration (got: '$fuzztime')"
+            exit 1
+            ;;
+        esac
+        case "$fuzztime_value" in
+          *[1-9]*) ;;
+          *)
             echo "FUZZTIME must be a positive Go duration (got: '$fuzztime')"
             exit 1
             ;;
@@ -214,7 +230,14 @@ tasks:
           fi
         fi
         case "$parallel" in
-          ''|*[!0-9]*|0*)
+          ''|*[!0-9]*)
+            echo "PARALLEL must be a positive integer (got: '$parallel')"
+            exit 1
+            ;;
+        esac
+        case "$parallel" in
+          *[1-9]*) ;;
+          *)
             echo "PARALLEL must be a positive integer (got: '$parallel')"
             exit 1
             ;;

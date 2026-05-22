@@ -1,0 +1,243 @@
+name: Autoscaled Fuzz
+
+on:
+  workflow_dispatch:
+    inputs:
+      fuzztime:
+        description: Per-target Go fuzz duration ([0-9]+[smh], total waves under 240m)
+        required: false
+        default: 20m
+      parallel:
+        description: Concurrent fuzz targets
+        required: false
+        default: "2"
+      fuzz_race:
+        description: Run fuzzing with the race detector (1 or 0)
+        required: false
+        default: "1"
+  schedule:
+    - cron: '30 10 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: autoscaled-fuzz-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GOTOOLCHAIN: local
+  # Keep these fallbacks in sync with the workflow_dispatch defaults above;
+  # scheduled events do not provide inputs.
+  FUZZTIME: ${{ inputs.fuzztime || '20m' }}
+  PARALLEL: ${{ inputs.parallel || '2' }}
+  # This lane defaults to race fuzzing because it does not run task check first.
+  FUZZ_RACE: ${{ inputs.fuzz_race || '1' }}
+  GOMAXPROCS: "4"
+
+jobs:
+  validate_inputs:
+    name: Validate fuzz inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate dispatch inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          fail() {
+            echo "::error::$1"
+            exit 1
+          }
+
+          fuzztime="${FUZZTIME}"
+          parallel="${PARALLEL}"
+          fuzz_race="${FUZZ_RACE}"
+
+          case "$fuzztime" in
+            *[smh])
+              fuzztime_value="${fuzztime%?}"
+              fuzztime_unit="${fuzztime: -1}"
+              ;;
+            *)
+              fail "FUZZTIME must match ^[0-9]+[smh]$ (got: '$fuzztime')"
+              ;;
+          esac
+          case "$fuzztime_value" in
+            ''|*[!0-9]*)
+              fail "FUZZTIME must match ^[0-9]+[smh]$ (got: '$fuzztime')"
+              ;;
+          esac
+          case "$fuzztime_value" in
+            *[1-9]*) ;;
+            *)
+              fail "FUZZTIME must be positive (got: '$fuzztime')"
+              ;;
+          esac
+          if [ "${#fuzztime_value}" -gt 6 ]; then
+            fail "FUZZTIME value is too large (got: '$fuzztime')"
+          fi
+
+          case "$parallel" in
+            ''|*[!0-9]*)
+              fail "PARALLEL must match ^[0-9]+$ (got: '$parallel')"
+              ;;
+          esac
+          case "$parallel" in
+            *[1-9]*) ;;
+            *)
+              fail "PARALLEL must be positive (got: '$parallel')"
+              ;;
+          esac
+          if [ "${#parallel}" -gt 6 ]; then
+            fail "PARALLEL value is too large (got: '$parallel')"
+          fi
+
+          case "$fuzz_race" in
+            0|1) ;;
+            *)
+              fail "FUZZ_RACE must match ^[01]$ (got: '$fuzz_race')"
+              ;;
+          esac
+
+          fuzztime_number=$((10#$fuzztime_value))
+          parallel_number=$((10#$parallel))
+          case "$fuzztime_unit" in
+            s) fuzztime_seconds=$fuzztime_number ;;
+            m) fuzztime_seconds=$((fuzztime_number * 60)) ;;
+            h) fuzztime_seconds=$((fuzztime_number * 3600)) ;;
+          esac
+
+          target_count="$(jq -r 'length' .github/fuzz-targets.json)"
+          case "$target_count" in
+            ''|*[!0-9]*)
+              fail ".github/fuzz-targets.json length is not numeric"
+              ;;
+          esac
+          if [ "$target_count" -lt 1 ]; then
+            fail ".github/fuzz-targets.json contains no targets"
+          fi
+
+          waves=$(((target_count + parallel_number - 1) / parallel_number))
+          estimated_seconds=$((waves * fuzztime_seconds))
+          timeout_seconds=$((240 * 60))
+          if [ "$estimated_seconds" -ge "$timeout_seconds" ]; then
+            estimated_minutes=$(((estimated_seconds + 59) / 60))
+            fail "ceil(targets/PARALLEL) * FUZZTIME must stay under 240 minutes (got about ${estimated_minutes}m)"
+          fi
+
+          echo "Validated FUZZTIME=${fuzztime}, PARALLEL=${parallel}, FUZZ_RACE=${fuzz_race}"
+
+  fuzz:
+    name: Autoscaled fuzz
+    needs: validate_inputs
+    if: (github.event_name == 'schedule' || github.ref == 'refs/heads/main') && needs.validate_inputs.result == 'success'
+    runs-on:
+      - infra-autoscale-cpace-fuzz-linux
+    timeout-minutes: 240
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Check runner dependencies
+        shell: sh
+        run: |
+          set -eu
+          missing=""
+          for tool in bash find jq mktemp sed sort touch xargs; do
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              missing="${missing} ${tool}"
+            fi
+          done
+          c_compiler="${CC:-}"
+          if [ -n "$c_compiler" ]; then
+            if ! command -v "$c_compiler" >/dev/null 2>&1; then
+              missing="${missing} C compiler (${c_compiler})"
+            fi
+          elif command -v cc >/dev/null 2>&1; then
+            c_compiler=cc
+          elif command -v gcc >/dev/null 2>&1; then
+            c_compiler=gcc
+          elif command -v clang >/dev/null 2>&1; then
+            c_compiler=clang
+          else
+            missing="${missing} C compiler (cc, gcc, or clang)"
+          fi
+          if [ -n "$missing" ]; then
+            echo "missing required runner tools:${missing}" >&2
+            exit 1
+          fi
+          echo "CC=${c_compiler}" >> "$GITHUB_ENV"
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install Task
+        shell: bash
+        run: |
+          set -euo pipefail
+          GOBIN="$(go env GOPATH)/bin" go install github.com/go-task/task/v3/cmd/task@v3.50.0
+
+      - name: Report fuzz plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "FUZZTIME=${FUZZTIME}"
+          echo "PARALLEL=${PARALLEL}"
+          echo "FUZZ_RACE=${FUZZ_RACE}"
+          echo "GOMAXPROCS=${GOMAXPROCS}"
+          jq -r '.[] | "\(.target) \(.package)"' .github/fuzz-targets.json
+
+      - name: Snapshot corpus state
+        shell: bash
+        run: touch "${RUNNER_TEMP}/fuzz-start"
+
+      - name: Run autoscaled fuzz
+        id: fuzz
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          FUZZ_RACE="${FUZZ_RACE}" PARALLEL="${PARALLEL}" GOMAXPROCS="${GOMAXPROCS}" \
+            "$(go env GOPATH)/bin/task" fuzz FUZZTIME="${FUZZTIME}"
+
+      - name: Find newly captured corpus files
+        id: corpus
+        if: steps.fuzz.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(find . -type f -path "*/testdata/fuzz/*/*" -newer "${RUNNER_TEMP}/fuzz-start" | sort | sed 's#^\./##')"
+          if [ -n "$files" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            {
+              echo 'files<<EOF'
+              echo "$files"
+              echo EOF
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload newly captured corpus files
+        if: steps.fuzz.outcome == 'failure' && steps.corpus.outputs.found == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: autoscaled-fuzz-corpus
+          path: ${{ steps.corpus.outputs.files }}
+          retention-days: 14
+
+      - name: Fail job if fuzz step failed
+        if: steps.fuzz.outcome == 'failure'
+        run: exit 1
