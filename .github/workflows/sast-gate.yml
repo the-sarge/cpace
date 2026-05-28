@@ -58,3 +58,21 @@ jobs:
       - name: Report gosec result
         if: steps.gosec.outcome == 'failure'
         run: exit 1
+
+      - name: Install ast-grep
+        env:
+          AST_GREP_VERSION: 0.43.0
+          AST_GREP_SHA256: a26253a9c821d935f7e383e40f0de7c2ca62a4121de1f73a6d81ec32eae631e0
+        run: |
+          set -euo pipefail
+          asset="app-x86_64-unknown-linux-gnu.zip"
+          curl -fsSL -o "${RUNNER_TEMP}/${asset}" \
+            "https://github.com/ast-grep/ast-grep/releases/download/${AST_GREP_VERSION}/${asset}"
+          echo "${AST_GREP_SHA256}  ${RUNNER_TEMP}/${asset}" | sha256sum -c -
+          unzip -j -o "${RUNNER_TEMP}/${asset}" ast-grep -d "${RUNNER_TEMP}"
+          chmod +x "${RUNNER_TEMP}/ast-grep"
+          sudo mv "${RUNNER_TEMP}/ast-grep" /usr/local/bin/ast-grep
+          ast-grep --version
+
+      - name: Run ast-grep structural rules
+        run: ast-grep scan --error
