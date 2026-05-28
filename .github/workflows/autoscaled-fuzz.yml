@@ -135,13 +135,21 @@ jobs:
           echo "Validated FUZZTIME=${fuzztime}, PARALLEL=${parallel}, FUZZ_RACE=${fuzz_race}"
 
   fuzz:
-    name: Autoscaled fuzz
+    name: Autoscaled fuzz (${{ matrix.arch }})
     needs: validate_inputs
     if: (github.event_name == 'schedule' || github.ref == 'refs/heads/main') && needs.validate_inputs.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner_label: cpace-garm-linux-fuzz-arm64
+          - arch: amd64
+            runner_label: cpace-garm-linux-fuzz-amd64
     runs-on:
       - self-hosted
       - linux
-      - cpace-garm-linux-fuzz
+      - ${{ matrix.runner_label }}
     timeout-minutes: 240
 
     steps:
@@ -199,6 +207,7 @@ jobs:
           echo "PARALLEL=${PARALLEL}"
           echo "FUZZ_RACE=${FUZZ_RACE}"
           echo "GOMAXPROCS=${GOMAXPROCS}"
+          echo "ARCH=${{ matrix.arch }}"
           jq -r '.[] | "\(.target) \(.package)"' .github/fuzz-targets.json
 
       - name: Snapshot corpus state
@@ -236,7 +245,7 @@ jobs:
         if: steps.fuzz.outcome == 'failure' && steps.corpus.outputs.found == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: autoscaled-fuzz-corpus
+          name: autoscaled-fuzz-${{ matrix.arch }}-corpus
           path: ${{ steps.corpus.outputs.files }}
           retention-days: 14
 
