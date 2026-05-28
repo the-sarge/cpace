@@ -336,3 +336,46 @@ Merged PR #52, `Autoscaled Fuzz`, into `main` as merge commit `2f88a41635f54de93
 
 - Consider the review-loop low/nit follow-ups before relying on the lane for release evidence: broader local `FUZZTIME` forms, more timeout headroom, a `PARALLEL` sanity cap, and a clearer non-main dispatch notice.
 - Capture the first scheduled autoscaled `FUZZ_RACE=1` run as evidence before citing the new lane as release-readiness signal.
+
+---
+
+## Autoscaled fuzz moved to GARM - 2026-05-28 09:37 EDT
+
+**Main:** `c9a29ca7d17e`
+**Actor:** Codex
+
+**Summary**
+
+Moved the `Autoscaled fuzz` workflow from the infra autoscaler-v1 direct label
+to the repo-scoped GARM fuzz route.
+
+**Completed**
+
+- Merged PR #55 (`c9a29ca`), replacing
+  `infra-autoscale-cpace-fuzz-linux` with `self-hosted`, `linux`, and
+  `cpace-garm-linux-fuzz` in `.github/workflows/autoscaled-fuzz.yml`.
+- Updated `.github/actionlint.yaml` and `docs/ci-policy.md` for the GARM route.
+- Kept the hosted validation preflight, `main`/schedule trust gate, no-secrets
+  workflow shape, and checkout credential hardening intact.
+- Cleared stale scheduled run `26572683953`, then proved the new route with
+  manual workflow run `26577365194`; both jobs passed and the GARM runner
+  cleaned up.
+
+**Validation**
+
+- `actionlint .github/workflows/autoscaled-fuzz.yml`
+- `task quick-test`
+- `task lint:gofmt`
+- `task lint:goimports`
+- `task lint:go`
+- PR #55 checks passed: Actionlint `26577264751`, CI Check `26577264746`, DCO
+  `26577264753`, Dependency Gate `26577264757`, and SAST Gate `26577264745`.
+- `task check:changed` was not completed locally because `cmark` is not
+  installed on this machine; its executable substeps above passed separately.
+
+**Next**
+
+- Treat scheduled/main-branch cpace fuzzing as a GARM route. Keep
+  `pull_request`, `pull_request_target`, release, publish, signing, deploy, and
+  secret-heavy jobs out of this route unless the trust boundary is reviewed
+  again.
