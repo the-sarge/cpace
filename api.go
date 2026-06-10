@@ -103,6 +103,20 @@ type normalizedConfig struct {
 	ad          []byte
 }
 
+// wipe performs best-effort zeroization of every byte slice owned by the
+// normalized config. Called via defer at the top of Start/Respond so that all
+// cloned input bytes are cleared on every exit path, including failure paths
+// and panics. Idempotent against fields that have already been cleared and
+// set to nil earlier in the function.
+func (nc *normalizedConfig) wipe() {
+	clearBytes(nc.password)
+	clearBytes(nc.initiatorID)
+	clearBytes(nc.responderID)
+	clearBytes(nc.ci)
+	clearBytes(nc.sid)
+	clearBytes(nc.ad)
+}
+
 // Start creates initiator state and message A.
 func Start(cfg Config) (*Initiator, []byte, error) {
 	return startWithRandom(cfg, rand.Reader)
@@ -116,10 +130,13 @@ func startWithRandom(cfg Config, random io.Reader) (*Initiator, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	defer clearBytes(nc.password)
+	defer nc.wipe()
 
 	g := calculateGenerator(nc.password, nc.ci, nc.sid)
 	defer clearElement(g)
+	// Early-clear the password so its residency is bounded by the generator
+	// derivation, not the full function lifetime. nc.wipe() will still cover
+	// the (now-nil) field on exit alongside the other normalized fields.
 	clearBytes(nc.password)
 	nc.password = nil
 	y, err := sampleScalar(random)
@@ -155,7 +172,7 @@ func respondWithRandom(cfg Config, messageA []byte, random io.Reader) (*Responde
 	if err != nil {
 		return nil, nil, err
 	}
-	defer clearBytes(nc.password)
+	defer nc.wipe()
 	a, err := decodeMessageA(messageA)
 	if err != nil {
 		return nil, nil, err
@@ -169,6 +186,8 @@ func respondWithRandom(cfg Config, messageA []byte, random io.Reader) (*Responde
 
 	g := calculateGenerator(nc.password, nc.ci, nc.sid)
 	defer clearElement(g)
+	// Early-clear the password as in startWithRandom; nc.wipe() handles the
+	// remaining normalized fields on exit.
 	clearBytes(nc.password)
 	nc.password = nil
 	y, err := sampleScalar(random)
@@ -226,15 +245,18 @@ func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
 	}
 	tr := transcriptIR(i.ya, i.ada, b.yb, b.adb)
 	isk := deriveISK(i.sid, k, tr)
+	// Defer ISK wipe so every exit path — including future early returns and
+	// panics between here and the success branch — clears the secret. Mirrors
+	// the deferred wipe in Responder.Finish. newSession clones isk into the
+	// returned Session, so this wipe does not affect the caller's Session.
+	defer clearBytes(isk)
 	expectedB := confirmationTag(isk, i.sid, b.yb, b.adb)
 	if !hmac.Equal(expectedB, b.tag) {
-		clearBytes(isk)
 		return nil, nil, ErrConfirmationFailed
 	}
 	tagA := confirmationTag(isk, i.sid, i.ya, i.ada)
 	msgC := encodeMessageC(tagA)
 	sess := newSession(isk, tr, b.adb, i.peerID)
-	clearBytes(isk)
 	return msgC, sess, nil
 }
 

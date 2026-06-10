@@ -1080,6 +1080,211 @@ func TestFinishConsumesStateOnParseFailure(t *testing.T) {
 	}
 }
 
+func TestConfirmationFailsOnPasswordMismatch(t *testing.T) {
+	initCfg := testConfig()
+	initCfg.Password = []byte("password-a")
+	respCfg := testConfig()
+	respCfg.Password = []byte("password-b")
+
+	initiator, msgA, err := startTestInitiator(initCfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := respondTestResponder(respCfg, msgA); err != nil {
+		t.Fatalf("Respond err=%v: Respond success does not authenticate by itself; it must succeed even with a wrong-password peer", err)
+	}
+	_, msgB, err := respondTestResponder(respCfg, msgA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrConfirmationFailed) {
+		t.Fatalf("initiator Finish with mismatched password err=%v want ErrConfirmationFailed", err)
+	}
+}
+
+func TestBuildCIWireStability(t *testing.T) {
+	if got, want := DraftVersion, "draft-irtf-cfrg-cpace-21"; got != want {
+		t.Fatalf("DraftVersion=%q want %q", got, want)
+	}
+	if got, want := suiteName, "CPACE-RISTR255-SHA512"; got != want {
+		t.Fatalf("suiteName=%q want %q", got, want)
+	}
+	if got, want := byte(SuiteCPaceRistretto255SHA512), byte(0x01); got != want {
+		t.Fatalf("SuiteCPaceRistretto255SHA512=0x%02x want 0x%02x", got, want)
+	}
+
+	// Pin the exact byte output of buildCI for fixed inputs. Any change to
+	// the contributing strings, their layout order, or the LV encoding will
+	// fail this assertion. This is the primary guard against silent
+	// protocol-identity drift; the keyed material derived through this CI
+	// is load-bearing for every session.
+	var want []byte
+	appendLV := func(s []byte) {
+		n := len(s)
+		if n > 0x7f {
+			t.Fatalf("test inputs must fit in single-byte LEB128; len=%d", n)
+			return // proves the byte(n) bound to gosec G115; Fatalf's no-return is invisible to it
+		}
+		want = append(want, byte(n))
+		want = append(want, s...)
+	}
+	appendLV([]byte("CPace-Go-CI"))
+	appendLV([]byte("draft-irtf-cfrg-cpace-21"))
+	appendLV([]byte("CPACE-RISTR255-SHA512"))
+	appendLV([]byte("initiator"))
+	appendLV([]byte("initiator-id"))
+	appendLV([]byte("responder"))
+	appendLV([]byte("responder-id"))
+	appendLV([]byte("context"))
+	appendLV([]byte("ctx-value"))
+
+	got := buildCI([]byte("initiator-id"), []byte("responder-id"), []byte("ctx-value"))
+	if !bytes.Equal(got, want) {
+		t.Fatalf("buildCI drift\n got=%x\nwant=%x", got, want)
+	}
+}
+
+func TestNilReceiverFinishAndExport(t *testing.T) {
+	var i *Initiator
+	if _, _, err := i.Finish([]byte("msgB")); !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("nil Initiator.Finish err=%v want ErrInvalidInput", err)
+	}
+
+	var r *Responder
+	if _, err := r.Finish([]byte("msgC")); !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("nil Responder.Finish err=%v want ErrInvalidInput", err)
+	}
+
+	var s *Session
+	if _, err := s.Export([]byte("label"), nil, 32); !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("nil Session.Export err=%v want ErrInvalidInput", err)
+	}
+	if got := s.TranscriptID(); got != nil {
+		t.Fatalf("nil Session.TranscriptID=%v want nil", got)
+	}
+}
+
+func TestExportDomainSeparation(t *testing.T) {
+	sI, _ := completeExchange(t, testConfig(), testConfig())
+
+	cases := []struct {
+		name                       string
+		labelA, ctxA, labelB, ctxB []byte
+	}{
+		{"different label", []byte("a"), []byte("ctx"), []byte("b"), []byte("ctx")},
+		{"different context", []byte("label"), []byte("a"), []byte("label"), []byte("b")},
+		{"label/context boundary 1", []byte("ab"), []byte("c"), []byte("a"), []byte("bc")},
+		{"label/context boundary 2", []byte("label"), []byte("ctx"), []byte("labelctx"), []byte("")},
+		{"empty vs non-empty label", []byte(""), []byte("ctx"), []byte("a"), []byte("ctx")},
+		{"empty vs non-empty context", []byte("label"), []byte(""), []byte("label"), []byte("a")},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			kA, err := sI.Export(tc.labelA, tc.ctxA, 32)
+			if err != nil {
+				t.Fatal(err)
+			}
+			kB, err := sI.Export(tc.labelB, tc.ctxB, 32)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if bytes.Equal(kA, kB) {
+				t.Fatalf("Export(%q,%q)==Export(%q,%q): prefix-free domain separation broken",
+					tc.labelA, tc.ctxA, tc.labelB, tc.ctxB)
+			}
+		})
+	}
+
+	t.Run("nil and empty slice equivalent", func(t *testing.T) {
+		kNil, err := sI.Export([]byte("label"), nil, 32)
+		if err != nil {
+			t.Fatal(err)
+		}
+		kEmpty, err := sI.Export([]byte("label"), []byte{}, 32)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(kNil, kEmpty) {
+			t.Fatal("Export(label,nil) != Export(label,[]byte{}): nil/empty inconsistent")
+		}
+	})
+
+	t.Run("deterministic", func(t *testing.T) {
+		k1, err := sI.Export([]byte("label"), []byte("ctx"), 32)
+		if err != nil {
+			t.Fatal(err)
+		}
+		k2, err := sI.Export([]byte("label"), []byte("ctx"), 32)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(k1, k2) {
+			t.Fatal("Export is not deterministic for identical inputs")
+		}
+	})
+}
+
+func TestFinishConsumesStateOnConfirmationFailure(t *testing.T) {
+	initCfg := testConfig()
+	initCfg.Password = []byte("password-a")
+	respCfg := testConfig()
+	respCfg.Password = []byte("password-b")
+
+	initiator, msgA, err := startTestInitiator(initCfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, msgB, err := respondTestResponder(respCfg, msgA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrConfirmationFailed) {
+		t.Fatalf("initiator Finish wrong-password err=%v want ErrConfirmationFailed", err)
+	}
+	if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrStateUsed) {
+		t.Fatalf("initiator second Finish after ErrConfirmationFailed err=%v want ErrStateUsed", err)
+	}
+
+	initiator2, msgA2, err := startTestInitiator(testConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	responder2, msgB2, err := respondTestResponder(testConfig(), msgA2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	msgC2, _, err := initiator2.Finish(msgB2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tampered := append([]byte(nil), msgC2...)
+	tampered[len(tampered)-1] ^= 0xff
+	if _, err := responder2.Finish(tampered); !errors.Is(err, ErrConfirmationFailed) {
+		t.Fatalf("responder Finish tampered tagA err=%v want ErrConfirmationFailed", err)
+	}
+	if _, err := responder2.Finish(msgC2); !errors.Is(err, ErrStateUsed) {
+		t.Fatalf("responder second Finish after ErrConfirmationFailed err=%v want ErrStateUsed", err)
+	}
+}
+
+func TestInitiatorFinishConsumesStateOnAbort(t *testing.T) {
+	initiator, _, err := startTestInitiator(testConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Identity Yb is rejected by scalarMultVFY (via decodePublicShare),
+	// surfacing as ErrAbort. State must be consumed before the rejection
+	// so that a retry returns ErrStateUsed rather than re-running the abort.
+	identityYb := make([]byte, pointSize)
+	msgB := encodeMessageB(identityYb, []byte("adb"), bytes.Repeat([]byte{0xaa}, tagSize))
+	if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrAbort) {
+		t.Fatalf("initiator Finish identity-Yb err=%v want ErrAbort", err)
+	}
+	if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrStateUsed) {
+		t.Fatalf("initiator second Finish after ErrAbort err=%v want ErrStateUsed", err)
+	}
+}
+
 func mustLoadDraftInvalidVector(t *testing.T) draftInvalidVector {
 	t.Helper()
 	v, err := loadDraftInvalidVectorJSON(draft21RistrettoInvalidJSON)

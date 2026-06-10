@@ -6,6 +6,31 @@
   checklist for future exact-candidate evidence refreshes.
 - Update external-review handoff and reviewer outreach notes to point at the
   published `v0.1.2` prerelease.
+- Record `v0.1.2` supplemental 4-hour ARM/Intel fuzz soak evidence with the
+  Intel deadline-miss recovery in `docs/fuzz-evidence.md` (#49).
+- Pin the Go toolchain via `toolchain go1.26.3` in `go.mod` and add a
+  per-workflow "Report Go environment" step so CI consistently records the
+  toolchain version used for each lane (#51).
+- Add a self-hosted `Autoscaled Fuzz` workflow on the
+  `infra-autoscale-cpace-fuzz-linux` runner label, gated to scheduled and
+  trusted manual dispatches, with a GitHub-hosted input-validation preflight;
+  add `.github/actionlint.yaml` to register the self-hosted runner label and
+  harden the `task fuzz` recipe to validate `FUZZTIME` and `PARALLEL` env
+  inputs (#52).
+- Reaffirm draft-21 scalar sampling behavior in `docs/security-assessment.md`
+  and `docs/spec-matrix.md`: bit-masking is the draft §8.3 recommendation and
+  the package adds defense-in-depth retries for the (~2^-125) canonical-decode
+  rejection window and the zero scalar; no protocol-visible change.
+- Internal hardening: unify the deferred wipe of normalized config fields so
+  every cloned `Config` byte slice is zeroized on every Start/Respond exit
+  path, and mirror `Responder.Finish`'s deferred ISK wipe in `Initiator.Finish`
+  so future early-returns cannot leak the session key. No public-API or
+  wire-format change.
+- Pin protocol-identity strings (`DraftVersion`, `suiteName`,
+  `SuiteCPaceRistretto255SHA512`) and the byte output of `buildCI` via
+  `TestBuildCIWireStability`. Add password-mismatch, nil-receiver,
+  Export-prefix-free, and `ErrConfirmationFailed`/`ErrAbort` state-consumption
+  tests. No protocol-visible change.
 
 ## v0.1.2 - 2026-05-08
 
