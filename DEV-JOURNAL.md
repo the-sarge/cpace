@@ -379,3 +379,57 @@ to the repo-scoped GARM fuzz route.
   `pull_request`, `pull_request_target`, release, publish, signing, deploy, and
   secret-heavy jobs out of this route unless the trust boundary is reviewed
   again.
+
+## cpace.S15 - 2026-06-10 10:33 EDT
+
+**Main:** `c2294c4`
+**Board:** 2026-05-27 multi-agent review fully landed; six ADRs revised and re-gated; acceptance flips gated on cpace-core-adr.
+**Planner:** Josh
+
+Landed the complete aftermath of the 2026-05-27 multi-agent code review.
+The non-ADR hardening followups F1-F5 are filed as issues #60-#64 under the
+Production Readiness milestone with a new label taxonomy (`area/*`, `kind/*`,
+`priority/*`). PR #65 merged the safe internal/test/doc/CI fixes (deferred
+wipe unification, sampleScalar retry, protocol-identity test pins, SAST gate
+with ast-grep rules) after a fresh full-suite re-verification including
+14/14 fuzz targets; the new gate's gosec `-tests` lane surfaced one G115
+false positive in a test helper, fixed by making the existing length guard
+visible to the analyzer rather than suppressing the rule.
+
+PR #66 merged the six API-affecting decisions as ADRs 0002-0007, each taken
+through the full gating cycle: `ras consider` (three agents plus
+adjudication), a maintainer-decided resolution pass via `ras fix --decisions`
+(105 recorded decisions: 66 address, 37 reject, 2 defer), and re-gating.
+All six considerations returned "accept with specific revisions" - no core
+decision was overturned, but every reasoning record needed corrections
+(notably: 0006's stdlib survey had `(*os.File).Close()` semantics inverted,
+0007 rested on a nonexistent allowed-signers file and a self-referential
+tag trust anchor). ADR-0007's revision changed its Decision (adopting GitHub
+artifact attestation for the SBOM and a tag-authority ruleset), so it got a
+fresh consideration rather than a verify, which caught a second round of
+defects in the new content - including the `actions/attest-sbom` deprecation
+and Scorecard's filename-based Signed-Releases scan - resolved in a second
+decisions pass (19 decisions). The ADRs remain `proposed` on main.
+
+**Validation**
+
+- `go test ./...`, `go test -race ./...`, `go vet`, `gofmt`, `staticcheck`,
+  `govulncheck`, `goimports`, `ast-grep scan --error`, and
+  `FUZZTIME=5s PARALLEL=2 task fuzz` (14/14) green on the safe-fixes tip.
+- `ras verify` clean (unresolved: []) for ADRs 0002/0003/0005/0006; ADR-0004
+  clean except the deliberately deferred `[[0001]]` cross-link; ADR-0007
+  round-2 verify 18/19 with only that same cross-link open.
+- Run IDs and full evidence chains recorded in the PR #66 comments and in
+  the `docs(adr)` commit messages.
+- PR #65 and #66 merged with all required checks green (one transient
+  proxy.golang.org failure re-run; `gh pr update-branch` rejected by DCO -
+  branch updates must be local `git merge --signoff`).
+
+**Next**
+
+- Flip ADRs 0002/0003/0005/0006 `proposed -> accepted` (gate satisfied).
+- Repair and re-gate `cpace-core-adr` (ADR-0001), then merge it; this heals
+  the dangling cross-links and unblocks the 0004/0007 flips.
+- Create the GitHub ruleset restricting `v*` tag create/update/delete and
+  export its JSON into the release evidence bundle (ADR-0007 criterion).
+- Implement accepted ADRs per their outlines; F1-F5 remain open as #60-#64.
