@@ -253,7 +253,7 @@ no `yb` field either: like `adb`, the responder's own share is read nowhere
 after construction. (Today's `Responder` stores both; both are dead weight the
 sketch deliberately drops.)
 
-The sketches show the current `([]byte, bool)` shape of `scalarMultVFY` — and the `(*ristretto255.Element, bool)` shape of `decodePublicShare`, which ADR-0003 changes too. ADR-0003 (peer-share error semantics, `proposed`; review gate satisfied per the 2026-06-09 `ras verify` pass recorded in DEV-JOURNAL.md — the ADR's own frontmatter sync is deferred to flip time) changes both helpers to error-returning shapes with exported sentinels and role-context wrapping at call sites. Ordering — acceptance is not implementation: if 0003 is accepted but unimplemented when this plan executes, land 0003's implementation as its own commit(s) **before step 1**, so the baseline oracle and the step-1 goldens capture the 0003 shape — or defer it past step 6; step 2 then moves whichever shape the baseline has, verbatim. Under the 0003 shape the responder prevalidation becomes `if _, err := decodePublicShare(peerYa); err != nil { ... }` and the DH call becomes `k, err := scalarMultVFY(...)`, with role-context wrapping per 0003's call-site examples — wrap the plain sentinel with role context, exactly one `ErrAbort` wrap, no duplicate wrapping. The seam placement and the clearing structure here are unaffected either way.
+The sketches show the current `([]byte, bool)` shape of `scalarMultVFY` — and the `(*ristretto255.Element, bool)` shape of `decodePublicShare`, which ADR-0003 changes too. ADR-0003 (peer-share error semantics, `proposed`; review gate satisfied per the 2026-06-09 `ras verify` pass — runs `20260609T22xxxx` in `.ras/data/runs` — recorded in DEV-JOURNAL.md's cpace.S15 entry of 2026-06-10; the ADR's own frontmatter sync is deferred to flip time) changes both helpers to error-returning shapes with exported sentinels and role-context wrapping at call sites. Ordering — acceptance is not implementation: if 0003 is accepted but unimplemented when this plan executes, land 0003's implementation as its own commit(s) **before step 1**, so the baseline oracle and the step-1 goldens capture the 0003 shape — or defer it past step 6; step 2 then moves whichever shape the baseline has, verbatim. Under the 0003 shape the responder prevalidation becomes `if _, err := decodePublicShare(peerYa); err != nil { ... }` and the DH call becomes `k, err := scalarMultVFY(...)`, with role-context wrapping per 0003's call-site examples — wrap the plain sentinel with role context, exactly one `ErrAbort` wrap, no duplicate wrapping. The seam placement and the clearing structure here are unaffected either way.
 
 ## The seam
 
@@ -325,8 +325,9 @@ lands with its tests already in place.
    `respondWithRandom` pass it through. Each role's extraction moves that role's
    *full* crypto — the constructor **and** the `finish` method — into `core.go`,
    leaving the shell `Finish` as wire framing plus the interim clearing
-   `defer`s. Move logic verbatim, with two pinned exceptions that reconcile
-   *verbatim* with the literal sketches: (a) `Initiator.Finish` today clears
+   `defer`s. Move logic verbatim, with three pinned exceptions — two that
+   reconcile verbatim-moved code with the literal sketches, and one
+   deliberate, ADR-recorded behavior change: (a) `Initiator.Finish` today clears
    its finish-local ISK with two explicit per-path `clearBytes(isk)` calls; the
    Initiator extraction commit canonicalizes this to the sketch's single
    `defer clearBytes(isk)` immediately after `deriveISK` — identical coverage
@@ -369,27 +370,31 @@ lands with its tests already in place.
    and would need direct core-field construction. Primitive-level vector tests
    stay.
 5. **Consolidate persistent-secret clearing into `clear()` — the dangerous
-   step, done test-first.** First write the `clear()`-contract tests —
-   `TestClearNilSafe`, `TestClearIdempotent`, and
-   `TestClearOnFinishFailurePaths` (parse-failure and confirmation-failure
-   cleanup for both roles) — plus `TestSessionISKSurvivesCoreClear` and
-   `TestFinishZeroValueHardening`. Then implement `core.clear()` per
+   step, done test-first.** First write the step-5 test set —
+   `TestClearNilSafe` and `TestClearIdempotent` (direct `core.clear()`
+   invocations: nil-safety, zero-then-nil idempotence),
+   `TestClearOnFinishFailurePaths` (Finish-driven: parse-failure and
+   confirmation-failure cleanup for both roles, asserted by white-box core
+   field reads, with **no** `clear()` reference), plus
+   `TestSessionISKSurvivesCoreClear` and `TestFinishZeroValueHardening`. Then
+   implement `core.clear()` per
    [the contract](#the-clear-contract) and replace the interim `defer`s with
    `defer core.clear()` (green). Step 5 only *consolidates* clearing that is
    already present — it introduces none. Step 5 also writes the changelog
    entry for the zero-value hardening, stating the forged-tag success path,
    alongside its pinning test. Red is staged and local-only:
-   the `TestClear*` contract tests reference `core.clear()`, which does not
-   compile before the implementation half exists — their red is a compile
-   failure, observed by stashing the implementation locally, and they land in
-   the same commit as the implementation. `TestFinishZeroValueHardening` and
-   `TestSessionISKSurvivesCoreClear` compile without `clear()`: run them
-   against the pre-consolidation tree first — the hardening test is a
-   *pinning* test (already green, since the guard landed in step 2) and the
-   ISK-isolation and failure-path assertions pin the interim defers' behavior
-   across the consolidation. No step requires running tests in a package
-   state that cannot compile, and every *committed* state stays green per the
-   per-commit gate.
+   `TestClearNilSafe` and `TestClearIdempotent` invoke `core.clear()`, which
+   does not compile before the implementation half exists — their red is a
+   compile failure, observed by stashing the implementation locally, and they
+   land in the same commit as the implementation. The other three —
+   `TestClearOnFinishFailurePaths`, `TestSessionISKSurvivesCoreClear`, and
+   `TestFinishZeroValueHardening` — reference no `clear()` and compile
+   against the pre-consolidation tree: run them there first. The hardening
+   test is a *pinning* test (already green, since the guard landed in step
+   2); the other two pin the interim defers' behavior across the
+   consolidation. No step requires running tests in a package state that
+   cannot compile, and every *committed* state stays green per the per-commit
+   gate.
    ⚠️ Tests prove behavior, not zeroization — the manual audit below is
    mandatory.
 6. **Interim gate + audit refresh.** Re-run the fuzz corpus as the interim
@@ -419,13 +424,17 @@ lands with its tests already in place.
   `calculateGenerator`.
 - **New — ISK deep-clone isolation test (`TestSessionISKSurvivesCoreClear`):**
   this is a **responder** test — `responderCore` is the only role whose core
-  ISK persists until `clear()`. Complete a handshake, build the responder's
-  `Session`, capture `coreISK := responderCore.isk` **before** calling
-  `responderCore.clear()`, then assert `responderCore.isk == nil`,
-  `allZero(coreISK)` — the backing array was zeroed, not merely dropped — and
-  that `Session.Export` still returns the correct non-zero bytes. (The same
-  pre-clear alias-capture pattern `api_test.go` already uses; field-nil alone
-  would pass an implementation that drops the reference without zeroing.)
+  ISK persists until cleanup. Drive the handshake to a responder whose core
+  holds the ISK, capture `coreISK := responder.core.isk` **before** the
+  `Responder.Finish(msgC)` whose deferred cleanup fires (the interim `defer`s
+  before step 5; `defer core.clear()` after), then assert
+  `responder.core.isk == nil`, `allZero(coreISK)` — the backing array was
+  zeroed, not merely dropped — and that the returned `Session.Export` still
+  produces the correct non-zero bytes. (The same capture-before-the-trigger
+  alias pattern `TestFinishCleanupDoesNotAliasReturnedSessions` already uses;
+  field-nil alone would pass an implementation that drops the reference
+  without zeroing. Direct `clear()`-invocation assertions live in
+  `TestClearIdempotent`, not here.)
   An initiator-side variant, if wanted, asserts a *different* property: after
   `initiatorCore.finish`, `clear()` zeroes the scalar, and the finish-local ISK
   never aliased the Session's cloned ISK. Written test-first in build step 5.
