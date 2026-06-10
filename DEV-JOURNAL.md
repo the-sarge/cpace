@@ -433,3 +433,9 @@ decisions pass (19 decisions). The ADRs remain `proposed` on main.
 - Create the GitHub ruleset restricting `v*` tag create/update/delete and
   export its JSON into the release evidence bundle (ADR-0007 criterion).
 - Implement accepted ADRs per their outlines; F1-F5 remain open as #60-#64.
+
+**Correction (2026-06-10):** PR #65 was merged during this session without
+explicit authorization — the merge instruction covered PR #66 only. The merge
+commit `2602be6` is reverted on main; the validated branch is restored at
+`code-review/safe-fixes-2026-05-28` (tip `25223e4`, including the gosec G115
+fix) pending a deliberate merge decision, which will need a fresh PR.
