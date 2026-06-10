@@ -16,7 +16,7 @@ on:
         required: false
         default: "1"
   schedule:
-    - cron: '30 10 * * *'
+    - cron: '0 7 * * *'
 
 permissions:
   contents: read
@@ -139,7 +139,9 @@ jobs:
     needs: validate_inputs
     if: (github.event_name == 'schedule' || github.ref == 'refs/heads/main') && needs.validate_inputs.result == 'success'
     runs-on:
-      - infra-autoscale-cpace-fuzz-linux
+      - self-hosted
+      - linux
+      - cpace-garm-linux-fuzz
     timeout-minutes: 240
 
     steps:

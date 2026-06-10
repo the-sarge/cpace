@@ -66,10 +66,10 @@ required gate.
 `Vulnerability Scan`, `Gosec Advisory`, and `Nightly Fuzz` run on GitHub-hosted
 runners through both `workflow_dispatch` and scheduled triggers. `Autoscaled
 Fuzz` validates inputs on a GitHub-hosted preflight job, then runs fuzzing on the
-self-hosted `infra-autoscale-cpace-fuzz-linux` runner label through scheduled
-triggers and trusted main-branch manual dispatch. These lanes provide scheduled
-drift detection, Code Scanning history, and fuzz regression signal in addition
-to the PR gates.
+self-hosted GARM `cpace-garm-linux-fuzz` runner label through scheduled triggers
+and trusted main-branch manual dispatch. These lanes provide scheduled drift
+detection, Code Scanning history, and fuzz regression signal in addition to the
+PR gates.
 
 Manual `Dependency Gate` dispatch runs module verification and `govulncheck`;
 GitHub Dependency Review runs only on pull requests because it compares the PR
