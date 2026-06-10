@@ -1120,10 +1120,12 @@ func TestBuildCIWireStability(t *testing.T) {
 	// is load-bearing for every session.
 	var want []byte
 	appendLV := func(s []byte) {
-		if len(s) > 0x7f {
-			t.Fatalf("test inputs must fit in single-byte LEB128; len=%d", len(s))
+		n := len(s)
+		if n > 0x7f {
+			t.Fatalf("test inputs must fit in single-byte LEB128; len=%d", n)
+			return // proves the byte(n) bound to gosec G115; Fatalf's no-return is invisible to it
 		}
-		want = append(want, byte(len(s)))
+		want = append(want, byte(n))
 		want = append(want, s...)
 	}
 	appendLV([]byte("CPace-Go-CI"))
