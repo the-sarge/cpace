@@ -12,14 +12,16 @@ confirming the revisions (run `20260522T152641-7d2ca5ac0cd36d5a1062254b`). All
 three returned *proceed with changes*; the disposition tables below record how
 each round's findings were resolved.
 
+Revision 4 (2026-06-10) folds in a five-perspective review of this branch: gating-language and enumeration fixes, two recorded decisions (zero-value hardening; sequencing against the external reviews), confirmation-tag golden capture, and audit-checklist additions. Pending the confirming `ras consider` round recorded in ADR-0001 — implementation must not begin before it passes.
+
 ## Goal
 
 The CPace cryptographic composition — generator derivation, scalar sampling,
 Diffie-Hellman, transcript assembly, ISK derivation, confirmation tags — has no
 module of its own. It is smeared across `crypto.go` primitives, `strings.go`
 transcript builders, and four orchestration functions in `api.go`. The
-persistent-secret invariant is enforced by hand-placed `defer`s across those
-four functions.
+persistent-secret invariant is enforced by hand-placed deferred closures in the
+two `Finish` functions; the constructors' `defer`s cover scratch secrets only.
 
 Extract a deep `initiatorCore` / `responderCore` — collectively the **CPace
 core** (see `CONTEXT.md`). The public `Initiator` / `Responder` become thin
@@ -32,7 +34,7 @@ its persistent secrets, so the persistent-secret audit concentrates in two
 | Decision | Resolution |
 |---|---|
 | Candidate | A — extract a deep CPace core |
-| Secret ownership | Stateful core objects own **persistent**-secret lifetime (initiator scalar; responder ISK). Scratch secrets stay local, cleared eagerly. |
+| Secret ownership | Stateful core objects own **persistent**-secret lifetime (initiator scalar; responder ISK — plus the responder transcript, public wire data zeroed as hygiene). Scratch secrets stay local, cleared eagerly. |
 | Seam content | Decoded cryptographic fields cross; wire framing stays in front. Responder core validates `Ya` before sampling. |
 | Randomness | Core constructor takes `io.Reader` (new core-test seam). `startWithRandom` / `respondWithRandom` **retained**, unexported, as the full-pipeline seam. |
 | `buildCI` | **In front** — `buildCI` runs inside `normalizeConfig`; `normalizedConfig` keeps its `ci` field unchanged. (Revises the earlier "behind the seam" call — lower churn, and it removes the seam contradiction phase-2 flagged.) |
@@ -74,7 +76,7 @@ func startWithRandom(cfg Config, random io.Reader) (*Initiator, []byte, error) {
 
 func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
     if i == nil || i.core == nil {
-        return nil, nil, fmt.Errorf("%w: nil initiator", ErrInvalidInput)
+        return nil, nil, fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
     }
     if err := i.consume(); err != nil {
         return nil, nil, err
@@ -117,7 +119,7 @@ func respondWithRandom(cfg Config, messageA []byte, random io.Reader) (*Responde
 
 func (r *Responder) Finish(messageC []byte) (*Session, error) {
     if r == nil || r.core == nil {
-        return nil, fmt.Errorf("%w: nil responder", ErrInvalidInput)
+        return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
     }
     if err := r.consume(); err != nil {
         return nil, err
@@ -131,10 +133,9 @@ func (r *Responder) Finish(messageC []byte) (*Session, error) {
 }
 ```
 
-The `i.core == nil` / `r.core == nil` guards are deliberate hardening: a
-caller-fabricated zero-value state returns `ErrInvalidInput` instead of
-panicking in the crypto. This changes no frozen public behavior — callers
-obtain `Initiator` / `Responder` values only from `Start` / `Respond`.
+The `i.core == nil` / `r.core == nil` guards are deliberate hardening, recorded in ADR-0001 as a **narrow policy reopen** (decided 2026-06-10). `Initiator` and `Responder` are exported structs, so a caller *can* fabricate a zero value; today that panics inside the crypto (initiator) or consumes the state and returns `ErrMessage`/`ErrConfirmationFailed` (responder). With the guards, `Finish` returns `ErrInvalidInput` **without** consuming — an observable behavior change for fabricated zero values, shipped with a changelog note and a pinning test per the ADR's acceptance criteria. The error text says "uninitialized", not "nil", because the guard also fires for a non-nil shell whose `core` is nil.
+
+Two load-bearing invariants the sketches rely on, stated so no implementer relaxes them: **the shells never reassign or nil `.core` after construction** — cleanup nils the core's *fields*, never the pointer — so the unsynchronized `i.core == nil` read is race-free and a second `Finish` still reaches `consume()` and returns `ErrStateUsed`, not `ErrInvalidInput`; and **core methods are never called after `clear()`** — the shell single-use guard is the enforcement boundary, and post-`clear()` core behavior is out of contract (the initiator path would nil-deref; the responder path would compute a tag over a nil ISK).
 
 ```go
 // core.go — unexported, deep
@@ -246,9 +247,13 @@ func (c *responderCore) clear() {
 The CPace IR asymmetry is intentional: `newResponderCore` performs the DH and
 ISK derivation; for the initiator that work lands in `finish`. The responder
 holds no scalar field — its scalar is a scratch secret cleared inside the
-constructor. The `responderCore` carries no `adb` field: the responder's own
-associated data is already baked into the stored `transcript` and `tagB`, and
-is read nowhere after construction.
+constructor. The `responderCore` carries no `adb` field — the responder's own
+associated data is already baked into the stored `transcript` and `tagB` — and
+no `yb` field either: like `adb`, the responder's own share is read nowhere
+after construction. (Today's `Responder` stores both; both are dead weight the
+sketch deliberately drops.)
+
+The sketches show `scalarMultVFY`'s current `([]byte, bool)` shape. ADR-0003 (peer-share error semantics, `proposed`, review gate satisfied) changes it to `([]byte, error)` with exported sentinels and role-context wrapping at call sites. If 0003 is accepted before this plan executes, implement step 2 against the 0003 shape (`k, err := scalarMultVFY(...)`, wrapping per 0003's call-site examples); the seam placement and the clearing structure here are unaffected either way.
 
 ## The seam
 
@@ -263,6 +268,8 @@ prebuilt — validation, public error wrapping; wire framing
 (`encode`/`decodeMessage*`); the single-use guard; the `a.sid == nc.sid`
 message-vs-config check; and the unexported `startWithRandom` /
 `respondWithRandom` randomness wrappers with their password backstop `defer`.
+
+Error ownership at the seam: the shells mint config and framing errors (`ErrInvalidInput`, `ErrMessage`); the core returns protocol errors ready-made (`ErrAbort` wraps, `ErrConfirmationFailed`, and `ErrRandomness` propagated from `sampleScalar`), and the shells pass them through without re-wrapping — exactly as the sketches show. An implementer must not introduce internal sentinels that the shell re-wraps; that shape risks double-wrapping and changed error identity.
 
 ## The `clear()` contract
 
@@ -283,11 +290,14 @@ contract is pinned:
   constructor must clear that secret before returning an error. No test is
   mandated for it while it stays vacuous (see [Tests](#tests)).
 - **Persistent scope only** — `clear()` owns the initiator scalar and the
-  responder ISK + transcript. Scratch secrets — the normalized password, the
-  generator element, the DH point `k`, the responder's own scalar, **and the
-  initiator's `finish`-local ISK** — are never core fields; each is cleared
-  eagerly by a local `defer` at the narrowest scope inside the core method that
-  creates it.
+  responder ISK + transcript (the transcript is public wire data, zeroed as
+  hygiene alongside the ISK — ADR-0001 records the same framing). Scratch
+  secrets — the normalized password, the generator element, the DH point `k`,
+  the responder's own scalar, **and the initiator's `finish`-local ISK** — are
+  never core fields; each is cleared eagerly at the narrowest scope inside the
+  core method that creates it, by local `defer` or inline immediately after
+  last use (the password is cleared inline, with the shell backstop `defer` in
+  front of the seam).
 
 ## Build sequence
 
@@ -295,14 +305,28 @@ Ordered so the regression net catches mistakes early and the dangerous step
 lands with its tests already in place.
 
 1. **Baseline.** `task check` and a fuzz smoke run pass on `main` — the
-   behavioral oracle for everything that follows.
+   behavioral oracle for everything that follows. From this unmodified
+   baseline, capture confirmation-tag goldens for the draft-vector inputs and
+   commit them to `testdata/` (see step 4 — the draft vectors carry no tags, so
+   these goldens are the only direct bit-equivalence anchor for the tag path).
 2. **Extract `core.go`, one role at a time** (Initiator first), with the
    `io.Reader` constructors **from the first extraction commit** —
    `newInitiatorCore` / `newResponderCore` take `io.Reader`; `startWithRandom` /
    `respondWithRandom` pass it through. Each role's extraction moves that role's
    *full* crypto — the constructor **and** the `finish` method — into `core.go`,
    leaving the shell `Finish` as wire framing plus the interim clearing
-   `defer`s. Move logic verbatim. Persistent-secret clearing is **preserved
+   `defer`s. Move logic verbatim, with two pinned exceptions that reconcile
+   *verbatim* with the literal sketches: (a) `Initiator.Finish` today clears
+   its finish-local ISK with two explicit per-path `clearBytes(isk)` calls; the
+   Initiator extraction commit canonicalizes this to the sketch's single
+   `defer clearBytes(isk)` immediately after `deriveISK` — identical coverage
+   plus panic paths. (b) Today's scalar snapshot (`scalar := i.scalar`) before
+   the clearing closure disappears with the move; the interim shell `defer`
+   reads `i.core.scalar` at fire time, equivalent because nothing reassigns the
+   field between `consume()` and return. The responder's `Ya` prevalidation
+   moves into `newResponderCore` in the Responder extraction commit — it never
+   sits in the shell (step 3 then *pins* the ordering with its test).
+   Persistent-secret clearing is **preserved
    verbatim** as interim `defer`s in the shell `Finish` (e.g.
    `defer func(){ clearScalar(i.core.scalar); i.core.scalar = nil }()`),
    including the `= nil` assignment — zeroization never regresses across commits
@@ -318,7 +342,15 @@ lands with its tests already in place.
    `TestResponderPrevalidatesInvalidInitiatorShareBeforeRandomness` stays green.
 4. **Add core-level draft-vector tests.** Drive `newInitiatorCore` /
    `newResponderCore` and `finish` with draft vector inputs; assert `ya` / `yb`
-   / `isk` / confirmation tags. Primitive-level vector tests stay.
+   / `isk` against the draft vectors and the confirmation tags against the
+   step-1 goldens (the draft defines no tag values — the `"CPaceMac"`
+   construction is package-local, so main-captured goldens are the oracle).
+   Note on entropy plumbing: the test reader feeds raw canonical scalar bytes
+   through the core's `io.Reader` seam; this reproduces the vector scalars only
+   because `sampleScalar`'s `b[31] &= 0x0f` mask is the identity for them. A
+   future vector with byte 31 ≥ `0x10` cannot be injected through the sampler
+   and would need direct core-field construction. Primitive-level vector tests
+   stay.
 5. **Consolidate persistent-secret clearing into `clear()` — the dangerous
    step, done test-first.** First write the `clear()`-contract tests (nil-safe,
    double-`clear()` idempotence, `Finish` parse-failure and confirmation-failure
@@ -326,7 +358,11 @@ lands with its tests already in place.
    (red). Then implement `core.clear()` per
    [the contract](#the-clear-contract) and replace the interim `defer`s with
    `defer core.clear()` (green). Step 5 only *consolidates* clearing that is
-   already present — it introduces none.
+   already present — it introduces none. The "red" observation is local-only:
+   the new tests reference `core.clear()`, which does not compile before the
+   implementation half exists, so tests and implementation land in the same
+   commit (red observed by stashing the implementation locally) and every
+   *committed* state stays green per the per-commit gate.
    ⚠️ Tests prove behavior, not zeroization — the manual audit below is
    mandatory.
 6. **Refresh evidence.** Re-run the fuzz corpus; update `docs/fuzz-evidence.md`
@@ -427,7 +463,8 @@ go test ./... -run TestResponderPrevalidatesInvalidInitiatorShareBeforeRandomnes
 go test ./... -run TestSessionISKSurvivesCoreClear   # responder-scoped
 go test ./... -run 'TestClear'        # nil-safe, idempotent, failure-path
 
-# Fuzz — smoke before, campaign after
+# Fuzz — smoke before; the post-refactor run is an interim gate ONLY, not
+# evidence: the recorded bar (docs/fuzz-evidence.md) re-runs at the #33 refresh
 FUZZTIME=30s PARALLEL=2 task fuzz
 FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz
 
@@ -435,35 +472,46 @@ FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz
 git diff --exit-code -- go.mod go.sum    # expect clean: no dependency change
 
 # Mandatory manual zeroization audit — api_test.go cannot prove this:
-#  - neither core has a password, generator, or k field
-#  - initiatorCore has no isk field; responderCore.isk and responderCore.transcript
-#    are the only persistent core secrets, zeroed-then-nilled by responderCore.clear()
+#  - neither core has a password, generator, k, or responder-scalar field
+#  - initiatorCore has no isk field; responderCore.isk is the only persistent
+#    core secret (responderCore.transcript is public wire data zeroed alongside
+#    it as hygiene), both zeroed-then-nilled by responderCore.clear()
 #  - initiatorCore.finish: defer clearBytes(isk) immediately after deriveISK
 #  - startWithRandom / respondWithRandom retain defer clearBytes(nc.password)
 #    as a backstop covering core-constructor error and panic paths
+#  - confirmation-tag and identity comparisons remain hmac.Equal; no
+#    bytes.Equal / reflect.DeepEqual on secret-derived values
 #  - trace both clear() methods and every shell defer site
+#  - residual (pre-existing, unchanged by this refactor): lvCat/prependLen
+#    build intermediate heap copies that are not cleared (the password inside
+#    calculateGenerator; K inside deriveISK), and hmac.New retains key pads
+#    internally — record in docs/security-spec-audit.md as residual risk
 ```
 
 ## Evidence & release-readiness
 
-This is a security-relevant refactor. Per the project's evidence-discipline
-rule, refresh `docs/fuzz-evidence.md` and `docs/security-spec-audit.md` (commit
-SHA, command, fuzz duration, target count, residual risks) before the work
-supports any stronger release claim. Dependency-review
-(`docs/dependency-review.md`) and Capslock (`docs/capslock-report.md`) evidence
-are **unaffected** — the refactor changes no module dependency (`go.mod` /
-`go.sum` stay byte-identical) and no capability surface; only fuzz and
-security-spec-audit evidence require a refresh. The behavioral net proves
-behavior is preserved but **cannot** prove zeroization — the manual audit pass
-is mandatory.
+This is a security-relevant refactor. Per the project's evidence-discipline rule, **all four** pinned evidence artifacts require a refresh against the post-refactor code, sequenced by issue #33 (exact-candidate evidence refresh):
+
+- **Fuzz** (`docs/fuzz-evidence.md`) — the step-6 `FUZZTIME=8m` campaign is an interim gate only; the recorded evidence bar (long per-target campaigns across hosts) re-runs at the #33 refresh. Do not replace the pinned evidence with the interim run.
+- **Security/spec audit** (`docs/security-spec-audit.md`) — refreshed in step 6 (commit SHA, command, duration, target count, residual risks — including the abandoned-state risk and the `lvCat`/`prependLen` intermediate-copy residual from the audit checklist).
+- **Dependency review / SAST** (`docs/dependency-review.md`) — `go.mod`/`go.sum` stay byte-identical, but the recorded evidence policy requires repeating dependency review when security-relevant code changes, and the pinned `gosec` source scan is sensitive to exactly this kind of relocation. Re-run at the #33 refresh; the unchanged-module check is necessary, not sufficient.
+- **Capslock** (`docs/capslock-report.md`) — no capability-surface change is expected; confirm with a re-run at the #33 refresh rather than asserting it.
+
+The behavioral net proves behavior is preserved but **cannot** prove zeroization — the manual audit pass is mandatory.
+
+**Sequencing** — per ADR-0001 (*Sequencing against release blockers*, decided 2026-06-10): implementation does not begin until the external review (#29–#31) and the independent cryptographic review (#32) conclude (or a later explicit maintainer decision accepts the review churn), and the revised ADR/plan text has passed its confirming `ras consider` round.
 
 ## Out of scope
 
 - **Candidate B** (`singleUse`) composes cleanly — after this, `Initiator` is
   `{mu, used, core}`, and B would consolidate the `{mu, used}` remainder.
   Independent; do later if wanted.
-- **Candidates C and D** untouched. Keeping framing in front of the seam
-  deliberately leaves C's seam free to move on its own.
+- **Candidates C and D** untouched. (The lettered candidates come from the
+  pre-ADR design exploration; only A — chosen — and B are described in this
+  repo. C concerned the wire-framing seam: keeping framing in front of the
+  CPace-core seam deliberately leaves that seam free to move on its own. D is
+  not otherwise recorded; the letters are kept only to match the exploration's
+  numbering.)
 - **Abandoned-state secret retention** (phase-1 finding #5) — a single-use
   state dropped without `Finish` leaves its secret to GC. Pre-existing under the
   current `api.go`; neither introduced nor worsened here. Resolvable only if the
