@@ -62,18 +62,14 @@ func sampleScalar(r io.Reader) (*ristretto255.Scalar, error) {
 		b[31] &= 0x0f
 		s, err := ristretto255.NewScalar().SetCanonicalBytes(b[:])
 		if err != nil {
-			// After masking the top four bits the value is below 2^252, but the
-			// Ristretto255 scalar order L is only slightly above 2^252, so
-			// SetCanonicalBytes can reject in the (~2^-125) window [L, 2^252).
-			// Treat that as an unusable sample and retry rather than aborting.
-			continue
+			return nil, fmt.Errorf("%w: scalar sampling rejected masked bytes: %w", ErrRandomness, err)
 		}
 		if s.Equal(ristretto255.NewScalar().Zero()) == 1 {
 			continue
 		}
 		return s, nil
 	}
-	return nil, fmt.Errorf("%w: scalar randomness produced only usable-rejection samples", ErrRandomness)
+	return nil, fmt.Errorf("%w: scalar randomness produced only zero scalars", ErrRandomness)
 }
 
 //go:noinline
@@ -146,12 +142,8 @@ func deriveISK(sid, k, transcript []byte) []byte {
 
 func confirmationTag(isk, sid, y, ad []byte) []byte {
 	keyInput := append([]byte("CPaceMac"), sid...)
-	// Raw concatenation follows draft-21 §10.4. It is collision-free because
-	// ISK is always exactly 64 bytes (SHA-512 output), so the boundary between
-	// sid and ISK is recoverable as the last 64 bytes. Two different
-	// (sid, ISK) pairs collide only if len(sid_1) = len(sid_2) and
-	// sid_1 || ISK_1 = sid_2 || ISK_2 — i.e. sid_1 = sid_2 and ISK_1 = ISK_2,
-	// which is the same session.
+	// Raw concatenation follows draft-21. This is unambiguous in this suite
+	// because ISK is fixed at SHA-512's 64-byte output length.
 	keyInput = append(keyInput, isk...)
 	macKey := sha512.Sum512(keyInput)
 	clearBytes(keyInput)

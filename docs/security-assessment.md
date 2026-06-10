@@ -39,7 +39,18 @@ each side puts itself first, the CI values differ and confirmation fails. Role
 labels such as `"client"` and `"server"` are not enough as global identities for
 all users or deployments; callers should bind stable party identities.
 
-Scalar randomness always comes from Go's `crypto/rand.Reader`; callers cannot inject a custom random reader through the public API. Scalar sampling masks the top four bits of byte 31 (clearing bits above group size 252), parses the result as a canonical Ristretto255 scalar, and rejects the zero scalar. The Ristretto255 scalar order `L = 2^252 + 27742...` exceeds `2^252` by approximately `2^125`, so a uniformly random masked value has probability approximately `2^-125` of falling in `[L, 2^252)` and being rejected by `SetCanonicalBytes`. That outcome is statistically negligible but reachable in principle; the sampling loop treats it as an unusable sample and retries rather than aborting. The zero check creates a secret-dependent loop only for the all-zero masked scalar case, which has negligible probability with the system random reader. Sampling failure after `maxScalarTries` retries wraps `ErrRandomness`. The package implements draft §8.3 bit-masking with defense-in-depth retries for unusable samples; using the ristretto255 library's `SetUniformBytes` plus zero rejection/retry would be an allowed draft alternative, but it consumes 64 random bytes and reduces modulo the scalar order, changing deterministic behavior and defining a different package profile.
+Scalar randomness always comes from Go's `crypto/rand.Reader`; callers cannot
+inject a custom random reader through the public API. Scalar sampling masks bits
+above group size 252, parses the result as a canonical scalar, and rejects zero.
+The mask makes the canonical parse error path defensive; it should be
+unreachable unless the sampling code changes. The zero check creates a
+secret-dependent loop only for the all-zero masked scalar case. That event has
+negligible probability with the system random reader. Sampling failure wraps
+`ErrRandomness`. The package keeps this draft-21 Ristretto255 recommendation
+for profile compatibility. Using the ristretto255 library's `SetUniformBytes`
+plus zero rejection/retry would be an allowed draft alternative, but it consumes
+64 random bytes and reduces modulo the scalar order, changing deterministic
+behavior and defining a different package profile.
 
 ## Memory Handling
 

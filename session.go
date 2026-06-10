@@ -81,7 +81,7 @@ func (s *Session) Export(label, context []byte, length int) ([]byte, error) {
 	info := lvCat([]byte("CPaceExport"), label, context)
 	out, err := hkdf.Key(sha512.New, st.isk, nil, string(info), length)
 	if err != nil {
-		return nil, fmt.Errorf("%w: export failed: %w", ErrInvalidInput, err)
+		return nil, fmt.Errorf("%w: export failed: %v", ErrInvalidInput, err)
 	}
 	return out, nil
 }
