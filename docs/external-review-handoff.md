@@ -142,8 +142,8 @@ upstream review.
 - Complete external review of package-owned framing, CI construction, and
   profile choices.
 - Obtain independent cryptographic review before any production-ready claim.
-- Refresh exact-release dependency review, long fuzz evidence, and
-  security/spec audit after review-driven changes and before any
-  production-readiness candidate.
+- Refresh exact-release dependency review, long fuzz evidence, Capslock
+  capability evidence, and security/spec audit after review-driven changes and
+  before any production-readiness candidate.
 - Resolve any critical or high review findings before moving beyond the `v0.x`
   prerelease line.

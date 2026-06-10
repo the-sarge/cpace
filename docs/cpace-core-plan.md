@@ -133,7 +133,7 @@ func (r *Responder) Finish(messageC []byte) (*Session, error) {
 }
 ```
 
-The `i.core == nil` / `r.core == nil` guards are deliberate hardening, recorded in ADR-0001 as a **narrow policy reopen** (decided 2026-06-10). `Initiator` and `Responder` are exported structs, so a caller *can* fabricate a zero value; today that panics inside the crypto (initiator) or consumes the state and returns `ErrMessage`/`ErrConfirmationFailed` (responder). With the guards, `Finish` returns `ErrInvalidInput` **without** consuming — an observable behavior change for fabricated zero values, shipped with a changelog note and a pinning test per the ADR's acceptance criteria. The error text says "uninitialized", not "nil", because the guard also fires for a non-nil shell whose `core` is nil.
+The `i.core == nil` / `r.core == nil` guards are deliberate hardening, recorded in ADR-0001 as a **narrow policy reopen** (decided 2026-06-10). `Initiator` and `Responder` are exported structs, so a caller *can* fabricate a zero value. Today `Finish` on one consumes the single-use state and then: the **initiator** returns `ErrMessage` (malformed message B) or `ErrAbort` (invalid or identity share), panicking on its nil scalar only when the share is valid; the **responder** returns `ErrMessage`/`ErrConfirmationFailed` — or **succeeds** against a crafted message C, because a zero-value responder's expected tag is computed from all-nil inputs with no secret material (a public constant), handing the caller a real `*Session` keyed from a nil ISK whose `Export` output is attacker-predictable. With the guards, `Finish` returns `ErrInvalidInput` **without** consuming — pinned by `TestFinishZeroValueHardening` (build step 5) and a changelog note that must state the forged-tag success path, per the ADR's acceptance criteria. The error text says "uninitialized", not "nil", because the merged guard also fires for a non-nil shell whose `core` is nil; this changes the nil-receiver message text from "nil initiator"/"nil responder" too (error identity is unchanged).
 
 Two load-bearing invariants the sketches rely on, stated so no implementer relaxes them: **the shells never reassign or nil `.core` after construction** — cleanup nils the core's *fields*, never the pointer — so the unsynchronized `i.core == nil` read is race-free and a second `Finish` still reaches `consume()` and returns `ErrStateUsed`, not `ErrInvalidInput`; and **core methods are never called after `clear()`** — the shell single-use guard is the enforcement boundary, and post-`clear()` core behavior is out of contract (the initiator path would nil-deref; the responder path would compute a tag over a nil ISK).
 
@@ -297,7 +297,10 @@ contract is pinned:
   never core fields; each is cleared eagerly at the narrowest scope inside the
   core method that creates it, by local `defer` or inline immediately after
   last use (the password is cleared inline, with the shell backstop `defer` in
-  front of the seam).
+  front of the seam). Derivation buffers are likewise scratch, cleared inside
+  the `crypto.go` primitives the core calls (`deriveISK`, `confirmationTag`,
+  `calculateGenerator`) — with the `lvCat`/`prependLen` intermediates excepted
+  as recorded residual risk (see the audit checklist).
 
 ## Build sequence
 
@@ -354,7 +357,8 @@ lands with its tests already in place.
 5. **Consolidate persistent-secret clearing into `clear()` — the dangerous
    step, done test-first.** First write the `clear()`-contract tests (nil-safe,
    double-`clear()` idempotence, `Finish` parse-failure and confirmation-failure
-   cleanup for both roles) and `TestSessionISKSurvivesCoreClear` — they fail
+   cleanup for both roles), `TestSessionISKSurvivesCoreClear`, and
+   `TestFinishZeroValueHardening` — they fail
    (red). Then implement `core.clear()` per
    [the contract](#the-clear-contract) and replace the interim `defer`s with
    `defer core.clear()` (green). Step 5 only *consolidates* clearing that is
@@ -396,6 +400,13 @@ lands with its tests already in place.
   An initiator-side variant, if wanted, asserts a *different* property: after
   `initiatorCore.finish`, `clear()` zeroes the scalar, and the finish-local ISK
   never aliased the Session's cloned ISK. Written test-first in build step 5.
+- **New — zero-value guard pinning test (`TestFinishZeroValueHardening`):**
+  both roles. `Finish` on a caller-fabricated zero-value `Initiator` /
+  `Responder` returns `ErrInvalidInput` **without** consuming the single-use
+  state — covering a malformed message and, for the responder, the crafted
+  message C whose forged tag *succeeds* today (the regression this guard
+  exists to close). Written test-first in build step 5 alongside the
+  `clear()`-contract tests.
 - **Internal-seam tests — retained:** `vectors_test.go`'s primitive-level
   checks (`calculateGenerator`, `scalarMultVFY`, transcript builders) still
   pinpoint which primitive diverges from the spec.
@@ -462,6 +473,7 @@ go test ./... -run TestResponderPrevalidatesInvalidInitiatorShareBeforeRandomnes
 # New tests — must exist before/with step 5, not after
 go test ./... -run TestSessionISKSurvivesCoreClear   # responder-scoped
 go test ./... -run 'TestClear'        # nil-safe, idempotent, failure-path
+go test ./... -run TestFinishZeroValueHardening      # zero-value guard, both roles
 
 # Fuzz — smoke before; the post-refactor run is an interim gate ONLY, not
 # evidence: the recorded bar (docs/fuzz-evidence.md) re-runs at the #33 refresh

@@ -57,14 +57,17 @@ The core owns one role's cryptographic computation and the lifetime of its
 (the responder's stored transcript is public wire data, but it is zeroed
 alongside the ISK as hygiene) — exposing a single `clear()` per core. Scratch
 secrets (the normalized password, the generator element, the Diffie-Hellman
-point `k`, the responder's ephemeral scalar, the initiator's `finish`-local
-ISK, and derivation buffers) are **not** core fields: they remain local
-variables cleared eagerly at the narrowest scope inside core methods, matching
-the current code with one deliberate improvement — the initiator's
-`finish`-local ISK moves from two explicit per-path clears to a single `defer`,
-which also covers panic paths. Storing scratch secrets on the core to be
-cleared by `clear()` would extend a plaintext secret's lifetime across the
-network round-trip — a regression, not the goal.
+point `k`, the responder's ephemeral scalar, and the initiator's `finish`-local
+ISK) are **not** core fields: they remain local variables cleared eagerly at
+the narrowest scope inside core methods, matching the current code with one
+deliberate improvement — the initiator's `finish`-local ISK moves from two
+explicit per-path clears to a single `defer`, which also covers panic paths.
+Derivation buffers are likewise scratch, cleared inside the `crypto.go`
+primitives the core calls (`deriveISK`, `confirmationTag`,
+`calculateGenerator`) — with the `lvCat`/`prependLen` intermediates excepted
+as recorded residual risk (see the plan's audit checklist). Storing scratch
+secrets on the core to be cleared by `clear()` would extend a plaintext
+secret's lifetime across the network round-trip — a regression, not the goal.
 
 Resolved design points:
 
@@ -87,13 +90,23 @@ Resolved design points:
   internal-only and does not touch the frozen public API or profile policy.
 - **Zero-value hardening (narrow policy reopen, decided 2026-06-10)** —
   `Initiator` / `Responder` are exported structs, so a caller can fabricate a
-  zero value; today `Finish` on one panics inside the crypto (initiator) or
-  consumes the state and returns `ErrMessage`/`ErrConfirmationFailed`
-  (responder). The shells gain a core-presence guard: `Finish` on a fabricated
-  zero value returns `ErrInvalidInput` **without** consuming the state. This is
-  an observable behavior change for fabricated zero values only; it is recorded
-  here as a deliberate, narrow reopen of the behavior freeze, and ships with a
-  changelog entry and a pinning test (see Acceptance criteria).
+  zero value. Today `Finish` on one consumes the single-use state and then:
+  the **initiator** returns `ErrMessage` (malformed message B) or `ErrAbort`
+  (invalid or identity share), panicking on its nil scalar only when the share
+  is valid; the **responder** returns `ErrMessage`/`ErrConfirmationFailed` —
+  or **succeeds** against a crafted message C, because a zero-value
+  responder's expected tag is computed from all-nil inputs with no secret
+  material (a public constant), handing the caller a real `*Session` keyed
+  from a nil ISK whose `Export` output is attacker-predictable. That
+  forged-tag success path is the strongest rationale for this reopen. The
+  shells gain a core-presence guard: `Finish` on a fabricated zero value
+  returns `ErrInvalidInput` **without** consuming the state. One further
+  string-level delta rides along: the nil-receiver error text changes from
+  "nil initiator"/"nil responder" to "uninitialized …" under the merged guard
+  (error identity via `errors.Is(err, ErrInvalidInput)` is unchanged).
+  Recorded as a deliberate, narrow reopen of the behavior freeze; ships with a
+  changelog entry — which must state the forged-tag success path — and a
+  pinning test (see Acceptance criteria).
 
 ## Acceptance criteria
 
@@ -147,8 +160,10 @@ of them is satisfied:
 
 Decided 2026-06-10: implementation is **hard-gated on the external reviews**.
 The reviewer packet (`docs/external-review-handoff.md`) pins reviewers to a
-fixed baseline, and issues #29–#31 ask them to evaluate exactly the
-orchestration and secret-lifetime code this refactor relocates.
+fixed baseline; issues #29–#31 pin the external-review scope for the
+package-owned profile, lifecycle, and framing surface, and #30 in particular
+targets exactly the orchestration and secret-lifetime code this refactor
+relocates — so relocating it mid-review invalidates the reviewers' anchors.
 
 - Implementation of this ADR must not begin until the external review
   (#29–#31) and the independent cryptographic review (#32) conclude, or a later
