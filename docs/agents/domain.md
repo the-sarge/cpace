@@ -9,9 +9,7 @@ This repo is **single-context**: one `CONTEXT.md` plus `docs/adr/` at the repo r
 - **`CONTEXT.md`** at the repo root — the project's domain glossary.
 - **`docs/adr/`** — read ADRs that touch the area you're about to work in.
 
-If either of these doesn't exist yet, **proceed silently**. Don't flag the absence; don't suggest creating them upfront. The producer skill (`/grill-with-docs`) creates them lazily when terms or decisions actually get resolved.
-
-> Status: `CONTEXT.md` and `docs/adr/` now exist at the repo root.
+Both exist. (If a future split ever removes one, **proceed silently** — don't flag the absence; the producer skill `/grill-with-docs` recreates them lazily when terms or decisions actually get resolved.)
 
 ## File structure
 
@@ -19,10 +17,9 @@ Single-context layout (this repo):
 
 ```
 /
-├── CONTEXT.md            ← domain glossary (not yet created)
-├── docs/adr/             ← architecture decision records (not yet created)
-│   ├── 0001-ristretto255-only-suite.md
-│   └── 0002-mandatory-key-confirmation.md
+├── CONTEXT.md            ← domain glossary
+├── docs/adr/             ← architecture decision records — read the live
+│                            directory; do not rely on a hardcoded list
 └── *.go                  ← flat package at the repo root
 ```
 
@@ -36,4 +33,4 @@ If the concept you need isn't in the glossary yet, that's a signal — either yo
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0002 (mandatory key confirmation) — but worth reopening because…_
+> _Contradicts ADR-0001 (extract a deep CPace core) — but worth reopening because…_

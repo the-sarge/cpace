@@ -1,17 +1,21 @@
 # Triage Labels
 
-The skills speak in terms of five canonical triage roles. This file maps those roles to the actual label strings used in this repo's issue tracker (GitHub Issues on `the-sarge/cpace`).
+The skills speak in terms of five canonical triage roles. This file maps those roles to the actual label vocabulary used in this repo's issue tracker (GitHub Issues on `the-sarge/cpace`).
 
-| Canonical role    | Label in our tracker | Meaning                                  |
-| ----------------- | -------------------- | ---------------------------------------- |
-| `needs-triage`    | `needs-triage`       | Maintainer needs to evaluate this issue  |
-| `needs-info`      | `needs-info`         | Waiting on reporter for more information |
-| `ready-for-agent` | `ready-for-agent`    | Fully specified, ready for an AFK agent  |
-| `ready-for-human` | `ready-for-human`    | Requires human implementation            |
-| `wontfix`         | `wontfix`            | Will not be actioned                     |
+The repo's live taxonomy (verify with `gh label list`) is **dimensional, not workflow-state**:
 
-When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
+- `priority/high` (address before v1.0.0), `priority/medium`
+- `kind/hardening`, `kind/coverage`
+- `area/framing`, `area/ci`
+- `release blocker`, `external review`, `security`
+- `wontfix`
 
-`wontfix` already exists in the repo. The other four labels do not exist yet — the `triage` skill will create them (via `gh label create`) the first time it needs them. Create them ahead of time if you want to set colours or descriptions yourself.
+| Canonical role    | Label in our tracker | How to express it here                                            |
+| ----------------- | -------------------- | ----------------------------------------------------------------- |
+| `needs-triage`    | *(unmapped)*         | An issue with no `priority/*` label has not been triaged.          |
+| `needs-info`      | *(unmapped)*         | Ask in an issue comment; do not label.                             |
+| `ready-for-agent` | *(unmapped)*         | State readiness in a comment; do not label.                        |
+| `ready-for-human` | *(unmapped)*         | State it in a comment; do not label.                               |
+| `wontfix`         | `wontfix`            | Will not be actioned.                                              |
 
-Edit the right-hand column to match whatever vocabulary you actually use.
+**Do not create labels.** The taxonomy is the maintainer's; `gh label create` for the unmapped roles would fragment triage. When a skill mentions an unmapped role, record the state in an issue comment instead, or ask the maintainer to extend this mapping.
