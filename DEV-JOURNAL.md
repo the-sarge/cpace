@@ -527,3 +527,36 @@ chronologically), so ADRs 0002-0007 are now visible in-branch.
   run ID to the ADR frontmatter.
 - Open the PR for `cpace-core-adr`; merging it heals the dangling `[[0001]]`
   links and unblocks the 0004/0007 acceptance flips.
+
+---
+
+## ADR-0001 confirming-round gate passed - 2026-06-10 16:37 EDT
+
+**Main:** `9fe2a53`
+**Actor:** Claude
+
+**Summary:** The revised ADR-0001 + plan cleared the confirming-round gate on
+branch `cpace-core-adr`. Four `ras consider` rounds on 2026-06-10 (run IDs in
+the ADR's `review-runs` frontmatter): round 1 (ADR) six fix-first items;
+round 2 (ADR + plan) four record-trail and ten plan-precision items —
+including a reproduced zero-value Responder forged-tag success path, now the
+recorded rationale for the ADR's zero-value reopen, and an interim
+commits-2-4 panic window closed by assigning the core-presence guard to build
+step 2; round 3 ADR **PASS** / plan four step-5 staging items; round 4 plan
+**PASS** with zero findings at `4dc2081`. No round disputed the architecture,
+the zero-value reopen, or the sequencing gate.
+
+**Process notes:** `ras verify` cannot re-gate this pair — the ADR and plan
+are each other's context refs, so any fix pass trips
+`source_identity_mismatch`; the gate was restated as fresh consider rounds.
+Issue #33 and the external-review handoff gained the Capslock line so all
+four artifacts name the same #33 evidence set (issue edit maintainer-
+authorized).
+
+**Open:**
+- C-012 carry-forward (ADR-0003 under-specifies call-site sentinel rewrap) -
+  pending a maintainer decision to file as an ADR-0003 issue.
+- Open the pull request for `cpace-core-adr`; merging heals the `[[0001]]`
+  links on main and unblocks the 0004/0007 acceptance flips.
+- Implementation remains hard-gated on #29-#32 per the ADR's Sequencing
+  section; #33 full refresh applies after.

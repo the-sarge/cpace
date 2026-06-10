@@ -10,6 +10,7 @@ review-runs:
   - 20260610T193900-68103126edf3dc34ef188d89 # confirming round 2 (plan) — plan-precision items, applied
   - 20260610T200402-9a4c734872fb55fcd195a988 # confirming round 3 (ADR) — PASS, no required fixes; ADR gate satisfied
   - 20260610T201447-7dd7dbcb923d3cf4f8152f55 # confirming round 3 (plan) — step-5 staging defects, applied
+  - 20260610T203109-403271f8a7dbd1033b5266bb # confirming round 4 (plan) — PASS, no required fixes; plan gate satisfied
 ---
 
 # Extract a deep CPace core
