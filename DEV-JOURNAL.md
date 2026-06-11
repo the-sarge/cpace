@@ -597,3 +597,51 @@ the ADR-0001 schema, and each Status section records its gate evidence.
 - Re-land the safe fixes (ex-PR #65) via a fresh PR after diagnosing its
   SAST/gosec failures.
 - ADR-0001 implementation stays hard-gated on external reviews #29-#32.
+
+---
+
+## Toolchain go1.26.4, tag-authority ruleset, safe-fixes re-land, 0003 mapping - 2026-06-10 23:28 EDT
+
+**Main:** `c56b70c6f1d9`
+**Actor:** Claude
+
+**Summary:** Maintainer-authorized follow-up batch closing four items from the
+ADR arc: the toolchain security bump merged, the ADR-0007 tag-authority
+control completed with evidence, the safe-fixes re-land staged for a
+deliberate merge decision, and the last open ADR-0003 clarification landed.
+
+**Completed:**
+- Merged PR #71 (`8e57063`): `go.mod` toolchain directive `go1.26.3 ->
+  go1.26.4` after the 2026-06-02 Go security release; branch updated with a
+  local `--signoff` merge per the DCO convention. The 1.26.4
+  evidence-reproduction work is now unblocked.
+- Completed the ADR-0007 *Tag authority control* criterion: added the missing
+  `creation` rule to ruleset 16048307 ("Protect release tags" — active on
+  `refs/tags/v*` since 2026-05-06 with update+deletion and an empty bypass
+  list). Negative authorization test: a repository-admin push of
+  `refs/tags/v0.0.0-ruleset-test` was rejected (GH013, "Cannot create ref due
+  to creations being restricted"). Exported ruleset JSON, the test transcript,
+  and SHA256SUMS are bundled at `docs/evidence/tagruleset-20260610/`.
+- Opened PR #73 re-landing the safe fixes (ex-#65) as a revert of revert
+  `5079d35`. The restored content is the validated tip `25223e4`, whose checks
+  were green including SAST Gate — the failures visible in #65's rollup were
+  stale pre-G115-fix runs. `task check` green under go1.26.4 on the re-land
+  branch. The merge is deliberately left to the maintainer per the cpace.S15
+  correction.
+- Merged PR #74: ADR-0003 *Call-site sentinel mapping* clarification — call
+  sites rewrap the plain sentinel with role context and discard the helper's
+  already-wrapped error; non-sentinel defensive branches pass through
+  unchanged. Closes issue #70; refines the outline without reopening the
+  accepted decision.
+
+**Validation:** `task docs:check` green on every docs branch; full `task
+check` green on the re-land branch; required PR checks green at each merge
+(two merges initially raced still-running checks and were retried after the
+fresh head's checks completed).
+
+**Next:**
+- Deliberate maintainer merge decision on PR #73.
+- Run the 1.26.4 evidence reproduction: dependency review + gosec, Capslock,
+  security/spec note, paired ARM/Intel long fuzz, exact-commit pins.
+- Send the external-review outreach (#29-#32) — the v1.0.0 critical path;
+  ADR-0001 implementation stays hard-gated on it.
