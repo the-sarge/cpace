@@ -9,7 +9,7 @@ review-runs:
 
 ## Status
 
-**Accepted (2026-06-10).** This ADR captures a v1.0.0 error-API decision surfaced by external code review (item H2). Gated per the project's ADR policy: the `ras consider` run above returned accept-with-revisions; the revisions were applied via a maintainer-decided resolution pass (`ras fix --decisions`) and re-gated, with `ras verify` returning clean (unresolved: []). Evidence trail: PR #66 comments and DEV-JOURNAL cpace.S15. The error-sentinel surface and the internal return shape of `scalarMultVFY` are settled; future reviews should not re-litigate them. One implementation-time clarification is tracked as issue #70 (how call sites rewrap the sentinels); it refines the implementation outline and does not reopen the decision.
+**Accepted (2026-06-10).** This ADR captures a v1.0.0 error-API decision surfaced by external code review (item H2). Gated per the project's ADR policy: the `ras consider` run above returned accept-with-revisions; the revisions were applied via a maintainer-decided resolution pass (`ras fix --decisions`) and re-gated, with `ras verify` returning clean (unresolved: []). Evidence trail: PR #66 comments and DEV-JOURNAL cpace.S15. The error-sentinel surface and the internal return shape of `scalarMultVFY` are settled; future reviews should not re-litigate them. One implementation-time clarification was tracked as issue #70 (how call sites rewrap the sentinels) and is resolved by the *Call-site sentinel mapping* subsection under Decision (2026-06-10); it refines the implementation outline and does not reopen the decision.
 
 ## Context
 
@@ -70,6 +70,16 @@ Change the signature of `scalarMultVFY` (and `decodePublicShare`) to return `([]
 
 `ErrAbort` is retained. The returned errors use exactly one `ErrAbort` wrap plus the plain sentinel where one exists, in the same style as the existing `fmt.Errorf("%w: %w", ErrInvalidInput, ErrEmptySessionID)` layering in `api.go`. API call sites must retain role-context wrapping, for example `fmt.Errorf("%w: invalid initiator share: %w", ErrAbort, ErrPeerShareIdentity)` and `fmt.Errorf("%w: invalid responder share: %w", ErrAbort, ErrPeerShareEncoding)`, so the finer sentinels do not regress initiator-vs-responder triage. The resulting public error-string shape is `cpace: protocol abort: invalid initiator share: cpace: peer share identity` (or the responder/encoding variant), with no duplicated `cpace: protocol abort` prefix.
 
+### Call-site sentinel mapping (clarification, 2026-06-10 — issue #70)
+
+The call-site examples above are produced by **rewrapping the plain sentinel, never the helper's returned error**. The helper's error already carries its one `ErrAbort` wrap, so a call site that `%w`-wraps it while adding `ErrAbort` role context would produce the duplicated `cpace: protocol abort` prefix this Decision forbids. Concretely, a call site dispatches on the returned error and handles exactly three cases:
+
+- `errors.Is(err, ErrPeerShareEncoding)` → mint a fresh error wrapping the **plain sentinel** with role context — `fmt.Errorf("%w: invalid initiator share: %w", ErrAbort, ErrPeerShareEncoding)` (or the responder variant) — and discard the helper's error value.
+- `errors.Is(err, ErrPeerShareIdentity)` → same, with `ErrPeerShareIdentity`.
+- **Default (non-sentinel branches)** — the wrong-length defensive error and the post-multiply neutral-element error — propagate the helper's error **unchanged**. It is already `ErrAbort`-wrapped, both branches are defensive and unreachable from the wire (framing enforces `pointSize`; prime-order Ristretto255 makes the post-multiply identity impossible), and deliberately adding no role context keeps the single-wrap rule trivially true while preserving the precise defensive diagnostic.
+
+This dispatch is the only sanctioned shape: detect-and-rewrap for the two sentinels, pass-through for everything else.
+
 ## Acceptance criteria
 
 Multi-agent review concurrence on this ADR moves it proposed -> accepted (the decision is ratified at review time). The acceptance criteria below are implementation-verification gates: they bind the implementing change and must all be satisfied before v1.0.0 is tagged - not before this ADR is accepted.
@@ -120,7 +130,7 @@ Multi-agent review concurrence on this ADR moves it proposed -> accepted (the de
 1. Add `ErrPeerShareEncoding` and `ErrPeerShareIdentity` to `errors.go` as plain `errors.New` sentinels with doc comments that say the returned error also wraps `ErrAbort`.
 2. Change `decodePublicShare` to return `(*ristretto255.Element, error)` using the two new sentinels for encoding and identity rejection, and an internal `ErrAbort`-wrapped error for the wrong-length defensive branch.
 3. Change `scalarMultVFY` to return `([]byte, error)`, returning `nil` on every failure path; thread the appropriate error through, and return `fmt.Errorf("%w: neutral-element shared secret", ErrAbort)` for the unreachable post-multiply identity branch.
-4. Update `api.go:166-168, 180-184, 222-226` so public API errors retain `invalid initiator share` / `invalid responder share` role context and still satisfy `errors.Is(err, ErrAbort)` plus `errors.Is(err, ErrPeerShareEncoding)` or `errors.Is(err, ErrPeerShareIdentity)` where applicable.
+4. Update `api.go:166-168, 180-184, 222-226` so public API errors retain `invalid initiator share` / `invalid responder share` role context and still satisfy `errors.Is(err, ErrAbort)` plus `errors.Is(err, ErrPeerShareEncoding)` or `errors.Is(err, ErrPeerShareIdentity)` where applicable, using the *Call-site sentinel mapping* specified under Decision (rewrap the plain sentinel; pass non-sentinel errors through unchanged).
 5. Add tests:
    - `TestPeerShareErrorsWrapErrAbort` — public-API tests over `Respond` and `Finish`, asserting both role-context strings and `errors.Is` behavior for `ErrAbort` plus the applicable peer-share sentinel.
    - `TestPeerShareEncodingRejection` — feed a non-canonical Ristretto255 encoding via wire and assert `ErrPeerShareEncoding`.
