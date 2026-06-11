@@ -1,12 +1,15 @@
 ---
-status: proposed
+status: accepted
+date: 2026-06-10
+review-runs:
+  - 20260609T225354-33836cfefacf9a5e5d403c7d # ras consider — accept with revisions; revisions applied via ras fix --decisions, ras verify clean
 ---
 
 # Type of the `length` parameter on `Session.Export`
 
 ## Status
 
-**Proposed — recorded, not yet enforced.** This ADR captures a v1.0.0 public-API decision surfaced by external code review (item M3). It stays `proposed` until an independent multi-agent review (`ras consider`) concurs. Once accepted, the `Session.Export` signature is settled for the v1.0.0 freeze.
+**Accepted (2026-06-10).** This ADR captures a v1.0.0 public-API decision surfaced by external code review (item M3). Gated per the project's ADR policy: the `ras consider` run above returned accept-with-revisions; the revisions were applied via a maintainer-decided resolution pass (`ras fix --decisions`) and re-gated, with `ras verify` returning clean (unresolved: []). Evidence trail: PR #66 comments and DEV-JOURNAL cpace.S15. The `Session.Export` signature is settled for the v1.0.0 freeze.
 
 ## Context
 

@@ -560,3 +560,40 @@ authorized).
   links on main and unblocks the 0004/0007 acceptance flips.
 - Implementation remains hard-gated on #29-#32 per the ADR's Sequencing
   section; #33 full refresh applies after.
+
+---
+
+## ADR-0001 merged; ADRs 0002-0007 accepted - 2026-06-10 22:36 EDT
+
+**Main:** `e44436c`
+**Actor:** Claude (merge and flips maintainer-authorized per-action)
+
+**Summary:** Merged PR #69 (`e44436c`), landing the fully gated ADR-0001
+record, plan, CONTEXT.md, and agent scaffolding on main — healing the
+`[[0001-extract-cpace-core]]` cross-links in ADRs 0004/0007. Then flipped all
+six review-cycle ADRs `proposed -> accepted` per the satisfied gates:
+0002/0003/0005/0006 (ras verify clean per the 2026-06-09 runs), 0004 (clean
+once the 0001 link healed), and 0007 (two-round gate: fresh round-2 consider
+after its Decision changed, round-2 verify 18/19 with only the 0001 link
+open). Each ADR's frontmatter now carries `date:` and `review-runs:` keys in
+the ADR-0001 schema, and each Status section records its gate evidence.
+
+**Also:**
+- PR #71 open: bumps the toolchain directive to go1.26.4 (2026-06-02 Go
+  security release); full check suite green, go.sum unchanged. Evidence
+  reproduction under 1.26.4 is queued as tasks for after its merge.
+- 0006's flip caveat resolved in its final text ("unmerged review branches
+  ... are not load-bearing evidence"); the implementing commit must carry its
+  own coverage.
+- Issue #70 filed: ADR-0003 call-site sentinel-rewrap clarification
+  (implementation-time; does not reopen the decision).
+- Removed the cpace-core-adr worktree and local branch after the merge.
+
+**Next:**
+- Merge PR #71, then run the 1.26.4 evidence reproduction (dependency review,
+  Capslock, security/spec note, paired ARM/Intel fuzz, exact-commit pins).
+- Create the v* tag-authority ruleset (ADR-0007 criterion) and export its
+  JSON into the release evidence bundle.
+- Re-land the safe fixes (ex-PR #65) via a fresh PR after diagnosing its
+  SAST/gosec failures.
+- ADR-0001 implementation stays hard-gated on external reviews #29-#32.

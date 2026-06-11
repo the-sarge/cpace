@@ -1,12 +1,16 @@
 ---
-status: proposed
+status: accepted
+date: 2026-06-10
+review-runs:
+  - 20260609T231754-e82921fff2487be0900ac8f0 # ras consider round 1 — accept with revisions; the revision changed the Decision (attestation + tag ruleset)
+  - 20260610T014347-779ee104a78b0c5503ab8b70 # ras consider round 2 (fresh, Decision changed) — accept with revisions; applied via ras fix --decisions (resolve 20260610T094058-a140c87ec67b154bcb339633)
 ---
 
 # Release supply-chain artifacts for v1.0.0
 
 ## Status
 
-**Proposed — recorded, not yet enforced.** This ADR captures a v1.0.0 release-pipeline architecture decision surfaced by external code review (item H6.a). It stays `proposed` until an independent multi-agent review (`ras consider`) concurs. Acceptance settles the signing/SBOM/SLSA artifact set for v1.0.0; future releases follow the same pattern unless re-opened.
+**Accepted (2026-06-10).** This ADR captures a v1.0.0 release-pipeline architecture decision surfaced by external code review (item H6.a). Gated per the project's ADR policy across two rounds: round 1 changed the Decision (adopting GitHub artifact attestation for the SBOM and a tag-authority ruleset), so a **fresh** `ras consider` round re-reviewed the new decision content rather than a verify; round 2's findings were applied via a maintainer-decided resolution pass, with the round-2 `ras verify` resolving 18/19 — the one open item being the deliberately deferred `[[0001-extract-cpace-core]]` cross-link, which resolved when ADR-0001 merged to main (PR #69, `e44436c`). Evidence trail: PR #66 comments and DEV-JOURNAL cpace.S15. Acceptance settles the signing/SBOM artifact set for v1.0.0 (SLSA deferred per the Decision); future releases follow the same pattern unless re-opened. The tag-authority ruleset acceptance criterion remains an open maintainer action (OmniFocus / release checklist).
 
 ## Context
 

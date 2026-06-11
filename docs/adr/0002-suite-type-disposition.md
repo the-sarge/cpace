@@ -1,12 +1,15 @@
 ---
-status: proposed
+status: accepted
+date: 2026-06-10
+review-runs:
+  - 20260609T221534-bb273e71d960efe03b4b0fd0 # ras consider — accept with revisions; revisions applied via ras fix --decisions, ras verify clean
 ---
 
 # Disposition of the `Suite` type before v1.0.0 freeze
 
 ## Status
 
-**Proposed - recorded, not yet enforced.** This ADR captures a v1.0.0 freeze decision surfaced by external code review (item B1) so the reasoning is preserved. It stays proposed until an independent multi-agent review (`ras consider`) of this ADR concurs. Multi-agent review concurrence on this ADR moves it proposed -> accepted; the decision is ratified at review time, and the implementation-verification gates below bind the implementing change before v1.0.0 is tagged. If the review dissents, this ADR is revised or rejected instead. Status may later record `accepted, implemented at <sha>` once implementation lands.
+**Accepted (2026-06-10).** This ADR captures a v1.0.0 freeze decision surfaced by external code review (item B1). Gated per the project's ADR policy: the `ras consider` run above returned accept-with-revisions; the revisions were applied via a maintainer-decided resolution pass (`ras fix --decisions`) and re-gated, with `ras verify` returning clean (unresolved: []). Evidence trail: PR #66 comments and DEV-JOURNAL cpace.S15. The decision is ratified; the implementation-verification gates below bind the implementing change before v1.0.0 is tagged. Status may later record `implemented at <sha>` once implementation lands.
 
 ## Context
 

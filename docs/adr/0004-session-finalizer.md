@@ -1,12 +1,15 @@
 ---
-status: proposed
+status: accepted
+date: 2026-06-10
+review-runs:
+  - 20260609T224053-605bb721c00f68fec9eb9544 # ras consider — accept with revisions; revisions applied via ras fix --decisions, ras verify clean except the deferred [[0001]] link
 ---
 
 # GC finalizer for `Session` to bound ISK lifetime on missed `Close`
 
 ## Status
 
-**Proposed — recorded, not yet enforced.** This ADR captures a memory-handling decision surfaced by external code review (item H1.c). It stays `proposed` until an independent multi-agent review (`ras consider`) concurs. Acceptance is contingent on the review agreeing that the decision recorded below is the right trade-off given Go's finalizer semantics and the package's documented best-effort memory-cleanup policy.
+**Accepted (2026-06-10).** This ADR captures a memory-handling decision surfaced by external code review (item H1.c). Gated per the project's ADR policy: the `ras consider` run above returned accept-with-revisions; the revisions were applied via a maintainer-decided resolution pass (`ras fix --decisions`) and re-gated, with `ras verify` returning clean except the deliberately deferred `[[0001-extract-cpace-core]]` cross-link — which resolved when ADR-0001 merged to main (PR #69, `e44436c`). Evidence trail: PR #66 comments and DEV-JOURNAL cpace.S15. The review concurred that the decision below is the right trade-off given Go's finalizer semantics and the package's documented best-effort memory-cleanup policy.
 
 ## Context
 
