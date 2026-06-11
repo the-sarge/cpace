@@ -645,3 +645,38 @@ fresh head's checks completed).
   security/spec note, paired ARM/Intel long fuzz, exact-commit pins.
 - Send the external-review outreach (#29-#32) — the v1.0.0 critical path;
   ADR-0001 implementation stays hard-gated on it.
+
+---
+
+## External reviews deferred; implementation proceeds pre-review - 2026-06-11 13:38 EDT
+
+**Main:** `5c539d6d7c80`
+**Actor:** Josh (decision) / Claude (record)
+
+**Summary:** Maintainer decision: with no external reviews in flight, defer
+the #29-#32 outreach and execute the accepted-ADR implementation backlog
+first, then refresh evidence once against the finished shape. Recorded as the
+deferral-clause exercise in ADR-0001's *Sequencing against release blockers*
+section (the clause anticipated exactly this decision).
+
+**Decisions:**
+- Reviews deferred; implementation proceeds pre-review. Rationale: the churn
+  the sequencing gate protects against cannot occur with no reviewers
+  engaged, and the eventual reviews gain value by covering the
+  post-extraction architecture instead of a shape scheduled for replacement.
+- Order of work: ADR-0003 (peer-share error semantics) first, per the plan's
+  pinned ordering rule; then the ADR-0001 six-step build sequence; then the
+  remaining accepted-ADR implementations (0002/0005/0006 small items, 0007
+  release pipeline); then one consolidated evidence refresh; then the
+  reviewer packet re-pins to the post-refactor baseline and outreach is sent.
+- The cost is accepted explicitly: v1.0.0 slips by the deferral, because the
+  reviews remain the Release Bar.
+
+**Next:**
+- The paired ARM/Intel fuzz campaigns launched earlier today (933ece2,
+  mbp128 + iMacPro, 1h x 14 targets) run to completion and serve as the
+  pre-refactor fuzz baseline plus the fuzz half of the go1264-20260611
+  evidence bundle.
+- Implement ADR-0003, then ADR-0001 per docs/cpace-core-plan.md.
+- The OmniFocus cpace project is being reorganized into phase groups to
+  mirror this sequencing.

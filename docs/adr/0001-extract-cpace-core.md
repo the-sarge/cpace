@@ -186,6 +186,18 @@ relocates — so relocating it mid-review invalidates the reviewers' anchors.
   `go.mod`/`go.sum` being byte-identical. See the plan's *Evidence &
   release-readiness* section.
 
+**Deferral exercised (2026-06-11).** With no reviews in flight, the
+maintainer deferred the external-review outreach and directed implementation
+to proceed pre-review — the churn this gate protects against cannot occur
+with no reviewers engaged, and the eventual reviews gain value by covering
+the post-extraction architecture rather than a shape scheduled for
+replacement. Order of work: ADR-0003 lands first (per the plan's pinned
+ordering rule), then this ADR's build sequence, then the remaining
+accepted-ADR implementations; one consolidated evidence refresh follows at
+the end, after which the reviewer packet re-pins to the post-refactor
+baseline and outreach is sent. The document-gate requirement above (passed
+2026-06-10) and the #33 exact-candidate refresh at RC time are unchanged.
+
 ## Consequences
 
 - The **persistent-secret** audit becomes a one-time read of two `clear()`
