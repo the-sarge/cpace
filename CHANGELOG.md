@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Bump the pinned toolchain directive to Go 1.26.4 after the 2026-06-02 Go
+  security release (`crypto/x509`, `mime`, and `net/textproto` fixes, plus
+  `crypto/fips140`, compiler, and runtime bug fixes). CI already runs 1.26.4
+  via setup-go with `GOTOOLCHAIN=local`; this aligns the `go.mod` directive
+  and local builds with it. No source change required.
 - Add a reusable evidence-bundle policy and cross-toolchain vector-stability
   checklist for future exact-candidate evidence refreshes.
 - Update external-review handoff and reviewer outreach notes to point at the
