@@ -1,0 +1,13 @@
+# Negative authorization test — 2026-06-11T03:20:00Z
+# Actor: the-sarge (repository admin); ruleset 16048307 bypass: none (current_user_can_bypass: never)
+# Expectation: push of refs/tags/v0.0.0-ruleset-test is REJECTED by the tag creation rule
+$ git tag -a v0.0.0-ruleset-test -m 'ruleset negative test' && git push origin v0.0.0-ruleset-test
+remote: error: GH013: Repository rule violations found for refs/tags/v0.0.0-ruleset-test.        
+remote: Review all repository rules at https://github.com/the-sarge/cpace/rules?ref=refs%2Ftags%2Fv0.0.0-ruleset-test        
+remote: 
+remote: - Cannot create ref due to creations being restricted.        
+remote: 
+To github.com:the-sarge/cpace.git
+ ! [remote rejected] v0.0.0-ruleset-test -> v0.0.0-ruleset-test (push declined due to repository rule violations)
+error: failed to push some refs to 'github.com:the-sarge/cpace.git'
+push exit code: 1
