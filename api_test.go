@@ -991,6 +991,23 @@ func TestResponderPrevalidatesInvalidInitiatorShareBeforeRandomness(t *testing.T
 			if random.reads != 0 {
 				t.Fatalf("Respond read randomness %d times before rejecting share", random.reads)
 			}
+
+			nc, err := normalizeConfig(cfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer nc.wipe()
+			random = &countingFailingReader{err: io.ErrUnexpectedEOF}
+			core, yb, tagB, err := newResponderCore(nc, tc.ya, nil, random)
+			if core != nil || yb != nil || tagB != nil {
+				t.Fatalf("newResponderCore returned core=%v yb=%x tagB=%x on invalid share", core, yb, tagB)
+			}
+			if !errors.Is(err, ErrAbort) || errors.Is(err, ErrRandomness) {
+				t.Fatalf("newResponderCore err=%v", err)
+			}
+			if random.reads != 0 {
+				t.Fatalf("newResponderCore read randomness %d times before rejecting share", random.reads)
+			}
 		})
 	}
 }
