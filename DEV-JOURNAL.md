@@ -758,3 +758,20 @@ section (the clause anticipated exactly this decision).
 
 **Next:**
 - Josh reviews/merges the evidence PR; then the ADR-0001 six-step build sequence starts against the recorded baseline.
+
+---
+
+## Phase 1 closed: go1.26.4 fuzz baseline merged - 2026-06-11 23:32 EDT
+
+**Main:** `4c60af8753e8`
+**Actor:** Josh (merge authorization) / Claude (record)
+
+**Summary:** Phase 1 (pre-refactor baseline evidence) is closed. Josh authorized the merge of PR #81 in-conversation; this entry rides on the PR branch and the merge executes once the docs lanes re-confirm green. With it, the `go1264-20260611` bundle is complete (dependency/Capslock/audit + the paired go1.26.4 fuzz campaigns at `933ece2`), both campaign worktrees are gone, and the ADR-0001 six-step build sequence is unblocked against a fully recorded baseline.
+
+**Completed:**
+- PR #81 (fuzz-evidence assembly) reviewed green on all required gates; merge authorized by Josh 2026-06-11 and executed by the session immediately after this entry landed on the branch.
+- OmniFocus phase group "1. Pre-refactor baseline evidence": completing "Paired ARM/Intel long fuzz campaigns under 1.26.4", and "Confirm every evidence doc names the exact post-#71 commit" after a post-merge grep confirms every refreshed evidence doc pins `933ece2`.
+
+**Next:**
+- ADR-0001 six-step build sequence per `docs/cpace-core-plan.md` (phase group 2), with the merged fuzz baseline as the pre-refactor oracle reference.
+- The consolidated Phase 3 refresh still owes the post-implementation fuzz campaign (ADR-0003 already triggered the refresh rule, as recorded in `docs/fuzz-evidence.md`).
