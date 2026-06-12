@@ -823,6 +823,31 @@ section (the clause anticipated exactly this decision).
 
 ---
 
+## ADR-0002 suite API cleanup merged - 2026-06-12 12:09 EDT
+
+**Main:** `a0fd89864c28`
+**Actor:** Codex
+
+**Summary:** PR #84 implemented ADR-0002 by removing the exported `Suite` type and `SuiteCPaceRistretto255SHA512` constant before v1.0.0, replacing the public marker with internal `currentSuite byte = 0x01`, and preserving the wire suite byte through `wireSuite = currentSuite`. The PR merged to `main` as `a0fd89864c285414262c8f097fd523ba2667ae25`.
+
+**Completed**
+
+- Removed the dead exported suite API surface while keeping the package single-suite and preserving the `0xc1 || 0x01 || role || ...` wire header.
+- Added a literal `wireSuite == 0x01` test pin and updated the existing protocol-identity stability test to use `currentSuite`.
+- Recorded the breaking pre-v1 cleanup in `CHANGELOG.md` and clarified ADR-0002's API-diff gate after ADR-0003's compatible additions had already landed.
+- Added interim non-evidence notes in `docs/fuzz-evidence.md` and `docs/security-spec-audit.md`; these do not replace the later exact-candidate Phase 3 evidence refresh.
+
+**Validation**
+
+- GitHub checks on PR #84 were green before merge: CI Check, CodeQL Analyze, Cross-Platform Smoke on macOS and Windows, DCO, Dependency Gate, SAST Gate, Staticcheck, plus neutral advisory gosec upload.
+- Local/manual checks reported on the PR: `go test ./...`, `go test -race ./...`, `task check`, `gosec -tests ./...`, `git diff --check origin/main...HEAD`, and `apidiff` export comparisons.
+- API diff from `origin/main` to the implementation reported exactly two removals: `Suite` and `SuiteCPaceRistretto255SHA512`; incompatible-only API diff from `v0.1.2` reported the same two removals.
+- The RAS implementation attempt produced branch `ras-impl/adr-0002-implementation-unexport-suite-before-v1-260612-1445-7dfa146c` but timed out after the interim fuzz gate; the recovered branch was reviewed with RAS run `20260612T154929-919d824f8425bee9cc6a70be`, fixed, and verified clean at head `d1f69ebf511c6829d8d80b105092f9c3ba19fa90`.
+
+**Next:** Continue the accepted ADR implementation sequence with ADR-0005; the consolidated release evidence refresh remains deferred until the remaining ADR implementations land.
+
+---
+
 ## ADR-0005 Export contract merged - 2026-06-12 15:30 EDT
 
 **Main:** `2b0e3c219e7a`
