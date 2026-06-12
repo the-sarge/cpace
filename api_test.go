@@ -406,8 +406,8 @@ func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	responderISK := responder.isk
-	responderTranscript := responder.transcript
+	responderISK := responder.core.isk
+	responderTranscript := responder.core.transcript
 
 	msgC, sI, err := initiator.Finish(msgB)
 	if err != nil {
@@ -424,7 +424,7 @@ func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if responder.isk != nil || responder.transcript != nil {
+	if responder.core.isk != nil || responder.core.transcript != nil {
 		t.Fatal("responder retained cleared state references after Finish")
 	}
 	if !allZero(responderISK) {
