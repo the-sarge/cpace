@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Pre-v1 API cleanup: remove exported `Suite` and `SuiteCPaceRistretto255SHA512` relative to `v0.1.2`; callers should drop those references and treat the package as single-suite with opaque framing. No wire/protocol behavior change.
+- Pre-v1 API cleanup (breaking relative to `v0.1.2`): remove exported `Suite` and `SuiteCPaceRistretto255SHA512`; callers should drop those references and treat the package as single-suite with opaque framing. No wire/protocol behavior change.
 - Internal hardening: `Initiator.Finish` and `Responder.Finish` now reject caller-fabricated zero-value protocol states with `ErrInvalidInput` before consuming state; this closes the pre-v1 zero-value responder forged-tag path where `Responder.Finish` could accept `encodeMessageC(confirmationTag(nil, nil, nil, nil))` and return a Session keyed from nil ISK. Nil-receiver error text now says "uninitialized initiator/responder"; error identity remains `ErrInvalidInput`.
 - Pre-v1 error surface: add exported `ErrPeerShareEncoding` and `ErrPeerShareIdentity` sentinels distinguishing non-canonical peer public shares from identity-element submissions (ADR-0003). Peer-share rejections from `Respond`/`Initiator.Finish` continue to wrap `ErrAbort` and retain initiator/responder role context; the internal `scalarMultVFY`/`decodePublicShare` helpers now return a typed error, and `scalarMultVFY` returns nil instead of the draft-shaped all-zero fallback. Malformed wire lengths still surface as `ErrMessage` from framing. No wire-format or protocol-visible change.
 - Bump the pinned toolchain directive to Go 1.26.4 after the 2026-06-02 Go
