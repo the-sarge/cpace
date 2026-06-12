@@ -31,6 +31,14 @@ With `PARALLEL=1` the 14 targets run sequentially, so the expected wall clock is
 
 **Scope note:** ADR-0003 (peer-share error semantics, PR #78, merged 2026-06-11 as `4c60af8`) landed after these campaigns ran. It changed `crypto.go`, `api.go`, and the `FuzzScalarMultVFY` harness, so under this document's own refresh rule the post-implementation shape is not yet covered by long-fuzz evidence; the consolidated post-implementation evidence refresh (after the accepted-ADR implementations land) owes a fresh paired campaign at that baseline.
 
+## ADR-0001 Interim Gate (Non-Evidence)
+
+This local interim gate does not replace or advance the pinned long-fuzz evidence above. It records only the ADR-0001 build-sequence check on the feature branch; the consolidated Phase 3 exact-candidate refresh still owes paired maintainer-machine long campaigns after the remaining accepted ADR implementations land.
+
+| Host | Platform | Toolchain | Commit | Started | Finished | Command | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| local worktree | `darwin/arm64` | Go 1.26.4, Task 3.51.1 | `7aa79e4a40304a14610df36d0bd906fd6c7e3a24` | `2026-06-12T04:08:47Z` | `2026-06-12T05:04:52Z` | `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz` | PASS: all 14 targets, `rc=0` |
+
 ## Supplemental v0.1.2 Tag Soak
 
 After the signed `v0.1.2` prerelease tag was cut at commit
@@ -152,11 +160,7 @@ runs cover the superseded candidate
 ARM all-target soak, an Intel all-target soak that ended nonzero on
 `FuzzProtocolConsistency`, and a clean same-host targeted rerun of that target.
 These runs do not replace continuous fuzzing or upstream OSS-Fuzz coverage.
-Repeat long fuzzing if parser, protocol, fuzz harness, dependency, or toolchain
-changes land before a future release tag — ADR-0003 (`4c60af8`) has already
-triggered that rule, and the consolidated post-implementation refresh owes the
-covering campaign. Production-readiness still requires completion of the
-remaining release blockers.
+Repeat long fuzzing if parser, protocol, fuzz harness, dependency, or toolchain changes land before a future release tag — ADR-0003 (`4c60af8`) and the ADR-0001 core extraction (`7aa79e4a40304a14610df36d0bd906fd6c7e3a24`, interim gate above) have already triggered that rule, and the consolidated post-implementation refresh owes the covering campaign. Production-readiness still requires completion of the remaining release blockers.
 
 The 4-hour split campaign is strong historical signal for the seven-target
 registry at commit `07ff1e9265c2e003e6dc7d37754c8b2185f03286`, but it is not

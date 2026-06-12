@@ -8,15 +8,7 @@ the implementation.
 ## Language
 
 **CPace core**:
-The deep, unexported module that owns one role's CPace computation — generator
-derivation, scalar sampling, Diffie-Hellman, transcript assembly, ISK
-derivation, confirmation tags — and the lifetime of its *persistent* secrets;
-scratch secrets are cleared in place inside its methods, never stored on it.
-**Target architecture, not yet implemented**: per ADR-0001 (accepted;
-implementation gated on the external reviews) it will exist as `initiatorCore`
-and `responderCore`, with the public `Initiator` and `Responder` becoming thin
-shells that delegate to it. Until that lands, `Initiator` / `Responder` hold
-the cryptographic state directly in `api.go`.
+The deep, unexported module that owns one role's CPace computation — generator derivation, scalar sampling, Diffie-Hellman, transcript assembly, ISK derivation, confirmation tags — and the lifetime of its *persistent* secrets; scratch secrets are cleared in place inside its methods, never stored on it. Implemented per ADR-0001 as `initiatorCore` and `responderCore`, with public `Initiator` and `Responder` as thin single-use shells that hold a named `core` field and delegate cryptographic work to it.
 _Avoid_: crypto layer, engine, helper.
 
 **Single-use state**:
@@ -25,14 +17,7 @@ exactly once. Reuse is rejected, and the state is spent even when a step fails.
 _Avoid_: handle, context (Go's `context.Context` is unrelated).
 
 **ISK**:
-The Intermediate Session Key — the shared secret CPace derives by hashing the
-sid, the Diffie-Hellman result, and the transcript. Ownership is
-role-asymmetric. The responder derives its ISK at construction and holds a
-working copy until cleanup (today a `Responder` field; under ADR-0001 a
-`responderCore` field cleared by `clear()`). The initiator's ISK exists only as
-a local inside `Finish`, cleared before `Finish` returns — it is never stored
-on the initiator or its core. A confirmed **Session** holds its own
-independent clone. Each owner clears its own copy.
+The Intermediate Session Key — the shared secret CPace derives by hashing the sid, the Diffie-Hellman result, and the transcript. Ownership is role-asymmetric. The responder derives its ISK at construction and holds a working copy in `responderCore` until cleanup by `clear()`. The initiator's ISK exists only as a local inside `Finish`, cleared before `Finish` returns — it is never stored on the initiator or its core. A confirmed **Session** holds its own independent clone. Each owner clears its own copy.
 _Avoid_: session key, shared secret, master key.
 
 **Transcript**:
