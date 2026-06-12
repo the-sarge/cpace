@@ -820,3 +820,32 @@ section (the clause anticipated exactly this decision).
 **Next:**
 - Phase group 2 continues: implement the remaining accepted ADRs (0002 suite-type disposition, 0005 export-length type, 0006 close-on-nil convention, 0007 release supply-chain artifacts).
 - Phase 3 consolidated evidence refresh (paired long fuzz campaigns, dependency review, SAST, Capslock) after the remaining implementations land; PR #82 carries only its interim non-evidence gate until then.
+
+---
+
+## ADR-0005 Export contract merged - 2026-06-12 15:30 EDT
+
+**Main:** `2b0e3c219e7a`
+**Actor:** Codex
+
+**Summary**
+
+ADR-0005 is implemented and merged. PR #86 pinned the `Session.Export` length contract without changing the exported signature or runtime behavior: `length` remains an `int`, valid lengths are documented as `[0, 16320]`, zero-length output is documented as length-only, and the existing range guard remains the panic barrier before `crypto/hkdf.Key`.
+
+**Completed**
+
+- Merged PR #86 as `2b0e3c219e7a8c92f4037d0b28209b15cece3199`; implementation head was `c41186c7d422edeb99948d7c3a05455157028c3c`.
+- Updated `session.go` with the ADR-0005 export-length doc contract and a code-site comment explaining why negative lengths must be rejected before calling `crypto/hkdf.Key`.
+- Added `TestExportLengthBoundaries` in `api_test.go` for `-1`, `0`, `1`, `maxHKDFOutput - 1`, `maxHKDFOutput`, and `maxHKDFOutput + 1`.
+- Added the Unreleased changelog entry for the pinned `Export` length contract.
+
+**Validation**
+
+- GitHub checks on PR #86 were green at `c41186c`: CI Check, DCO, Dependency Gate, SAST Gate, CodeQL, Staticcheck, and cross-platform smoke.
+- Local gates passed at `c41186c`: `go test -run TestExportLengthBoundaries ./...`, `task check`, `gosec -tests ./...`, `git diff --check origin/main...HEAD`, and a formal `apidiff` export-data comparison against `origin/main` with no API diff.
+- Interim fuzz gate `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz` passed all 14 configured targets at `4f564ac`; the final delta from `4f564ac` to `c41186c` was comment-only, and RAS verification found no security-evidence posture change.
+- RAS review `20260612T180622-b8fb1b829d980b97d1086fe2` found and verified the DCO fix; fresh RAS review `20260612T191439-3be06a9cdf52510fb230436e` requested and verified the code-site comment, with no still-open findings or new concerns.
+
+**Next**
+
+Complete the ADR-0005 OmniFocus task and keep the broader release evidence caveat intact: stronger release claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit.
