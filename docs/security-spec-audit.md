@@ -103,6 +103,8 @@ Manual zeroization audit for the ADR-0001 addendum: `Initiator` and `Responder` 
 
 Residual memory risks after the ADR-0001 addendum are unchanged in kind: a single-use state abandoned without `Finish` can retain its core-owned persistent secret until garbage collection; `lvCat`/`prependLen` still create heap intermediates that are not individually cleared, including password material inside `calculateGenerator` and K material inside `deriveISK`; and `hmac.New` retains internal key-pad copies outside package control. These are best-effort-zeroization limitations, not protocol-visible behavior changes.
 
+ADR-0002 (suite API cleanup) landed on this feature branch after the audit's implementation baseline. It removes only the exported inert suite markers (`Suite` and `SuiteCPaceRistretto255SHA512`) before v1.0.0, keeps the package single-suite, and preserves the wire suite byte as `0x01` through internal `currentSuite`/`wireSuite` constants. Interim verification for the ADR-0002 implementation: `task check` passed; `go test ./...`, `go test -race ./...`, and `gosec -tests ./...` passed; and `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz` ran locally on `darwin/arm64` with Go 1.26.4 and Task 3.51.1 from `2026-06-12T14:48:13Z` to `2026-06-12T15:44:29Z`, passing all 14 registered targets with `rc=0`. This is an interim gate only and does not replace the pinned paired long-fuzz evidence or the consolidated Phase 3 exact-candidate refresh.
+
 ## Residual Risk
 
 External review of package-owned CI/framing/profile choices remains open.

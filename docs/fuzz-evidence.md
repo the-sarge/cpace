@@ -1,6 +1,6 @@
 # Fuzz Evidence
 
-Date: 2026-05-08 through 2026-06-11 (pinned long-fuzz evidence; the ADR-0001 interim non-evidence gate below is dated 2026-06-12)
+Date: 2026-05-08 through 2026-06-11 (pinned long-fuzz evidence; the ADR-0001 and ADR-0002 interim non-evidence gates below are dated 2026-06-12)
 
 Target module: `github.com/the-sarge/cpace`
 
@@ -38,6 +38,14 @@ This local interim gate does not replace or advance the pinned long-fuzz evidenc
 | Host | Platform | Toolchain | Commit | Started | Finished | Command | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | local worktree | `darwin/arm64` | Go 1.26.4, Task 3.51.1 | `7aa79e4a40304a14610df36d0bd906fd6c7e3a24` | `2026-06-12T04:08:47Z` | `2026-06-12T05:04:52Z` | `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz` | PASS: all 14 targets, `rc=0` |
+
+## ADR-0002 Interim Gate (Non-Evidence)
+
+This local interim gate does not replace or advance the pinned long-fuzz evidence above. It records only the ADR-0002 build-sequence check on the feature branch; the consolidated Phase 3 exact-candidate refresh still owes paired maintainer-machine long campaigns after the remaining accepted ADR implementations land.
+
+| Host | Platform | Toolchain | Commit | Started | Finished | Command | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `mbp128.local` | `darwin/arm64` | Go 1.26.4, Task 3.51.1 | `03a35cc3dac55b3dfa798c218bf335761cc7502c` | `2026-06-12T14:48:13Z` | `2026-06-12T15:44:29Z` | `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz` | PASS: all 14 targets, `rc=0` |
 
 ## Supplemental v0.1.2 Tag Soak
 
