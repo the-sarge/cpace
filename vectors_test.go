@@ -340,6 +340,79 @@ func TestRistrettoDraft21Vectors(t *testing.T) {
 	}
 }
 
+func TestCoreDraft21Vectors(t *testing.T) {
+	v, err := loadDraftVectorJSON(draft21RistrettoVectorJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tags, err := loadDraftVectorJSON(draft21RistrettoConfirmationTagJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"ya", "yb"} {
+		if v[key][31]&0xf0 != 0 {
+			t.Fatalf("%s top nibble is not sampler-injectable: %x", key, v[key][31])
+		}
+	}
+
+	initNC := draftVectorConfig(v, v["ADa"])
+	defer initNC.wipe()
+	initCore, gotYa, err := newInitiatorCore(initNC, &repeatingReader{buf: v["ya"]})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clearScalar(initCore.scalar)
+	if !bytes.Equal(gotYa, v["Ya"]) {
+		t.Fatalf("newInitiatorCore Ya got %x want %x", gotYa, v["Ya"])
+	}
+	gotTagA, initSession, err := initCore.finish(v["Yb"], v["ADb"], tags["tagB"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(gotTagA, tags["tagA"]) {
+		t.Fatalf("initiator core tagA got %x want %x", gotTagA, tags["tagA"])
+	}
+	if !bytes.Equal(initSession.state.isk, v["ISK_IR"]) {
+		t.Fatalf("initiator core session ISK got %x want %x", initSession.state.isk, v["ISK_IR"])
+	}
+
+	respNC := draftVectorConfig(v, v["ADb"])
+	defer respNC.wipe()
+	respCore, gotYb, gotTagB, err := newResponderCore(respNC, v["Ya"], v["ADa"], &repeatingReader{buf: v["yb"]})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clearBytes(respCore.isk)
+	defer clearBytes(respCore.transcript)
+	if !bytes.Equal(gotYb, v["Yb"]) {
+		t.Fatalf("newResponderCore Yb got %x want %x", gotYb, v["Yb"])
+	}
+	if !bytes.Equal(respCore.isk, v["ISK_IR"]) {
+		t.Fatalf("responder core ISK got %x want %x", respCore.isk, v["ISK_IR"])
+	}
+	if !bytes.Equal(gotTagB, tags["tagB"]) {
+		t.Fatalf("responder core tagB got %x want %x", gotTagB, tags["tagB"])
+	}
+	respSession, err := respCore.finish(tags["tagA"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(respSession.state.isk, v["ISK_IR"]) {
+		t.Fatalf("responder core session ISK got %x want %x", respSession.state.isk, v["ISK_IR"])
+	}
+}
+
+func draftVectorConfig(v draftVector, ad []byte) normalizedConfig {
+	return normalizedConfig{
+		password:    clone(v["PRS"]),
+		initiatorID: []byte("A_initiator"),
+		responderID: []byte("B_responder"),
+		ci:          clone(v["CI"]),
+		sid:         clone(v["sid"]),
+		ad:          clone(ad),
+	}
+}
+
 func TestScalarMultVFYDraftInvalidVectors(t *testing.T) {
 	v, err := loadDraftInvalidVectorJSON(draft21RistrettoInvalidJSON)
 	if err != nil {
