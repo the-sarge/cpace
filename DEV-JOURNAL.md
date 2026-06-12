@@ -799,3 +799,24 @@ section (the clause anticipated exactly this decision).
 - Open the PR for review; merges remain Josh's action.
 - Offer the same dual review pattern used for PR #78: pr-review-toolkit read-only agents plus `ras review`.
 - Do not complete the OmniFocus ADR-0001 item or update memory outcome until after Josh's merge.
+
+---
+
+## ADR-0001 core extraction dual-reviewed and merged - 2026-06-12 09:10 EDT
+
+**Main:** `bb9584e60552`
+**Actor:** Claude (Fable 5)
+
+**Summary:** Ran the planned dual review of PR #82 (ADR-0001 CPace core extraction) at head `07d4dd0`, applied the resulting fixes and comment polish as `954759a`, and merged the PR with explicit authorization. Both review tracks reported zero code defects; all findings were documentation and comment items. Main is now `bb9584e` and the ADR-0001 build sequence is fully landed.
+
+**Completed:**
+- pr-review-toolkit read-only pass (code-reviewer, pr-test-analyzer, silent-failure-hunter, comment-analyzer; code-simplifier skipped on crypto): zero code defects. Extraction verified behavior-preserving (crypto-bearing files byte-identical to main), constant-time / zeroization / error-ownership discipline intact across the seam, zero-value hardening correctly scoped with all four cases pinned, statement coverage 97.1% to 97.2% with no test weakened or deleted.
+- `ras review` run `20260612T052158-c0ffd1611e1f66bf3ff5fc7a` (not posted): one Fix First nit (C-001, fuzz-evidence header date range); a second mis-keyed adjudication referencing out-of-diff plan text was binned Do Not Act On by the synthesis itself.
+- Review fixes committed as `954759a`: corrected the confirmation-tag golden appendix reference in `vectors_test.go` (B.3.11.1 to B.3.9, copy-drift); scoped the `docs/fuzz-evidence.md` header date range to pinned long-fuzz evidence, resolving C-001; restored into `core.go` the security-rationale comments dropped during extraction (persistent-secret ownership, validate-Ya-first ordering, finish-local ISK wipe and `newSession` clone isolation, password early-clear through the by-value seam) plus the `clear()` zero-then-nil contract on both methods; documented the never-reassigned core-pointer invariant and refreshed the stale `wipe()` godoc in `api.go`; updated the CONTEXT.md ISK entry to point at the core's `finish`; removed a dead test assignment; annotated `docs/cpace-core-plan.md` that the implementation retains main's broader `defer nc.wipe()` backstop, a strict superset of the sketches' `clearBytes(nc.password)`.
+- PR #82 merged as `bb9584e` at 2026-06-12T13:08:17Z (merge commit, Josh-authorized). `feat/adr-0001-cpace-core` worktree removed; local and remote branches deleted.
+
+**Validation:** `task check` exit 0 on the fix commit (including race tests), `gosec -tests ./...` 0 issues, `git diff --check` clean. CI green on `954759a` before merge: Check, DCO, Dependency Gate, SAST Gate, CodeQL Analyze, Staticcheck, macOS and Windows smoke; the gosec CodeQL child check neutral/skipped as designed. `mergeStateStatus: CLEAN` at merge time.
+
+**Next:**
+- Phase group 2 continues: implement the remaining accepted ADRs (0002 suite-type disposition, 0005 export-length type, 0006 close-on-nil convention, 0007 release supply-chain artifacts).
+- Phase 3 consolidated evidence refresh (paired long fuzz campaigns, dependency review, SAST, Capslock) after the remaining implementations land; PR #82 carries only its interim non-evidence gate until then.
