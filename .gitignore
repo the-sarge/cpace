@@ -1,5 +1,7 @@
 *.test
 *.out
+.DS_Store
+.idea/
 coverage/
 dist/
 bin/
