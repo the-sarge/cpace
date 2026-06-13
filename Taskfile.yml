@@ -128,6 +128,11 @@ tasks:
     cmds:
       - "{{.GOSEC}} ./..."
 
+  release:helpers:
+    desc: Run release helper script smoke tests
+    cmds:
+      - scripts/test-release-helpers.sh
+
   quick:
     desc: Lightweight local iteration lane
     cmds:
@@ -179,9 +184,10 @@ tasks:
         fi
 
   check:
-    desc: Full local validation gate
+    desc: Full local validation gate, including release helper smoke tests
     cmds:
       - task: docs:check
+      - task: release:helpers
       - task: test
       - task: test:race
       - task: lint

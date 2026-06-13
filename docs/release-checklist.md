@@ -51,6 +51,8 @@ bundle shape, required metadata, checksum verification, and optional detached
 signature handling. Summary docs may explain evidence, but the evidence packet
 should preserve the raw logs or immutable workflow links.
 
+Before each release, capture the active `refs/tags/v*` tag-authority ruleset JSON as recurring release evidence. Record `gh api /repos/the-sarge/cpace/rulesets` and `gh api /repos/the-sarge/cpace/rulesets/16048307`, then confirm ruleset `16048307` is active, covers creation/update/deletion for `refs/tags/v*`, has `bypass_actors: []`, and reports `current_user_can_bypass: never`. The 2026-06-10 baseline is committed under `docs/evidence/tagruleset-20260610/`; each release needs a fresh capture because GitHub ruleset state is admin-mutable.
+
 ## 4. Long Fuzz Evidence
 
 Run every registered fuzz target from `.github/fuzz-targets.json` against the
@@ -103,19 +105,13 @@ documented rationale that reviewers can inspect.
 
 ## 7. Release Asset Scope And SBOM
 
-Current releases do not attach compiled software assets. The canonical source
-release artifact is the repository content reachable from the signed annotated
-tag.
+The canonical source release artifact remains the repository content reachable from the signed annotated tag. For signed `v*` tags, the GitHub Release must also include a CycloneDX JSON 1.5 SBOM named `cpace-<tag>.cdx.json` and the SBOM attestation bundle named `cpace-<tag>.cdx.json.sigstore.json`. Tags in the `v0.x` range and SemVer prerelease tags are published as GitHub prereleases and are not marked latest.
 
-If a future release adds compiled assets, each compiled asset must be delivered
-with a software bill of materials. The SBOM may be one release-level SBOM that
-maps every compiled asset to its components, or one SBOM per asset. Release
-notes must identify the SBOM location, and the asset verification instructions
-must cover the asset hashes or signed manifest described in
-`docs/release-verification.md`.
+Do not publish a release until the Release Validation workflow has generated and validated the SBOM, attested it with GitHub artifact attestations, attached the SBOM and Sigstore bundle, and appended the SBOM SHA-256 checksum to the release body. The checksum is release-body corruption detection only; the SBOM's authenticity comes from the attached attestation bundle and `gh attestation verify`.
 
-Do not publish a release containing compiled assets until the SBOM is generated
-and attached or otherwise made available from the release notes.
+The pre-tag local gate remains the prevention layer because Go module proxy and checksum database entries may observe a pushed tag before tag-triggered CI finishes. A failed Release Validation run means cutting a superseding tag, not force-updating the failed tag.
+
+No SLSA Build Level 3 provenance is generated for v1.0.0. ADR-0007 defers Level 3 source-only-module provenance to a later v1.x minor release after the SLSA generator path is validated.
 
 ## 8. Source Repository Scope
 
@@ -156,16 +152,20 @@ cut a new tag.
 After pushing the tag, wait for the tag-triggered Release Validation workflow.
 It must pass:
 
+- `Verify Signed Tag`
 - `Check`
 - `Race`
 - `Govulncheck`
 - `Gosec` with SARIF upload
+- `SBOM` generation, CycloneDX 1.5 validation, and checksum calculation
+- `SBOM Attestation` with a GitHub/Sigstore bundle
+- `Release` note extraction, asset preparation, and publishing on tag pushes
 
-Confirm Code Scanning has no unexpected open alerts after SARIF ingestion.
+Confirm Code Scanning has no unexpected open alerts after SARIF ingestion. For rehearsals, `workflow_dispatch` must target a signed tag ref and must exercise verification, SBOM generation, attestation, release-note extraction, and asset preparation without publishing a GitHub Release; branch dispatches should fail with the workflow's unsupported-ref explanation.
 
 ## 12. Publish Release
 
-Create the GitHub release or prerelease. Notes should state:
+The Release Validation workflow creates the GitHub release on publishing-eligible tag pushes and fails closed if a release for that tag already exists, so manual repair can happen without in-place asset replacement. Verify the published notes state:
 
 - whether the release is production-ready;
 - the supported CPace draft, suite, and mode;
@@ -173,7 +173,8 @@ Create the GitHub release or prerelease. Notes should state:
 - validation workflow run URL;
 - signed-tag verification expectation and a link to
   `docs/release-verification.md`;
-- SBOM location for any compiled release assets;
+- SBOM asset name `cpace-<tag>.cdx.json`, SBOM SHA-256 checksum, and Sigstore bundle asset name `cpace-<tag>.cdx.json.sigstore.json`;
+- SLSA Build Level 3 provenance deferral for v1.0.0, if the release notes discuss supply-chain artifact scope;
 - remaining blockers, if any.
 
 Keep tags in the `v0.x` range until independent review is complete and the

@@ -24,8 +24,7 @@ Additional automated signal:
 - Vulnerability Scan runs `govulncheck` on schedule and manual dispatch;
 - Gosec Advisory runs on schedule and manual dispatch and uploads SARIF to Code
   Scanning;
-- Release Validation runs tests, race tests, `govulncheck`, and `gosec` for
-  `v*` tags and manual dispatch.
+- Release Validation verifies signed annotated tag refs, runs tests, race tests, `govulncheck`, and `gosec`, generates and validates the CycloneDX SBOM, emits the SBOM attestation bundle, and publishes the GitHub Release only for `v*` tag pushes; manual dispatch is a non-publishing tag rehearsal, and branch dispatch fails closed with an explanatory job.
 
 The `Dependency Gate` and `SAST Gate` workflows intentionally do not use
 workflow path filters. Required checks must report a status on every pull
@@ -91,6 +90,7 @@ to avoid granting write permissions to untrusted code.
 Before any release tag, apply the release checklist and confirm that:
 
 - `govulncheck` and `gosec` pass in Release Validation;
+- signed-tag verification, SBOM generation/validation, SBOM attestation bundle preparation, and release publishing gates pass in Release Validation;
 - Code Scanning has no unexpected open CodeQL or gosec alerts;
 - advisory security scans have no unresolved violations under this policy;
 - dependency-review evidence is current for the release candidate;

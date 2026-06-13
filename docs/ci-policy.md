@@ -10,8 +10,7 @@ Local validation uses `Taskfile.yml` as the command facade:
 
 - `task docs:check` validates tracked Markdown and whitespace.
 - `task quick` runs Go formatting checks, docs validation, and `go test ./...`.
-- `task check` runs docs validation, tests, race tests, formatting/import
-  checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`.
+- `task check` runs docs validation, release-helper smoke tests, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for CycloneDX SBOM JSON validation.
 - `task fuzz` runs every fuzz target in `.github/fuzz-targets.json` with the
   caller-provided `FUZZTIME`, `PARALLEL`, and `FUZZ_RACE` settings.
 
@@ -29,8 +28,7 @@ Repository CI runs on these events:
 - Scheduled or manual runs: Vulnerability Scan, Gosec Advisory, Nightly Fuzz,
   Autoscaled Fuzz, CodeQL, Staticcheck Advisory, Scorecard, and
   cross-platform smoke workflows provide background and release-posture signal.
-- Release tags matching `v*`: Release Validation runs tests, race tests,
-  `govulncheck`, and `gosec` with SARIF upload.
+- Release tags matching `v*`: Release Validation verifies the signed annotated tag first, runs tests, race tests, `govulncheck`, and `gosec` with SARIF upload, then generates, validates, attests, and publishes the GitHub Release with SBOM assets. `v0.x` and SemVer prerelease tags are published as GitHub prereleases and are explicitly not marked latest.
 
 Maintainer-controlled long fuzzing is run outside the required PR gate and
 recorded in `docs/fuzz-evidence.md` when it supports a release-readiness claim.
@@ -100,8 +98,17 @@ residual risk. Raw or immutable artifacts are required for exact release
 candidates and recommended for external-review refreshes when they are cheap to
 capture.
 
-Release tags should remain signed annotated tags. Downstream consumers should
-be able to verify each release tag with `git verify-tag`.
+Release tags should remain signed annotated tags. Downstream consumers should be able to verify each release tag with `git verify-tag`.
+
+## Distribution Surface
+
+The primary release trust root is the signed annotated `v*` tag. Release Validation verifies that tag against `.github/allowed_signers`, then treats the checked-out source tree as the release candidate. That CI verification catches maintainer mistakes such as lightweight tags, unsigned tags, or signatures outside the documented signer set, but it does not protect against a principal who can create, update, or delete a `v*` tag and thereby choose both the workflow definition and the checked-in signer file.
+
+The primary tag-authority control is the active GitHub repository ruleset `16048307` on `refs/tags/v*`, covering creation, update, and deletion with no routine bypass actors. That state is admin-mutable GitHub configuration rather than repository content, so each release must capture fresh ruleset JSON before tagging and document any break-glass change. The committed 2026-06-10 evidence under `docs/evidence/tagruleset-20260610/` is the baseline, not a permanent release claim.
+
+CI attests the generated SBOM asset, not the CPace protocol implementation, Go API, source archive, Go module proxy entry, or SLSA Build Level 3 provenance. The SBOM attestation binds `cpace-<tag>.cdx.json` to the GitHub Actions run through GitHub artifact attestations with the CycloneDX predicate type `https://cyclonedx.org/bom`; the attached `cpace-<tag>.cdx.json.sigstore.json` bundle is retained for verifiers that need the Sigstore bundle. The release-body SHA-256 checksum is only a corruption-detection convenience because the release body and assets share the mutable GitHub Release trust domain.
+
+`anchore/sbom-action` is SHA-pinned and requests Syft `v1.45.1`, but the action downloads the Syft release binary from Anchore's GitHub releases at runtime. A compromised Syft download could falsify the SBOM, but the SBOM job has only read repository permissions and cannot make the signed tag authentic or mutate release publishing by itself. Checksum-pinning the Syft binary remains a possible follow-up if the project needs a stronger SBOM-generation toolchain claim.
 
 ## Self-Hosted Runners
 

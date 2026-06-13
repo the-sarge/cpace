@@ -92,3 +92,7 @@ jobs:
       - name: Run tests
         if: steps.changes.outputs.docs_only != 'true'
         run: go test ./...
+
+      - name: Run release helper smoke tests
+        if: steps.changes.outputs.docs_only != 'true'
+        run: scripts/test-release-helpers.sh

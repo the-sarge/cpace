@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add ADR-0007 release supply-chain artifacts: Release Validation now verifies signed annotated tags first, generates and validates a CycloneDX 1.5 SBOM, attests the SBOM with GitHub/Sigstore, and publishes the SBOM plus Sigstore bundle on tag pushes. No Go API, protocol, or wire-format impact.
 - Pre-v1 contract/behavior change: `(*Session)(nil).Close()` now returns `nil` as a nil-safe no-op; zero-value `Session` values and nil/zero-value `Export` remain strict `ErrInvalidInput` cases. This is breaking for callers that used `errors.Is(err, ErrInvalidInput)` on `Close` to detect nil receivers.
 - Pin Export length contract: documented as `[0, 16320]`, zero-length returns length 0.
 - Pre-v1 API cleanup (breaking relative to `v0.1.2`): remove exported `Suite` and `SuiteCPaceRistretto255SHA512`; callers should drop those references and treat the package as single-suite with opaque framing. No wire/protocol behavior change.

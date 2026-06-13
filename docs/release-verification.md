@@ -1,14 +1,12 @@
 # Release Verification
 
-Official releases are published as signed annotated Git tags. This project does
-not currently attach binary release assets to GitHub releases. The canonical
-release artifact is the repository content reachable from the signed tag.
+Official releases are published as signed annotated Git tags. The canonical source release artifact is the repository content reachable from the signed tag. GitHub Releases for signed `v*` tags also attach a CycloneDX SBOM and the SBOM's GitHub/Sigstore attestation bundle as distribution metadata; these assets do not replace signed-tag verification. Tags in the `v0.x` range and SemVer prerelease tags are GitHub prereleases and are not marked latest.
 
 ## Verify A Release Tag
 
-Git verifies SSH signatures against an allowed signers file. If this is the
-first time verifying this project's SSH-signed tags, create a project-specific
-allowed signers file from the maintainer's public GitHub SSH keys:
+Git verifies SSH signatures against an allowed signers file. CI uses the checked-in signer snapshot at `.github/allowed_signers`. Because that file is read from the tagged source tree, consumers should cross-check it against the maintainer's current public GitHub SSH keys before relying on it.
+
+If this is the first time verifying this project's SSH-signed tags, create a project-specific allowed signers file from the maintainer's public GitHub SSH keys:
 
 ```sh
 mkdir -p ~/.config/git
@@ -21,6 +19,15 @@ Review the key fingerprints:
 
 ```sh
 ssh-keygen -lf ~/.config/git/cpace-allowed-signers
+```
+
+If you have a checkout of the release source, verify that every checked-in signer key blob still appears in the freshly fetched maintainer keys. Extra fetched GitHub account keys are not trusted automatically; investigate them before adding them to an allowed signers file:
+
+```sh
+awk '{ print $2 " " $3 }' .github/allowed_signers | sort -u > /tmp/cpace-checked-in-keys
+awk '{ print $2 " " $3 }' ~/.config/git/cpace-allowed-signers | sort -u > /tmp/cpace-github-keys
+missing="$(comm -23 /tmp/cpace-checked-in-keys /tmp/cpace-github-keys)"
+test -z "$missing" || { printf 'checked-in signer keys missing from GitHub keys:\n%s\n' "$missing" >&2; exit 1; }
 ```
 
 Then either verify with that file for this command:
@@ -124,17 +131,26 @@ release notes or evidence docs for that release.
 
 ## Release Assets
 
-Current GitHub releases have no attached binary assets. If future releases add
-assets, each asset must be signed directly or included in a signed manifest that
-lists cryptographic hashes for every asset. Verify those signatures or manifest
-hashes before using the assets.
+GitHub Releases for signed `v*` tags attach these release-managed assets:
 
-Future compiled assets must also ship with an SBOM as described in
-`docs/release-checklist.md`. Verify that the release notes identify the SBOM
-location before using compiled assets.
+- `cpace-<tag>.cdx.json`: CycloneDX JSON 1.5 SBOM for the source release.
+- `cpace-<tag>.cdx.json.sigstore.json`: GitHub/Sigstore bundle emitted by the SBOM attestation workflow.
 
-GitHub may display auto-generated source archives for tags. Treat the signed Git
-tag as the canonical authenticity mechanism for source releases.
+The release body includes the SBOM's SHA-256 checksum for corruption detection:
+
+```sh
+shasum -a 256 cpace-<tag>.cdx.json
+```
+
+Compare the computed digest with the release-body value before using the SBOM. This checksum is not an authenticity mechanism because the GitHub Release body is mutable release metadata in the same trust domain as the uploaded assets. Use signed-tag verification for source authenticity and the SBOM attestation for SBOM authenticity.
+
+Optional layered SBOM attestation verification with the GitHub CLI:
+
+```sh
+gh attestation verify cpace-<tag>.cdx.json --repo the-sarge/cpace --predicate-type https://cyclonedx.org/bom
+```
+
+GitHub may display auto-generated source archives for tags. Treat the signed Git tag as the canonical authenticity mechanism for source releases.
 
 ## Support Scope
 
