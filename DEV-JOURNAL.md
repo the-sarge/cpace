@@ -910,3 +910,31 @@ ADR-0007 is implemented and merged. PR #90 adds the release supply-chain artifac
 
 - Complete the ADR-0007 OmniFocus task `h0GnwLCRQYj` after this journal update lands.
 - The v1.0.0 candidate still needs the consolidated Phase 3 evidence refresh before stronger release claims: signed `v*` workflow-dispatch rehearsal, branch/non-`v*` fail-closed checks, lightweight/unsigned/wrong-signer tag negative tests, missing changelog-section failure, `gh attestation verify`, and Scorecard before/after evidence for SBOM, Packaging, and Signed-Releases.
+
+---
+
+## Message framing hardening landed - 2026-06-13 12:17 EDT
+
+**Main:** `a95e39c8ec8e`
+**Actor:** Codex
+
+### Summary
+
+PR #92 deepened package-owned Message framing behind shared internal field specs, added a 128 KiB aggregate invalid-message decoder backstop, documented the framing term in `CONTEXT.md`, and kept valid message shapes governed by per-field caps plus exact public-share/tag lengths.
+
+### Completed
+
+- Merged PR #92 as `a95e39c8ec8e18d56d76f049211fe2b392d61985`; implementation head was sign-off-only rewritten from RAS-verified `ef6143282899a1ce31d685cdf66b78cdc51e60cf` to merged head `da296be1800dcd5e50a31ea87e97a9080da4f478`.
+- Centralized Message A/B/C framing around package-owned specs, common encode/decode helpers, and compile-time worst-case guards proving each valid package-owned shape remains below `maxMessageLength`.
+- Updated `README.md`, `docs/security-assessment.md`, `docs/project-plan.md`, and `docs/code-review-followups-2026-05-28.md` to distinguish valid-message per-field caps from the 128 KiB aggregate decoder cap for malformed framed inputs.
+- Resolved both RAS review `20260613T154244-a0567247c6bdab93ec542cf3` Fix First findings; RAS verification reported no still-open findings and no new concerns before the DCO-only sign-off rewrite.
+
+### Validation
+
+- GitHub checks on PR #92 were green at `da296be`: CI Check, DCO, Dependency Gate, SAST Gate, CodeQL Analyze/CodeQL, Staticcheck, and macOS/Windows smoke; the gosec child check was neutral/skipped as expected.
+- Local gates passed on the fixed implementation before the sign-off-only rewrite: `go test ./...`, `go test -race ./...`, `go vet ./...`, `task quick`, `git diff --check`, and `rg -n "aggregate message|not aggregate message|per-field" README.md docs/`.
+- Compile-time guard proof passed: temporarily lowering `maxMessageLength` below the computed max valid Message A size made `go test ./...` fail at compile time with a `uint` underflow, then the 128 KiB cap was restored and tests passed.
+
+### Next
+
+- Stronger release claims still require refreshing pinned fuzz, dependency-review, and security/spec-audit evidence against the exact candidate commit.
