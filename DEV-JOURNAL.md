@@ -1034,3 +1034,31 @@ PR #98 concentrates the internal Package-owned cap policy behind `caps.go` witho
 
 - Merge PR #98 only with explicit maintainer authorization.
 - Keep the release evidence caveat intact: this is internal but security-relevant because it moves allocation and parsing-limit facts, so stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security/spec-audit evidence against the exact candidate commit.
+
+---
+
+## Package cap policy merged - 2026-06-13 18:36 EDT
+
+**Main:** `a01df3746207`
+**Actor:** Codex
+
+**Summary**
+
+PR #98 merged the Package-owned cap policy refactor into `main` at merge commit `a01df374620724f6fb88dbe9328c8dd6984bda7c`. The change concentrates internal caller-field and Message framing cap metadata in `caps.go` / `caps_test.go` while preserving the frozen public interface, package-profile policy, cap values, wire format, and current validation diagnostics.
+
+**Completed**
+
+- Merged `codex/package-owned-cap-policy` through GitHub PR #98 using the repo's merge-commit pattern.
+- Kept the cap policy package-owned: no public profile knob, no exported interface, and no observable behavior change intended.
+- Recorded the Package-owned cap policy term in `CONTEXT.md` and kept the prior implementation evidence in this journal.
+- Resolved RAS review finding `C-001` and verified the fix against head `863090b84331cec0824ef8a0a5f9a0c68f160a89` with no open or new concerns.
+
+**Validation**
+
+- Local gates before merge: `task check`, `gosec -tests -fmt sarif -out /tmp/cpace-gosec.sarif . ./tools/releasepolicy`, and `git diff --check` passed.
+- GitHub checks for PR #98 passed before merge: CI, CodeQL, Cross-Platform Smoke on macOS and Windows, DCO, Dependency Gate, SAST Gate, and Staticcheck Advisory. The standalone gosec annotation was neutral while SAST Gate was green.
+- RAS review run: `20260613T220234-2d89640ea92a616f9cb7b8a6`; RAS verification against the final PR head reported `C-001` resolved with no still-open or new concerns.
+
+**Next**
+
+- Refresh pinned dependency-review, fuzz, and security-audit evidence against the exact post-merge candidate commit before making stronger release-readiness claims from this `main` line.
