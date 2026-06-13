@@ -184,7 +184,7 @@ tasks:
         fi
 
   check:
-    desc: Full local validation gate
+    desc: Full local validation gate, including release helper smoke tests
     cmds:
       - task: docs:check
       - task: release:helpers

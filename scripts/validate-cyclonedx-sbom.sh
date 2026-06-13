@@ -27,6 +27,7 @@ jq -e '.bomFormat == "CycloneDX" and .specVersion == "1.5"' "$sbom" >/dev/null |
   exit 1
 }
 
+# Keep this expected set aligned with go.mod for release-relevant module graph entries that must appear in Syft's CycloneDX output.
 for module in \
   github.com/the-sarge/cpace \
   github.com/gtank/ristretto255 \
@@ -44,6 +45,7 @@ do
     any(candidate_strings[]; . == $module or contains($module))
   ' "$sbom" >/dev/null || {
     echo "SBOM is missing expected Go module entry: $module" >&2
+    echo "If the release-relevant module graph changed intentionally, update scripts/validate-cyclonedx-sbom.sh and scripts/test-release-helpers.sh together." >&2
     exit 1
   }
 done

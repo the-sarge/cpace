@@ -10,8 +10,7 @@ Local validation uses `Taskfile.yml` as the command facade:
 
 - `task docs:check` validates tracked Markdown and whitespace.
 - `task quick` runs Go formatting checks, docs validation, and `go test ./...`.
-- `task check` runs docs validation, tests, race tests, formatting/import
-  checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`.
+- `task check` runs docs validation, release-helper smoke tests, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for CycloneDX SBOM JSON validation.
 - `task fuzz` runs every fuzz target in `.github/fuzz-targets.json` with the
   caller-provided `FUZZTIME`, `PARALLEL`, and `FUZZ_RACE` settings.
 
@@ -29,7 +28,7 @@ Repository CI runs on these events:
 - Scheduled or manual runs: Vulnerability Scan, Gosec Advisory, Nightly Fuzz,
   Autoscaled Fuzz, CodeQL, Staticcheck Advisory, Scorecard, and
   cross-platform smoke workflows provide background and release-posture signal.
-- Release tags matching `v*`: Release Validation verifies the signed annotated tag first, runs tests, race tests, `govulncheck`, and `gosec` with SARIF upload, then generates, validates, attests, and publishes the release SBOM assets.
+- Release tags matching `v*`: Release Validation verifies the signed annotated tag first, runs tests, race tests, `govulncheck`, and `gosec` with SARIF upload, then generates, validates, attests, and publishes the GitHub Release with SBOM assets. `v0.x` and SemVer prerelease tags are published as GitHub prereleases and are explicitly not marked latest.
 
 Maintainer-controlled long fuzzing is run outside the required PR gate and
 recorded in `docs/fuzz-evidence.md` when it supports a release-readiness claim.

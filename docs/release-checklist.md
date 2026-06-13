@@ -105,7 +105,7 @@ documented rationale that reviewers can inspect.
 
 ## 7. Release Asset Scope And SBOM
 
-The canonical source release artifact remains the repository content reachable from the signed annotated tag. For v1.x releases, the GitHub Release must also include a CycloneDX JSON 1.5 SBOM named `cpace-<tag>.cdx.json` and the SBOM attestation bundle named `cpace-<tag>.cdx.json.sigstore.json`.
+The canonical source release artifact remains the repository content reachable from the signed annotated tag. For signed `v*` tags, the GitHub Release must also include a CycloneDX JSON 1.5 SBOM named `cpace-<tag>.cdx.json` and the SBOM attestation bundle named `cpace-<tag>.cdx.json.sigstore.json`. Tags in the `v0.x` range and SemVer prerelease tags are published as GitHub prereleases and are not marked latest.
 
 Do not publish a release until the Release Validation workflow has generated and validated the SBOM, attested it with GitHub artifact attestations, attached the SBOM and Sigstore bundle, and appended the SBOM SHA-256 checksum to the release body. The checksum is release-body corruption detection only; the SBOM's authenticity comes from the attached attestation bundle and `gh attestation verify`.
 

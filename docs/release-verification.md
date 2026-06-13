@@ -1,6 +1,6 @@
 # Release Verification
 
-Official releases are published as signed annotated Git tags. The canonical source release artifact is the repository content reachable from the signed tag. v1.x GitHub Releases also attach a CycloneDX SBOM and the SBOM's GitHub/Sigstore attestation bundle as distribution metadata; these assets do not replace signed-tag verification.
+Official releases are published as signed annotated Git tags. The canonical source release artifact is the repository content reachable from the signed tag. GitHub Releases for signed `v*` tags also attach a CycloneDX SBOM and the SBOM's GitHub/Sigstore attestation bundle as distribution metadata; these assets do not replace signed-tag verification. Tags in the `v0.x` range and SemVer prerelease tags are GitHub prereleases and are not marked latest.
 
 ## Verify A Release Tag
 
@@ -131,7 +131,7 @@ release notes or evidence docs for that release.
 
 ## Release Assets
 
-v1.x releases attach these release-managed assets:
+GitHub Releases for signed `v*` tags attach these release-managed assets:
 
 - `cpace-<tag>.cdx.json`: CycloneDX JSON 1.5 SBOM for the source release.
 - `cpace-<tag>.cdx.json.sigstore.json`: GitHub/Sigstore bundle emitted by the SBOM attestation workflow.
