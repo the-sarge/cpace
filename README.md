@@ -71,11 +71,7 @@ exchange; it is not parsed from peer-controlled wire data.
 Scalar randomness is always drawn from Go's `crypto/rand.Reader`. Callers do
 not provide randomness to `Start` or `Respond`.
 
-Input and wire fields have package-owned per-field caps: passwords and party
-IDs are limited to 4 KiB, context and session IDs to 1 KiB, and associated data
-to 64 KiB. These are not aggregate message-size limits. Associated data should
-bind protocol context, not carry large payloads; represent large external
-artifacts with a digest, Merkle root, exporter, or other fixed-size commitment.
+Input and wire fields have package-owned per-field caps: passwords and party IDs are limited to 4 KiB, context and session IDs to 1 KiB, and associated data to 64 KiB. Valid package-owned message shapes are governed by those per-field caps and exact public-share/tag lengths; malformed framed inputs also hit a 128 KiB aggregate decoder backstop before field parsing proceeds. Associated data should bind protocol context, not carry large payloads; represent large external artifacts with a digest, Merkle root, exporter, or other fixed-size commitment.
 
 ## Validation
 

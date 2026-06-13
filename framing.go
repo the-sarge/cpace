@@ -15,6 +15,11 @@ const (
 	maxSessionIDLength      = 1 << 10
 	maxAssociatedDataLength = 64 << 10
 
+	// maxMessageLength is an aggregate invalid-message cap. It is intentionally
+	// above every valid package-owned Message framing shape, so valid wire bytes
+	// remain governed by the per-field caps below.
+	maxMessageLength = 128 << 10
+
 	// maxLEB128BytesForField is a uniform length-prefix ceiling that must cover
 	// maxAssociatedDataLength, the largest package field cap. The caps are
 	// per-field, not aggregate message limits.
@@ -22,6 +27,26 @@ const (
 )
 
 const _ = uint((1 << (7 * maxLEB128BytesForField)) - 1 - maxAssociatedDataLength)
+
+const (
+	messageHeaderSize      = 3
+	maxValidMessageALength = messageHeaderSize +
+		maxLEB128BytesForField + maxSessionIDLength +
+		maxLEB128BytesForField + pointSize +
+		maxLEB128BytesForField + maxAssociatedDataLength
+	maxValidMessageBLength = messageHeaderSize +
+		maxLEB128BytesForField + pointSize +
+		maxLEB128BytesForField + maxAssociatedDataLength +
+		maxLEB128BytesForField + tagSize
+	maxValidMessageCLength = messageHeaderSize +
+		maxLEB128BytesForField + tagSize
+)
+
+const (
+	_ = uint(maxMessageLength - maxValidMessageALength - 1)
+	_ = uint(maxMessageLength - maxValidMessageBLength - 1)
+	_ = uint(maxMessageLength - maxValidMessageCLength - 1)
+)
 
 type messageA struct {
 	sid []byte
@@ -39,87 +64,113 @@ type messageC struct {
 	tag []byte
 }
 
+type messageSpec struct {
+	role   byte
+	fields []messageFieldSpec
+}
+
+type messageFieldSpec struct {
+	name   string
+	length int
+	exact  bool
+}
+
+var (
+	messageASpec = messageSpec{
+		role: roleA,
+		fields: []messageFieldSpec{
+			cappedField("message A session id", maxSessionIDLength),
+			exactField("message A point", pointSize),
+			cappedField("message A associated data", maxAssociatedDataLength),
+		},
+	}
+	messageBSpec = messageSpec{
+		role: roleB,
+		fields: []messageFieldSpec{
+			exactField("message B point", pointSize),
+			cappedField("message B associated data", maxAssociatedDataLength),
+			exactField("message B tag", tagSize),
+		},
+	}
+	messageCSpec = messageSpec{
+		role: roleC,
+		fields: []messageFieldSpec{
+			exactField("message C tag", tagSize),
+		},
+	}
+)
+
+func cappedField(name string, maxLen int) messageFieldSpec {
+	return messageFieldSpec{name: name, length: maxLen}
+}
+
+func exactField(name string, wantLen int) messageFieldSpec {
+	return messageFieldSpec{name: name, length: wantLen, exact: true}
+}
+
 func encodeMessageA(sid, ya, ada []byte) []byte {
-	out := []byte{wireFormatV1, wireSuite, roleA}
-	out = append(out, prependLen(sid)...)
-	out = append(out, prependLen(ya)...)
-	out = append(out, prependLen(ada)...)
-	return out
+	return encodeMessage(messageASpec, sid, ya, ada)
 }
 
 func encodeMessageB(yb, adb, tag []byte) []byte {
-	out := []byte{wireFormatV1, wireSuite, roleB}
-	out = append(out, prependLen(yb)...)
-	out = append(out, prependLen(adb)...)
-	out = append(out, prependLen(tag)...)
-	return out
+	return encodeMessage(messageBSpec, yb, adb, tag)
 }
 
 func encodeMessageC(tag []byte) []byte {
-	out := []byte{wireFormatV1, wireSuite, roleC}
-	out = append(out, prependLen(tag)...)
+	return encodeMessage(messageCSpec, tag)
+}
+
+func encodeMessage(spec messageSpec, fields ...[]byte) []byte {
+	if len(fields) != len(spec.fields) {
+		panic("cpace: internal message framing field count mismatch")
+	}
+	out := []byte{wireFormatV1, wireSuite, spec.role}
+	for _, field := range fields {
+		out = append(out, prependLen(field)...)
+	}
 	return out
 }
 
 func decodeMessageA(in []byte) (messageA, error) {
-	r, err := newMessageReader(in, roleA)
+	fields, err := decodeMessage(messageASpec, in)
 	if err != nil {
 		return messageA{}, err
 	}
-	sid, err := r.readField(maxSessionIDLength, "message A session id")
-	if err != nil {
-		return messageA{}, err
-	}
-	ya, err := r.readExactField(pointSize, "message A point")
-	if err != nil {
-		return messageA{}, err
-	}
-	ada, err := r.readField(maxAssociatedDataLength, "message A associated data")
-	if err != nil {
-		return messageA{}, err
-	}
-	if err := r.done(); err != nil {
-		return messageA{}, err
-	}
-	return messageA{sid: sid, ya: ya, ada: ada}, nil
+	return messageA{sid: fields[0], ya: fields[1], ada: fields[2]}, nil
 }
 
 func decodeMessageB(in []byte) (messageB, error) {
-	r, err := newMessageReader(in, roleB)
+	fields, err := decodeMessage(messageBSpec, in)
 	if err != nil {
 		return messageB{}, err
 	}
-	yb, err := r.readExactField(pointSize, "message B point")
-	if err != nil {
-		return messageB{}, err
-	}
-	adb, err := r.readField(maxAssociatedDataLength, "message B associated data")
-	if err != nil {
-		return messageB{}, err
-	}
-	tag, err := r.readExactField(tagSize, "message B tag")
-	if err != nil {
-		return messageB{}, err
-	}
-	if err := r.done(); err != nil {
-		return messageB{}, err
-	}
-	return messageB{yb: yb, adb: adb, tag: tag}, nil
+	return messageB{yb: fields[0], adb: fields[1], tag: fields[2]}, nil
 }
 
 func decodeMessageC(in []byte) (messageC, error) {
-	r, err := newMessageReader(in, roleC)
+	fields, err := decodeMessage(messageCSpec, in)
 	if err != nil {
 		return messageC{}, err
 	}
-	tag, err := r.readExactField(tagSize, "message C tag")
+	return messageC{tag: fields[0]}, nil
+}
+
+func decodeMessage(spec messageSpec, in []byte) ([][]byte, error) {
+	r, err := newMessageReader(in, spec)
 	if err != nil {
-		return messageC{}, err
+		return nil, err
+	}
+	fields := make([][]byte, len(spec.fields))
+	for i, field := range spec.fields {
+		fields[i], err = r.readField(field)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err := r.done(); err != nil {
-		return messageC{}, err
+		return nil, err
 	}
-	return messageC{tag: tag}, nil
+	return fields, nil
 }
 
 type messageReader struct {
@@ -127,7 +178,7 @@ type messageReader struct {
 	off int
 }
 
-func newMessageReader(in []byte, wantRole byte) (*messageReader, error) {
+func newMessageReader(in []byte, spec messageSpec) (*messageReader, error) {
 	if len(in) < 3 {
 		return nil, fmt.Errorf("%w: truncated header", ErrMessage)
 	}
@@ -137,41 +188,32 @@ func newMessageReader(in []byte, wantRole byte) (*messageReader, error) {
 	if in[1] != wireSuite {
 		return nil, fmt.Errorf("%w: wrong suite", ErrMessage)
 	}
-	if in[2] != wantRole {
+	if in[2] != spec.role {
 		return nil, fmt.Errorf("%w: wrong role", ErrMessage)
+	}
+	if len(in) > maxMessageLength {
+		return nil, fmt.Errorf("%w: message too large", ErrMessage)
 	}
 	return &messageReader{buf: in, off: 3}, nil
 }
 
-func (r *messageReader) readField(maxLen int, name string) ([]byte, error) {
+func (r *messageReader) readField(spec messageFieldSpec) ([]byte, error) {
 	n, err := r.readLEB128()
 	if err != nil {
 		return nil, err
 	}
-	if n > maxLen {
-		return nil, fmt.Errorf("%w: %s field too large", ErrMessage, name)
+	if spec.exact {
+		if n != spec.length {
+			return nil, fmt.Errorf("%w: %s length", ErrMessage, spec.name)
+		}
+	} else if n > spec.length {
+		return nil, fmt.Errorf("%w: %s field too large", ErrMessage, spec.name)
 	}
 	if len(r.buf)-r.off < n {
-		return nil, fmt.Errorf("%w: truncated %s field", ErrMessage, name)
+		return nil, fmt.Errorf("%w: truncated %s field", ErrMessage, spec.name)
 	}
 	out := clone(r.buf[r.off : r.off+n])
 	r.off += n
-	return out, nil
-}
-
-func (r *messageReader) readExactField(wantLen int, name string) ([]byte, error) {
-	n, err := r.readLEB128()
-	if err != nil {
-		return nil, err
-	}
-	if n != wantLen {
-		return nil, fmt.Errorf("%w: %s length", ErrMessage, name)
-	}
-	if len(r.buf)-r.off < wantLen {
-		return nil, fmt.Errorf("%w: truncated %s field", ErrMessage, name)
-	}
-	out := clone(r.buf[r.off : r.off+wantLen])
-	r.off += wantLen
 	return out, nil
 }
 

@@ -71,12 +71,7 @@ draft LEB128 length-value fields. Decoders reject trailing data, wrong
 version/suite/role, malformed or non-canonical LEB128, oversized fields, invalid
 point lengths, and invalid tag lengths.
 
-Size limits are per-field, not aggregate message limits: passwords and party
-IDs are capped at 4 KiB, context and session IDs at 1 KiB, and associated data
-at 64 KiB. Public-share and confirmation-tag fields are decoded with exact
-32-byte and 64-byte limits. Associated data is intended to bind outer protocol
-context; large external artifacts should normally be represented by a digest,
-Merkle root, exporter, or other fixed-size commitment.
+Size limits for valid package-owned message shapes are per-field: passwords and party IDs are capped at 4 KiB, context and session IDs at 1 KiB, and associated data at 64 KiB. Public-share and confirmation-tag fields are decoded with exact 32-byte and 64-byte limits. Malformed framed inputs also hit a 128 KiB aggregate decoder backstop before field parsing proceeds; this is an invalid-message throttle, not a replacement for the per-field valid-message caps. Associated data is intended to bind outer protocol context; large external artifacts should normally be represented by a digest, Merkle root, exporter, or other fixed-size commitment.
 
 Confirmation tags intentionally remain draft-compatible. This package does not
 add extra role-label inputs to the draft-21 confirmation MACs.

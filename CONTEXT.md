@@ -16,6 +16,10 @@ An `Initiator` or `Responder` value, which the protocol permits to be consumed
 exactly once. Reuse is rejected, and the state is spent even when a step fails.
 _Avoid_: handle, context (Go's `context.Context` is unrelated).
 
+**Message framing**:
+The package-owned binary envelope for CPace messages A, B, and C: format byte, suite byte, role byte, and length-value encoded fields with package-owned caps. Message framing sits in front of the **CPace core**; decoded cryptographic fields cross that seam, but parsing, role checks, size caps, and wire bytes stay here.
+_Avoid_: wire protocol, transport, serialization helper.
+
 **ISK**:
 The Intermediate Session Key — the shared secret CPace derives by hashing the sid, the Diffie-Hellman result, and the transcript. Ownership is role-asymmetric. The responder derives its ISK at construction and holds a working copy in `responderCore` until cleanup by `clear()`. The initiator's ISK exists only as a local inside the core's `finish`, cleared before `Finish` returns — it is never stored on the initiator or its core. A confirmed **Session** holds its own independent clone. Each owner clears its own copy.
 _Avoid_: session key, shared secret, master key.

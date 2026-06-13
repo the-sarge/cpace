@@ -1087,11 +1087,30 @@ func TestMessageParserRejectsMalformed(t *testing.T) {
 	}
 }
 
+func TestMessageFramingAggregateSizeCap(t *testing.T) {
+	tooLarge := append([]byte{wireFormatV1, wireSuite, roleA}, bytes.Repeat([]byte{0x80}, maxMessageLength)...)
+	if _, err := decodeMessageA(tooLarge); !errors.Is(err, ErrMessage) ||
+		!strings.Contains(err.Error(), "message too large") {
+		t.Fatalf("decode oversized message err=%v", err)
+	}
+
+	wrongSuite := clone(tooLarge)
+	wrongSuite[1] ^= 0xff
+	if _, err := decodeMessageA(wrongSuite); !errors.Is(err, ErrMessage) ||
+		!strings.Contains(err.Error(), "wrong suite") ||
+		strings.Contains(err.Error(), "message too large") {
+		t.Fatalf("decode oversized wrong-suite message err=%v", err)
+	}
+}
+
 func TestMessageParserFieldSizeLimits(t *testing.T) {
 	point := bytes.Repeat([]byte{0x42}, pointSize)
 	tag := bytes.Repeat([]byte{0x99}, tagSize)
 
 	msgA := encodeMessageA(bytes.Repeat([]byte{0x11}, maxSessionIDLength), point, bytes.Repeat([]byte{0x22}, maxAssociatedDataLength))
+	if len(msgA) >= maxMessageLength {
+		t.Fatalf("max-size message A len=%d exceeds aggregate cap %d", len(msgA), maxMessageLength)
+	}
 	if _, err := decodeMessageA(msgA); err != nil {
 		t.Fatalf("decode A max-size fields: %v", err)
 	}

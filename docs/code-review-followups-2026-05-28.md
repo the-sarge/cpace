@@ -27,16 +27,18 @@ A peer-sent empty `sid` against a non-empty-local-`SessionID` responder is curre
 
 **Severity:** Medium. **Surfaced as review item M6.**
 
-`framing.go:130-144` performs only a 3-byte header check then begins field-by-field parsing. Per-field size caps are enforced individually (max 64 KiB for AD, max 1 KiB for sid, etc.) but no upfront `len(in) > maxMessageLen` check exists.
+**Status:** Addressed by PR #92. `newMessageReader` now has a 128 KiB aggregate invalid-message backstop, while valid package-owned message shapes remain governed by per-field caps and exact public-share/tag lengths.
 
-For a server calling `Respond` in a tight loop under a flood of maximally-sized (~66 KiB) malformed messages, allocations happen field-by-field on every call before any cryptographic filter. Per-field caps are the only throttle.
+Before PR #92, `framing.go:130-144` performed only a 3-byte header check then began field-by-field parsing. Per-field size caps were enforced individually (max 64 KiB for AD, max 1 KiB for sid, etc.) but no upfront `len(in) > maxMessageLen` check existed.
 
-**Proposed fix:**
-- Add a `maxMessageLen` constant derived from per-field caps + header overhead (or a round constant like `128 * 1024` well above any valid message).
-- Check `if len(in) > maxMessageLen` at the top of `newMessageReader` and reject early with `ErrMessage`.
+Before the fix, a server calling `Respond` in a tight loop under a flood of maximally-sized (~66 KiB) malformed messages allocated field-by-field on every call before any cryptographic filter. Per-field caps were the only throttle.
+
+**Implemented fix:**
+- Added `maxMessageLength = 128 << 10`, a round cap well above every valid package-owned message shape.
+- Checked `if len(in) > maxMessageLength` in `newMessageReader` after header version/suite/role validation and rejected early with `ErrMessage`.
 - No valid message length is reduced; this rejects only invalid oversized messages earlier.
 
-**File as issue with labels:** `area/framing`, `kind/hardening`, `priority/medium`.
+**Tracking:** formerly file as issue with labels `area/framing`, `kind/hardening`, `priority/medium`; PR #92 resolves it.
 
 ---
 
