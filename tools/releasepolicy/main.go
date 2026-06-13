@@ -100,6 +100,7 @@ func checkWorkflow(path string, root *yaml.Node) []finding {
 		return c.findings
 	}
 	c.checkJobSet(jobs)
+	c.checkStepSets(jobs)
 	c.checkJobPermissions(jobs)
 	c.checkUnsupportedRefJob(jobs)
 	c.checkVerifyTagJob(jobs)
@@ -127,9 +128,19 @@ func (c *checker) checkRoot(root *yaml.Node) {
 	if root.Kind != yaml.MappingNode {
 		c.fail("$", "workflow must be a mapping")
 	}
+	if !sameStringSet(mapKeys(root), []string{"name", "on", "permissions", "env", "concurrency", "jobs"}) {
+		c.fail("$", "workflow root keys must exactly match the accepted release workflow")
+	}
 	if scalar(mapping(root, "name")) != "Release Validation" {
 		c.fail("name", "workflow name must be Release Validation")
 	}
+	expectExactScalars(c, "env", mapping(root, "env"), map[string]string{
+		"GOTOOLCHAIN": "local",
+	})
+	expectExactScalars(c, "concurrency", mapping(root, "concurrency"), map[string]string{
+		"group":              "release-${{ github.ref }}",
+		"cancel-in-progress": "false",
+	})
 }
 
 func (c *checker) checkTriggers(root *yaml.Node) {
@@ -183,6 +194,83 @@ func (c *checker) checkJobSet(jobs *yaml.Node) {
 	for _, name := range mapKeys(jobs) {
 		if !contains(want, name) {
 			c.fail("jobs."+name, "unexpected job in release workflow")
+		}
+	}
+}
+
+func (c *checker) checkStepSets(jobs *yaml.Node) {
+	want := map[string][]string{
+		"unsupported-ref": {
+			"Explain unsupported ref",
+		},
+		"verify-tag": {
+			"uses:actions/checkout",
+			"Verify tag object and signature",
+			"Validate release tag metadata",
+		},
+		"check": {
+			"uses:actions/checkout",
+			"Set up Go",
+			"Report Go environment",
+			"Run tests",
+		},
+		"race": {
+			"uses:actions/checkout",
+			"Set up Go",
+			"Report Go environment",
+			"Run race tests",
+		},
+		"vuln": {
+			"uses:actions/checkout",
+			"Set up Go",
+			"Report Go environment",
+			"Install task",
+			"Install govulncheck",
+			"Run vulnerability scan",
+		},
+		"gosec": {
+			"uses:actions/checkout",
+			"Set up Go",
+			"Report Go environment",
+			"Install task",
+			"Install gosec",
+			"Run gosec scan",
+			"Upload gosec SARIF to code scanning",
+			"Report gosec result",
+		},
+		"sbom": {
+			"uses:actions/checkout",
+			"Generate CycloneDX SBOM",
+			"Validate SBOM and compute checksum",
+			"Upload SBOM artifact",
+		},
+		"sbom-attestation": {
+			"uses:actions/checkout",
+			"Download SBOM artifact",
+			"Validate downloaded SBOM",
+			"Attest SBOM",
+			"Prepare Sigstore bundle asset",
+			"Upload release assets artifact",
+		},
+		"release": {
+			"uses:actions/checkout",
+			"Download prepared release assets",
+			"Prepare release notes and assets",
+			"Publish GitHub Release",
+		},
+	}
+	for _, jobName := range mapKeys(jobs) {
+		job := mapping(jobs, jobName)
+		expected, ok := want[jobName]
+		if !ok || job == nil {
+			continue
+		}
+		var got []string
+		for _, step := range steps(job) {
+			got = append(got, stepIdentity(step))
+		}
+		if !sameStringSlice(got, expected) {
+			c.fail("jobs."+jobName+".steps", fmt.Sprintf("steps must exactly match accepted release policy: got %q, want %q", got, expected))
 		}
 	}
 }
@@ -253,11 +341,12 @@ func (c *checker) checkVerifyTagJob(jobs *yaml.Node) {
 		c.fail("jobs.verify-tag.if", "verify-tag must run only for signed v* tag refs")
 	}
 	outputs := mapping(job, "outputs")
-	for _, name := range []string{"release-tag", "sbom-file", "prerelease", "latest"} {
-		if scalar(mapping(outputs, name)) == "" {
-			c.fail("jobs.verify-tag.outputs."+name, "missing verify-tag output")
-		}
-	}
+	expectExactScalars(c, "jobs.verify-tag.outputs", outputs, map[string]string{
+		"release-tag": "${{ steps.release-tag.outputs.release-tag }}",
+		"sbom-file":   "${{ steps.release-tag.outputs.sbom-file }}",
+		"prerelease":  "${{ steps.release-tag.outputs.prerelease }}",
+		"latest":      "${{ steps.release-tag.outputs.latest }}",
+	})
 	verifyStep := stepByName(job, "Verify tag object and signature")
 	if verifyStep == nil {
 		c.fail("jobs.verify-tag.steps", "missing tag verification step")
@@ -327,9 +416,11 @@ func (c *checker) checkCheckoutCredentials(jobs *yaml.Node) {
 				continue
 			}
 			with := mapping(step, "with")
-			if scalar(mapping(with, "persist-credentials")) != "false" {
-				c.fail(fmt.Sprintf("jobs.%s.steps[%d].with.persist-credentials", jobName, idx), "checkout steps must set persist-credentials: false")
+			want := map[string]string{"persist-credentials": "false"}
+			if jobName == "verify-tag" {
+				want["fetch-depth"] = "0"
 			}
+			expectExactScalars(c, fmt.Sprintf("jobs.%s.steps[%d].with", jobName, idx), with, want)
 		}
 	}
 }
@@ -371,7 +462,15 @@ func (c *checker) checkValidationJobs(jobs *yaml.Node) {
 	if gosec != nil {
 		requireRunStep(c, gosec, "jobs.gosec", "Install task", []string{`go install github.com/go-task/task/v3/cmd/task@v3.50.0`})
 		requireRunStep(c, gosec, "jobs.gosec", "Install gosec", []string{`go install github.com/securego/gosec/v2/cmd/gosec@v2.26.1`})
-		requireRunStep(c, gosec, "jobs.gosec", "Run gosec scan", []string{`task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'`})
+		scan := requireRunStep(c, gosec, "jobs.gosec", "Run gosec scan", []string{`task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'`})
+		if scan != nil {
+			if scalar(mapping(scan, "id")) != "gosec" {
+				c.fail("jobs.gosec.steps.Run gosec scan.id", "gosec scan step id must be gosec")
+			}
+			if scalar(mapping(scan, "continue-on-error")) != "true" {
+				c.fail("jobs.gosec.steps.Run gosec scan.continue-on-error", "gosec scan must continue so the report step can fail explicitly")
+			}
+		}
 		upload := stepByName(gosec, "Upload gosec SARIF to code scanning")
 		if upload == nil {
 			c.fail("jobs.gosec.steps", "missing gosec SARIF upload step")
@@ -382,22 +481,26 @@ func (c *checker) checkValidationJobs(jobs *yaml.Node) {
 			if !strings.HasPrefix(scalar(mapping(upload, "uses")), "github/codeql-action/upload-sarif@") {
 				c.fail("jobs.gosec.steps.Upload gosec SARIF to code scanning.uses", "gosec SARIF upload must use github/codeql-action/upload-sarif")
 			}
-			expectScalars(c, "jobs.gosec.steps.Upload gosec SARIF to code scanning.with", mapping(upload, "with"), map[string]string{
+			expectExactScalars(c, "jobs.gosec.steps.Upload gosec SARIF to code scanning.with", mapping(upload, "with"), map[string]string{
 				"sarif_file": "gosec.sarif",
 				"category":   "gosec-release",
 			})
 		}
-		requireRunStep(c, gosec, "jobs.gosec", "Report gosec result", []string{`exit 1`})
+		report := requireRunStep(c, gosec, "jobs.gosec", "Report gosec result", []string{`exit 1`})
+		if report != nil && scalar(mapping(report, "if")) != "steps.gosec.outcome == 'failure'" {
+			c.fail("jobs.gosec.steps.Report gosec result.if", "gosec failure report guard changed")
+		}
 	}
 }
 
-func requireRunStep(c *checker, job *yaml.Node, jobPath, name string, want []string) {
+func requireRunStep(c *checker, job *yaml.Node, jobPath, name string, want []string) *yaml.Node {
 	step := stepByName(job, name)
 	if step == nil {
 		c.fail(jobPath+".steps", "missing "+name+" step")
-		return
+		return nil
 	}
 	requireExactScriptLines(c, jobPath+".steps."+name+".run", scalar(mapping(step, "run")), want)
+	return step
 }
 
 func (c *checker) checkSBOMJob(jobs *yaml.Node) {
@@ -420,7 +523,7 @@ func (c *checker) checkSBOMJob(jobs *yaml.Node) {
 		c.fail("jobs.sbom.steps.Generate CycloneDX SBOM.uses", "SBOM generation must use anchore/sbom-action")
 	}
 	with := mapping(gen, "with")
-	expectScalars(c, "jobs.sbom.steps.Generate CycloneDX SBOM.with", with, map[string]string{
+	expectExactScalars(c, "jobs.sbom.steps.Generate CycloneDX SBOM.with", with, map[string]string{
 		"format":                "cyclonedx-json@1.5",
 		"output-file":           "${{ needs.verify-tag.outputs.sbom-file }}",
 		"syft-version":          "v1.45.1",
@@ -440,6 +543,22 @@ func (c *checker) checkSBOMJob(jobs *yaml.Node) {
 			`echo "sbom-sha256=$sbom_sha256"`,
 			`} >> "$GITHUB_OUTPUT"`,
 		})
+		expectExactScalars(c, "jobs.sbom.steps.Validate SBOM and compute checksum.env", mapping(validate, "env"), map[string]string{
+			"SBOM_FILE": "${{ needs.verify-tag.outputs.sbom-file }}",
+		})
+	}
+	upload := stepByName(job, "Upload SBOM artifact")
+	if upload == nil {
+		c.fail("jobs.sbom.steps", "missing SBOM artifact upload step")
+	} else {
+		if !strings.HasPrefix(scalar(mapping(upload, "uses")), "actions/upload-artifact@") {
+			c.fail("jobs.sbom.steps.Upload SBOM artifact.uses", "SBOM artifact upload must use actions/upload-artifact")
+		}
+		expectExactScalars(c, "jobs.sbom.steps.Upload SBOM artifact.with", mapping(upload, "with"), map[string]string{
+			"name":              "release-sbom",
+			"path":              "${{ needs.verify-tag.outputs.sbom-file }}",
+			"if-no-files-found": "error",
+		})
 	}
 }
 
@@ -448,12 +567,27 @@ func (c *checker) checkSBOMAttestationJob(jobs *yaml.Node) {
 	if job == nil {
 		return
 	}
+	download := stepByName(job, "Download SBOM artifact")
+	if download == nil {
+		c.fail("jobs.sbom-attestation.steps", "missing SBOM artifact download step")
+	} else {
+		if !strings.HasPrefix(scalar(mapping(download, "uses")), "actions/download-artifact@") {
+			c.fail("jobs.sbom-attestation.steps.Download SBOM artifact.uses", "SBOM download must use actions/download-artifact")
+		}
+		expectExactScalars(c, "jobs.sbom-attestation.steps.Download SBOM artifact.with", mapping(download, "with"), map[string]string{
+			"name": "release-sbom",
+			"path": "dist",
+		})
+	}
 	validate := stepByName(job, "Validate downloaded SBOM")
 	if validate == nil {
 		c.fail("jobs.sbom-attestation.steps", "missing downloaded SBOM validation step")
 	} else {
 		requireExactScriptLines(c, "jobs.sbom-attestation.steps.Validate downloaded SBOM.run", scalar(mapping(validate, "run")), []string{
 			`scripts/validate-cyclonedx-sbom.sh "dist/$SBOM_FILE"`,
+		})
+		expectExactScalars(c, "jobs.sbom-attestation.steps.Validate downloaded SBOM.env", mapping(validate, "env"), map[string]string{
+			"SBOM_FILE": "${{ needs.sbom.outputs.sbom-file }}",
 		})
 	}
 	attest := stepByName(job, "Attest SBOM")
@@ -465,7 +599,7 @@ func (c *checker) checkSBOMAttestationJob(jobs *yaml.Node) {
 		c.fail("jobs.sbom-attestation.steps.Attest SBOM.uses", "SBOM attestation must use actions/attest")
 	}
 	with := mapping(attest, "with")
-	expectScalars(c, "jobs.sbom-attestation.steps.Attest SBOM.with", with, map[string]string{
+	expectExactScalars(c, "jobs.sbom-attestation.steps.Attest SBOM.with", with, map[string]string{
 		"subject-path": "dist/${{ needs.sbom.outputs.sbom-file }}",
 		"sbom-path":    "dist/${{ needs.sbom.outputs.sbom-file }}",
 	})
@@ -478,6 +612,23 @@ func (c *checker) checkSBOMAttestationJob(jobs *yaml.Node) {
 			`cp "$ATTESTATION_BUNDLE_PATH" "$bundle_dst"`,
 			`test -s "$bundle_dst"`,
 		})
+		expectExactScalars(c, "jobs.sbom-attestation.steps.Prepare Sigstore bundle asset.env", mapping(prepare, "env"), map[string]string{
+			"ATTESTATION_BUNDLE_PATH": "${{ steps.attest-sbom.outputs.bundle-path }}",
+			"SBOM_FILE":               "${{ needs.sbom.outputs.sbom-file }}",
+		})
+	}
+	upload := stepByName(job, "Upload release assets artifact")
+	if upload == nil {
+		c.fail("jobs.sbom-attestation.steps", "missing release assets upload step")
+	} else {
+		if !strings.HasPrefix(scalar(mapping(upload, "uses")), "actions/upload-artifact@") {
+			c.fail("jobs.sbom-attestation.steps.Upload release assets artifact.uses", "release assets upload must use actions/upload-artifact")
+		}
+		expectExactScalars(c, "jobs.sbom-attestation.steps.Upload release assets artifact.with", mapping(upload, "with"), map[string]string{
+			"name":              "release-assets",
+			"path":              "dist/${{ needs.sbom.outputs.sbom-file }}\ndist/${{ needs.sbom.outputs.sbom-file }}.sigstore.json\n",
+			"if-no-files-found": "error",
+		})
 	}
 }
 
@@ -485,6 +636,18 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 	job := mapping(jobs, "release")
 	if job == nil {
 		return
+	}
+	download := stepByName(job, "Download prepared release assets")
+	if download == nil {
+		c.fail("jobs.release.steps", "missing prepared release assets download step")
+	} else {
+		if !strings.HasPrefix(scalar(mapping(download, "uses")), "actions/download-artifact@") {
+			c.fail("jobs.release.steps.Download prepared release assets.uses", "release asset download must use actions/download-artifact")
+		}
+		expectExactScalars(c, "jobs.release.steps.Download prepared release assets.with", mapping(download, "with"), map[string]string{
+			"name": "release-assets",
+			"path": "dist",
+		})
 	}
 	prepare := stepByName(job, "Prepare release notes and assets")
 	if prepare == nil {
@@ -512,6 +675,11 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 			`} > release-body.md`,
 			`echo "Prepared release body and assets for $RELEASE_TAG."`,
 		})
+		expectExactScalars(c, "jobs.release.steps.Prepare release notes and assets.env", mapping(prepare, "env"), map[string]string{
+			"RELEASE_TAG": "${{ needs.verify-tag.outputs.release-tag }}",
+			"SBOM_FILE":   "${{ needs.sbom.outputs.sbom-file }}",
+			"SBOM_SHA256": "${{ needs.sbom.outputs.sbom-sha256 }}",
+		})
 	}
 	publish := stepByName(job, "Publish GitHub Release")
 	if publish == nil {
@@ -520,6 +688,9 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 	}
 	if scalar(mapping(publish, "if")) != publishGuard {
 		c.fail("jobs.release.steps.Publish GitHub Release.if", "publishing must be limited to v* tag pushes")
+	}
+	if scalar(mapping(publish, "shell")) != "bash" {
+		c.fail("jobs.release.steps.Publish GitHub Release.shell", "publishing must use bash")
 	}
 	run := scalar(mapping(publish, "run"))
 	requireExactScriptLines(c, "jobs.release.steps.Publish GitHub Release.run", run, []string{
@@ -546,10 +717,13 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 		`--verify-tag \`,
 		`"${release_args[@]}"`,
 	})
-	env := mapping(publish, "env")
-	if scalar(mapping(env, "GH_TOKEN")) != "${{ github.token }}" {
-		c.fail("jobs.release.steps.Publish GitHub Release.env.GH_TOKEN", "publishing must use github.token")
-	}
+	expectExactScalars(c, "jobs.release.steps.Publish GitHub Release.env", mapping(publish, "env"), map[string]string{
+		"GH_TOKEN":           "${{ github.token }}",
+		"RELEASE_TAG":        "${{ needs.verify-tag.outputs.release-tag }}",
+		"RELEASE_PRERELEASE": "${{ needs.verify-tag.outputs.prerelease }}",
+		"RELEASE_LATEST":     "${{ needs.verify-tag.outputs.latest }}",
+		"SBOM_FILE":          "${{ needs.sbom.outputs.sbom-file }}",
+	})
 }
 
 func checkAllowedSigners(repoRoot string) []finding {
@@ -558,7 +732,7 @@ func checkAllowedSigners(repoRoot string) []finding {
 	if err != nil {
 		return []finding{{path: path, msg: err.Error()}}
 	}
-	if string(in) != expectedSigners {
+	if strings.ReplaceAll(string(in), "\r\n", "\n") != expectedSigners {
 		return []finding{{path: path, msg: "allowed_signers must exactly match the accepted maintainer signing keys"}}
 	}
 	return nil
@@ -676,6 +850,17 @@ func stepByName(job *yaml.Node, name string) *yaml.Node {
 		}
 	}
 	return nil
+}
+
+func stepIdentity(step *yaml.Node) string {
+	if name := scalar(mapping(step, "name")); name != "" {
+		return name
+	}
+	if uses := scalar(mapping(step, "uses")); uses != "" {
+		action, _, _ := strings.Cut(uses, "@")
+		return "uses:" + action
+	}
+	return "unnamed"
 }
 
 func steps(job *yaml.Node) []*yaml.Node {

@@ -192,6 +192,48 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			},
 			want: "task gosec",
 		},
+		{
+			name: "extra release step",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      - name: Publish GitHub Release\n", "      - name: Extra release mutation\n        run: gh release upload \"$RELEASE_TAG\" \"dist/$SBOM_FILE\" --clobber\n\n      - name: Publish GitHub Release\n")
+			},
+			want: "steps must exactly match",
+		},
+		{
+			name: "extra attestation step",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      - name: Attest SBOM\n", "      - name: Extra OIDC step\n        run: echo extra\n\n      - name: Attest SBOM\n")
+			},
+			want: "steps must exactly match",
+		},
+		{
+			name: "gosec report guard changed",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        if: steps.gosec.outcome == 'failure'", "        if: false")
+			},
+			want: "gosec failure report guard changed",
+		},
+		{
+			name: "verify tag output rewired",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      release-tag: ${{ steps.release-tag.outputs.release-tag }}", "      release-tag: ${{ github.ref_name }}")
+			},
+			want: "jobs.verify-tag.outputs.release-tag",
+		},
+		{
+			name: "root defaults injected",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "permissions:\n", "defaults:\n  run:\n    shell: bash\n\npermissions:\n")
+			},
+			want: "workflow root keys must exactly match",
+		},
+		{
+			name: "extra publish env",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "          GH_TOKEN: ${{ github.token }}\n", "          GH_TOKEN: ${{ github.token }}\n          EXTRA_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n")
+			},
+			want: "unexpected key",
+		},
 	}
 
 	for _, tt := range tests {
@@ -223,6 +265,16 @@ func TestReleasePolicyRejectsUnexpectedAllowedSigners(t *testing.T) {
 
 	findings := checkAllowedSigners(repoRoot)
 	requireFinding(t, findings, "allowed_signers must exactly match")
+}
+
+func TestReleasePolicyAcceptsCRLFAllowedSigners(t *testing.T) {
+	repoRoot := t.TempDir()
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(strings.ReplaceAll(expectedSigners, "\n", "\r\n")), 0o644)
+
+	findings := checkAllowedSigners(repoRoot)
+	if len(findings) > 0 {
+		t.Fatalf("expected CRLF-normalized allowed_signers to pass, got %#v", findings)
+	}
 }
 
 func currentWorkflow(t *testing.T) string {
