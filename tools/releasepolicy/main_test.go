@@ -1,8 +1,12 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 func TestCurrentRepositoryReleasePolicy(t *testing.T) {
@@ -15,5 +19,200 @@ func TestCurrentRepositoryReleasePolicy(t *testing.T) {
 		for _, finding := range findings {
 			t.Errorf("%s: %s", finding.path, finding.msg)
 		}
+	}
+}
+
+func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
+	base := currentWorkflow(t)
+	tests := []struct {
+		name   string
+		mutate func(*testing.T, string) string
+		want   string
+	}{
+		{
+			name: "neutralized verify tag command",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, `          git verify-tag "$GITHUB_REF_NAME"`, `          git verify-tag "$GITHUB_REF_NAME" || true`)
+			},
+			want: `git verify-tag "$GITHUB_REF_NAME"`,
+		},
+		{
+			name: "echoed verify tag command",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, `          git verify-tag "$GITHUB_REF_NAME"`, `          echo git verify-tag "$GITHUB_REF_NAME"`)
+			},
+			want: `git verify-tag "$GITHUB_REF_NAME"`,
+		},
+		{
+			name: "commented verify tag command",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, `          git verify-tag "$GITHUB_REF_NAME"`, `          # git verify-tag "$GITHUB_REF_NAME"`)
+			},
+			want: `git verify-tag "$GITHUB_REF_NAME"`,
+		},
+		{
+			name: "neutralized SBOM validation",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, `          scripts/validate-cyclonedx-sbom.sh "$sbom_file"`, `          scripts/validate-cyclonedx-sbom.sh "$sbom_file" || true`)
+			},
+			want: `scripts/validate-cyclonedx-sbom.sh "$sbom_file"`,
+		},
+		{
+			name: "echoed release creation",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, `          gh release create "$tag" "$sbom_path" "$bundle_path" \`, `          echo gh release create "$tag" "$sbom_path" "$bundle_path" \`)
+			},
+			want: `gh release create "$tag" "$sbom_path" "$bundle_path" \`,
+		},
+		{
+			name: "extra release permission",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "    permissions:\n      contents: write\n\n    steps:", "    permissions:\n      contents: write\n      id-token: write\n\n    steps:")
+			},
+			want: "unexpected key",
+		},
+		{
+			name: "contents write on check job",
+			mutate: func(t *testing.T, in string) string {
+				from := "  check:\n    name: Check\n    if: " + tagGuard + "\n    needs: verify-tag\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n\n    steps:"
+				to := "  check:\n    name: Check\n    if: " + tagGuard + "\n    needs: verify-tag\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    permissions:\n      contents: write\n\n    steps:"
+				return replaceOnce(t, in, from, to)
+			},
+			want: "must inherit top-level contents: read",
+		},
+		{
+			name: "unexpected attestation permission",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "    permissions:\n      contents: read\n      id-token: write\n      attestations: write\n\n    steps:", "    permissions:\n      contents: read\n      id-token: write\n      attestations: write\n      issues: write\n\n    steps:")
+			},
+			want: "unexpected key",
+		},
+		{
+			name: "rogue job",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "\n  release:\n", "\n  rogue:\n    name: Rogue\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo pwned\n\n  release:\n")
+			},
+			want: "unexpected job",
+		},
+		{
+			name: "unexpected needs entry",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "    needs:\n      - verify-tag\n      - check\n      - race\n      - vuln\n      - gosec\n", "    needs:\n      - verify-tag\n      - check\n      - race\n      - vuln\n      - gosec\n      - unsupported-ref\n")
+			},
+			want: "needs must exactly match",
+		},
+		{
+			name: "push branches",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "  push:\n    tags:", "  push:\n    branches:\n      - main\n    tags:")
+			},
+			want: "push trigger must contain only tags",
+		},
+		{
+			name: "extra tag glob",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      - 'v*'\n", "      - 'v*'\n      - '*'\n")
+			},
+			want: "push trigger must contain only v* tags",
+		},
+		{
+			name: "broadened job guard",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "    if: "+tagGuard+"\n", "    if: "+tagGuard+" || github.event_name == 'workflow_dispatch'\n")
+			},
+			want: "must run only for signed v* tag refs",
+		},
+		{
+			name: "unsupported ref missing negation",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "    if: "+unsupportedRefGuard+"\n", "    if: github.event_name == 'workflow_dispatch' && ("+tagGuard+")\n")
+			},
+			want: "unsupported-ref job must be limited",
+		},
+		{
+			name: "unpinned action",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2", "actions/checkout@v6")
+			},
+			want: "action must be pinned",
+		},
+		{
+			name: "run expression interpolation",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "          go version", `          echo "${{ github.ref }}"`)
+			},
+			want: "must not interpolate",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			findings := findingsForWorkflow(t, tt.mutate(t, base))
+			requireFinding(t, findings, tt.want)
+		})
+	}
+}
+
+func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
+	repoRoot := t.TempDir()
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "release.yml"), []byte(currentWorkflow(t)), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte("the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFake\n"), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-tag-metadata.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "validate-cyclonedx-sbom.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "extract-release-notes.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "required release helper must be executable")
+}
+
+func currentWorkflow(t *testing.T) string {
+	t.Helper()
+	in, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "release.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(in)
+}
+
+func findingsForWorkflow(t *testing.T, in string) []finding {
+	t.Helper()
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte(in), &doc); err != nil {
+		t.Fatal(err)
+	}
+	if len(doc.Content) != 1 {
+		t.Fatalf("expected one YAML document, got %d", len(doc.Content))
+	}
+	return checkWorkflow("release.yml", doc.Content[0])
+}
+
+func requireFinding(t *testing.T, findings []finding, want string) {
+	t.Helper()
+	for _, finding := range findings {
+		if strings.Contains(finding.path, want) || strings.Contains(finding.msg, want) {
+			return
+		}
+	}
+	t.Fatalf("missing finding containing %q; got %#v", want, findings)
+}
+
+func replaceOnce(t *testing.T, in, old, new string) string {
+	t.Helper()
+	if !strings.Contains(in, old) {
+		t.Fatalf("test fixture did not contain %q", old)
+	}
+	return strings.Replace(in, old, new, 1)
+}
+
+func mustWriteFile(t *testing.T, path string, content []byte, mode os.FileMode) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, content, mode); err != nil {
+		t.Fatal(err)
 	}
 }

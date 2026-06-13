@@ -15,6 +15,12 @@ import (
 
 var shaRef = regexp.MustCompile(`^[0-9a-f]{40}$`)
 
+const (
+	tagGuard            = "github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')"
+	unsupportedRefGuard = "github.event_name == 'workflow_dispatch' && !(" + tagGuard + ")"
+	publishGuard        = "github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')"
+)
+
 type finding struct {
 	path string
 	msg  string
@@ -77,6 +83,7 @@ func checkWorkflow(path string, root *yaml.Node) []finding {
 		return c.findings
 	}
 	c.checkJobSet(jobs)
+	c.checkJobPermissions(jobs)
 	c.checkUnsupportedRefJob(jobs)
 	c.checkVerifyTagJob(jobs)
 	c.checkNeeds(jobs)
@@ -112,11 +119,19 @@ func (c *checker) checkTriggers(root *yaml.Node) {
 		c.fail("on", "missing trigger block")
 		return
 	}
+	if !sameStringSet(mapKeys(on), []string{"push", "workflow_dispatch"}) {
+		c.fail("on", "trigger block must contain only push.tags v* and workflow_dispatch")
+	}
 	push := mapping(on, "push")
 	if push == nil {
 		c.fail("on.push", "missing push trigger")
-	} else if !contains(seqStrings(mapping(push, "tags")), "v*") {
-		c.fail("on.push.tags", "push trigger must include v* tags")
+	} else {
+		if !sameStringSet(mapKeys(push), []string{"tags"}) {
+			c.fail("on.push", "push trigger must contain only tags")
+		}
+		if !sameStringSet(seqStrings(mapping(push, "tags")), []string{"v*"}) {
+			c.fail("on.push.tags", "push trigger must contain only v* tags")
+		}
 	}
 	if mapping(on, "workflow_dispatch") == nil {
 		c.fail("on.workflow_dispatch", "missing workflow_dispatch trigger")
@@ -146,6 +161,43 @@ func (c *checker) checkJobSet(jobs *yaml.Node) {
 			c.fail("jobs."+name, "missing required job")
 		}
 	}
+	for _, name := range mapKeys(jobs) {
+		if !contains(want, name) {
+			c.fail("jobs."+name, "unexpected job in release workflow")
+		}
+	}
+}
+
+func (c *checker) checkJobPermissions(jobs *yaml.Node) {
+	want := map[string]map[string]string{
+		"gosec": {
+			"contents":        "read",
+			"security-events": "write",
+		},
+		"sbom-attestation": {
+			"contents":     "read",
+			"id-token":     "write",
+			"attestations": "write",
+		},
+		"release": {
+			"contents": "write",
+		},
+	}
+	for _, jobName := range []string{"unsupported-ref", "verify-tag", "check", "race", "vuln", "gosec", "sbom", "sbom-attestation", "release"} {
+		job := mapping(jobs, jobName)
+		if job == nil {
+			continue
+		}
+		permissions := mapping(job, "permissions")
+		expected, hasOverride := want[jobName]
+		if !hasOverride {
+			if permissions != nil {
+				c.fail("jobs."+jobName+".permissions", "job must inherit top-level contents: read and must not declare permissions")
+			}
+			continue
+		}
+		expectExactScalars(c, "jobs."+jobName+".permissions", permissions, expected)
+	}
 }
 
 func (c *checker) checkUnsupportedRefJob(jobs *yaml.Node) {
@@ -154,7 +206,7 @@ func (c *checker) checkUnsupportedRefJob(jobs *yaml.Node) {
 		return
 	}
 	ifCond := scalar(mapping(job, "if"))
-	if !strings.Contains(ifCond, "workflow_dispatch") || !strings.Contains(ifCond, "github.ref_type == 'tag'") || !strings.Contains(ifCond, "refs/tags/v") {
+	if ifCond != unsupportedRefGuard {
 		c.fail("jobs.unsupported-ref.if", "unsupported-ref job must be limited to non-v* workflow_dispatch refs")
 	}
 	steps := steps(job)
@@ -163,9 +215,11 @@ func (c *checker) checkUnsupportedRefJob(jobs *yaml.Node) {
 		return
 	}
 	run := scalar(mapping(steps[0], "run"))
-	if !strings.Contains(run, "Release Validation workflow_dispatch runs must target a signed v* tag ref.") || !strings.Contains(run, "exit 1") {
-		c.fail("jobs.unsupported-ref.steps[0].run", "unsupported-ref step must fail closed with the documented explanation")
-	}
+	requireScriptLines(c, "jobs.unsupported-ref.steps[0].run", run, []string{
+		`echo "Release Validation workflow_dispatch runs must target a signed v* tag ref."`,
+		`echo "Use the regular CI workflows for branch validation."`,
+		`exit 1`,
+	})
 }
 
 func (c *checker) checkVerifyTagJob(jobs *yaml.Node) {
@@ -176,7 +230,7 @@ func (c *checker) checkVerifyTagJob(jobs *yaml.Node) {
 	if needs(job) != nil {
 		c.fail("jobs.verify-tag.needs", "verify-tag must not depend on another job")
 	}
-	if !isTagGuard(scalar(mapping(job, "if"))) {
+	if scalar(mapping(job, "if")) != tagGuard {
 		c.fail("jobs.verify-tag.if", "verify-tag must run only for signed v* tag refs")
 	}
 	outputs := mapping(job, "outputs")
@@ -191,27 +245,28 @@ func (c *checker) checkVerifyTagJob(jobs *yaml.Node) {
 		return
 	}
 	run := scalar(mapping(verifyStep, "run"))
-	for _, fragment := range []string{
+	requireScriptLines(c, "jobs.verify-tag.steps.Verify tag object and signature.run", run, []string{
 		`git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"`,
-		`git cat-file -t "$GITHUB_REF_NAME"`,
+		`tag_type="$(git cat-file -t "$GITHUB_REF_NAME")"`,
+		`printf '%s\n' "$tag_type"`,
 		`test "$tag_type" = tag`,
 		`git config gpg.ssh.allowedSignersFile .github/allowed_signers`,
 		`git verify-tag "$GITHUB_REF_NAME"`,
-	} {
-		if !strings.Contains(run, fragment) {
-			c.fail("jobs.verify-tag.steps.Verify tag object and signature.run", "missing required fragment: "+fragment)
-		}
-	}
+	})
 	metaStep := stepByName(job, "Validate release tag metadata")
 	if metaStep == nil {
 		c.fail("jobs.verify-tag.steps", "missing release tag metadata step")
-	} else if !strings.Contains(scalar(mapping(metaStep, "run")), `scripts/release-tag-metadata.sh "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"`) {
-		c.fail("jobs.verify-tag.steps.Validate release tag metadata.run", "metadata step must use scripts/release-tag-metadata.sh")
+	} else {
+		requireScriptLines(c, "jobs.verify-tag.steps.Validate release tag metadata.run", scalar(mapping(metaStep, "run")), []string{
+			`scripts/release-tag-metadata.sh "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"`,
+		})
 	}
 }
 
 func (c *checker) checkNeeds(jobs *yaml.Node) {
 	want := map[string][]string{
+		"unsupported-ref":  nil,
+		"verify-tag":       nil,
 		"check":            {"verify-tag"},
 		"race":             {"verify-tag"},
 		"vuln":             {"verify-tag"},
@@ -226,16 +281,11 @@ func (c *checker) checkNeeds(jobs *yaml.Node) {
 			continue
 		}
 		got := needs(job)
-		for _, need := range expected {
-			if !contains(got, need) {
-				c.fail("jobs."+jobName+".needs", "missing required need: "+need)
-			}
+		if !sameStringSet(got, expected) {
+			c.fail("jobs."+jobName+".needs", "needs must exactly match: "+strings.Join(expected, ", "))
 		}
-		if jobName != "release" && !isTagGuard(scalar(mapping(job, "if"))) {
+		if jobName != "unsupported-ref" && scalar(mapping(job, "if")) != tagGuard {
 			c.fail("jobs."+jobName+".if", "job must run only for signed v* tag refs")
-		}
-		if jobName == "release" && !isTagGuard(scalar(mapping(job, "if"))) {
-			c.fail("jobs.release.if", "release job must be scoped to signed v* tag refs")
 		}
 	}
 }
@@ -288,12 +338,14 @@ func (c *checker) checkSBOMJob(jobs *yaml.Node) {
 	if validate == nil {
 		c.fail("jobs.sbom.steps", "missing SBOM validation step")
 	} else {
-		run := scalar(mapping(validate, "run"))
-		for _, fragment := range []string{`scripts/validate-cyclonedx-sbom.sh "$sbom_file"`, `sha256sum "$sbom_file"`} {
-			if !strings.Contains(run, fragment) {
-				c.fail("jobs.sbom.steps.Validate SBOM and compute checksum.run", "missing required fragment: "+fragment)
-			}
-		}
+		requireScriptLines(c, "jobs.sbom.steps.Validate SBOM and compute checksum.run", scalar(mapping(validate, "run")), []string{
+			`sbom_file="$SBOM_FILE"`,
+			`scripts/validate-cyclonedx-sbom.sh "$sbom_file"`,
+			`sbom_sha256="$(sha256sum "$sbom_file" | awk '{ print $1 }')"`,
+			`echo "sbom-file=$sbom_file"`,
+			`echo "sbom-sha256=$sbom_sha256"`,
+			`} >> "$GITHUB_OUTPUT"`,
+		})
 	}
 }
 
@@ -302,12 +354,14 @@ func (c *checker) checkSBOMAttestationJob(jobs *yaml.Node) {
 	if job == nil {
 		return
 	}
-	permissions := mapping(job, "permissions")
-	expectScalars(c, "jobs.sbom-attestation.permissions", permissions, map[string]string{
-		"contents":     "read",
-		"id-token":     "write",
-		"attestations": "write",
-	})
+	validate := stepByName(job, "Validate downloaded SBOM")
+	if validate == nil {
+		c.fail("jobs.sbom-attestation.steps", "missing downloaded SBOM validation step")
+	} else {
+		requireScriptLines(c, "jobs.sbom-attestation.steps.Validate downloaded SBOM.run", scalar(mapping(validate, "run")), []string{
+			`scripts/validate-cyclonedx-sbom.sh "dist/$SBOM_FILE"`,
+		})
+	}
 	attest := stepByName(job, "Attest SBOM")
 	if attest == nil {
 		c.fail("jobs.sbom-attestation.steps", "missing SBOM attestation step")
@@ -325,10 +379,11 @@ func (c *checker) checkSBOMAttestationJob(jobs *yaml.Node) {
 	if prepare == nil {
 		c.fail("jobs.sbom-attestation.steps", "missing Sigstore bundle preparation step")
 	} else {
-		run := scalar(mapping(prepare, "run"))
-		if !strings.Contains(run, `bundle_dst="dist/${SBOM_FILE}.sigstore.json"`) || !strings.Contains(run, `cp "$ATTESTATION_BUNDLE_PATH" "$bundle_dst"`) {
-			c.fail("jobs.sbom-attestation.steps.Prepare Sigstore bundle asset.run", "bundle preparation must copy the attest output to the release asset name")
-		}
+		requireScriptLines(c, "jobs.sbom-attestation.steps.Prepare Sigstore bundle asset.run", scalar(mapping(prepare, "run")), []string{
+			`bundle_dst="dist/${SBOM_FILE}.sigstore.json"`,
+			`cp "$ATTESTATION_BUNDLE_PATH" "$bundle_dst"`,
+			`test -s "$bundle_dst"`,
+		})
 	}
 }
 
@@ -337,16 +392,22 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 	if job == nil {
 		return
 	}
-	permissions := mapping(job, "permissions")
-	expectScalars(c, "jobs.release.permissions", permissions, map[string]string{"contents": "write"})
 	prepare := stepByName(job, "Prepare release notes and assets")
 	if prepare == nil {
 		c.fail("jobs.release.steps", "missing release preparation step")
 	} else {
 		run := scalar(mapping(prepare, "run"))
-		for _, fragment := range []string{
+		requireScriptLines(c, "jobs.release.steps.Prepare release notes and assets.run", run, []string{
+			`sbom_path="dist/$SBOM_FILE"`,
+			`bundle_path="${sbom_path}.sigstore.json"`,
+			`test -s "$sbom_path"`,
+			`test -s "$bundle_path"`,
 			`scripts/validate-cyclonedx-sbom.sh "$sbom_path"`,
+			`computed_sha256="$(sha256sum "$sbom_path" | awk '{ print $1 }')"`,
+			`test "$computed_sha256" = "$SBOM_SHA256"`,
 			`scripts/extract-release-notes.sh CHANGELOG.md "$RELEASE_TAG" > release-notes.md`,
+		})
+		for _, fragment := range []string{
 			`SBOM SHA-256 (corruption detection only)`,
 			`SBOM attestation bundle`,
 		} {
@@ -360,20 +421,27 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 		c.fail("jobs.release.steps", "missing publishing step")
 		return
 	}
-	if scalar(mapping(publish, "if")) != "github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')" {
+	if scalar(mapping(publish, "if")) != publishGuard {
 		c.fail("jobs.release.steps.Publish GitHub Release.if", "publishing must be limited to v* tag pushes")
 	}
 	run := scalar(mapping(publish, "run"))
-	for _, fragment := range []string{
-		`gh release view "$tag"`,
-		`refusing automated in-place asset replacement`,
-		`gh release create "$tag" "$sbom_path" "$bundle_path"`,
-		`--verify-tag`,
-	} {
-		if !strings.Contains(run, fragment) {
-			c.fail("jobs.release.steps.Publish GitHub Release.run", "missing required fragment: "+fragment)
-		}
-	}
+	requireScriptLines(c, "jobs.release.steps.Publish GitHub Release.run", run, []string{
+		`set -euo pipefail`,
+		`tag="$RELEASE_TAG"`,
+		`sbom_path="dist/$SBOM_FILE"`,
+		`bundle_path="${sbom_path}.sigstore.json"`,
+		`if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then`,
+		`echo "GitHub Release already exists for $tag; refusing automated in-place asset replacement." >&2`,
+		`echo "Delete the draft/release or repair it manually before rerunning Release Validation." >&2`,
+		`exit 1`,
+		`fi`,
+		`gh release create "$tag" "$sbom_path" "$bundle_path" \`,
+		`--repo "$GITHUB_REPOSITORY" \`,
+		`--title "$tag" \`,
+		`--notes-file release-body.md \`,
+		`--verify-tag \`,
+		`"${release_args[@]}"`,
+	})
 	env := mapping(publish, "env")
 	if scalar(mapping(env, "GH_TOKEN")) != "${{ github.token }}" {
 		c.fail("jobs.release.steps.Publish GitHub Release.env.GH_TOKEN", "publishing must use github.token")
@@ -408,6 +476,8 @@ func checkRequiredScripts(repoRoot string) []finding {
 			findings = append(findings, finding{path: full, msg: err.Error()})
 		case info.IsDir():
 			findings = append(findings, finding{path: full, msg: "expected file, got directory"})
+		case info.Mode().Perm()&0111 == 0:
+			findings = append(findings, finding{path: full, msg: "required release helper must be executable"})
 		}
 	}
 	return findings
@@ -423,6 +493,39 @@ func expectScalars(c *checker, nodePath string, n *yaml.Node, want map[string]st
 			c.fail(nodePath+"."+key, fmt.Sprintf("got %q, want %q", got, expected))
 		}
 	}
+}
+
+func expectExactScalars(c *checker, nodePath string, n *yaml.Node, want map[string]string) {
+	expectScalars(c, nodePath, n, want)
+	if n == nil {
+		return
+	}
+	for _, key := range mapKeys(n) {
+		if _, ok := want[key]; !ok {
+			c.fail(nodePath+"."+key, "unexpected key")
+		}
+	}
+}
+
+func requireScriptLines(c *checker, nodePath, run string, want []string) {
+	lines := scriptLines(run)
+	for _, line := range want {
+		if !contains(lines, line) {
+			c.fail(nodePath, "missing exact required command line: "+line)
+		}
+	}
+}
+
+func scriptLines(run string) []string {
+	var out []string
+	for _, line := range strings.Split(run, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		out = append(out, line)
+	}
+	return out
 }
 
 type actionRef struct {
@@ -494,10 +597,6 @@ func needs(job *yaml.Node) []string {
 	}
 }
 
-func isTagGuard(in string) bool {
-	return strings.Contains(in, "github.ref_type == 'tag'") && strings.Contains(in, "startsWith(github.ref, 'refs/tags/v')")
-}
-
 func mapping(n *yaml.Node, key string) *yaml.Node {
 	if n == nil || n.Kind != yaml.MappingNode {
 		return nil
@@ -547,4 +646,21 @@ func contains(items []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func sameStringSet(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for _, item := range got {
+		if !contains(want, item) {
+			return false
+		}
+	}
+	for _, item := range want {
+		if !contains(got, item) {
+			return false
+		}
+	}
+	return true
 }
