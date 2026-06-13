@@ -938,3 +938,33 @@ PR #92 deepened package-owned Message framing behind shared internal field specs
 ### Next
 
 - Stronger release claims still require refreshing pinned fuzz, dependency-review, and security/spec-audit evidence against the exact candidate commit.
+
+---
+
+## Release policy checker ready - 2026-06-13 13:49 EDT
+
+**Main:** `2e63306e7653`
+**Actor:** Codex
+
+### Summary
+
+PR #94 deepens the ADR-0007 release policy checker into an executable guard for the accepted release workflow shape, helper scripts, allowed signer set, permission ceilings, guards, job graph, exact release/SBOM/attestation steps, and bypass-resistant shell command bodies.
+
+### Completed
+
+- Opened PR #94, `Add release policy checker`, from `codex/release-policy-checker` to `main`.
+- Added the isolated `tools/releasepolicy` Go checker, `scripts/check-release-policy.sh`, helper-test wiring, and the `CONTEXT.md` glossary entry for the release policy checker.
+- Closed RAS-surfaced bypass classes across review-fix attempts: command neutralization, unreachable shell logic, injected extra shell lines, widened triggers and guards, permission creep, rogue jobs, unexpected `needs`, unchecked validation jobs, unbounded step/env/with blocks, arbitrary allowed signers, missing checkout credential hardening, and non-executable helper scripts.
+- Current implementation head before the journal update is `aba8f821f0b6fb85bf01c7cf77c2848af19d58b0`.
+
+### Validation
+
+- Local gates passed at `aba8f821f0b6fb85bf01c7cf77c2848af19d58b0`: `(cd tools/releasepolicy && go test ./...)`, `./scripts/check-release-policy.sh`, `scripts/test-release-helpers.sh`, and `task check`.
+- GitHub checks on PR #94 were green at `aba8f821f0b6fb85bf01c7cf77c2848af19d58b0`: CI Check, DCO, Dependency Gate, SAST Gate, CodeQL Analyze/CodeQL, Staticcheck, macOS/Windows smoke, with the gosec child check neutral as expected.
+- RAS review-fix run `20260613T165919-87c8df5ab6556bf018e9c559` completed and surfaced the first hardening batch; later review-fix runs `20260613T171857-c902eba83eee88a47b6c4802`, `20260613T173208-0a17aa1001d01213f20295d0`, and `20260613T174226-35656c70061bca3f97fc30f0` exposed additional findings before their wrappers stalled, so the final clean judgment comes from the fixed code plus local and GitHub gates rather than a completed final RAS synthesis.
+
+### Next
+
+- Merge PR #94 after the journal commit's checks are green.
+- Update OmniFocus with the merged PR and evidence notes.
+- Keep the release evidence caveat intact: stronger release claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit.
