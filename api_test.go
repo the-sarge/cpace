@@ -1061,152 +1061,62 @@ func TestTranscriptLockingMismatches(t *testing.T) {
 	}
 }
 
-func TestMessageParserRejectsMalformed(t *testing.T) {
-	cfg := testConfig()
-	_, msgA, err := startTestInitiator(cfg)
-	if err != nil {
-		t.Fatal(err)
+func TestMessageFramingCatalogueRejectsMalformed(t *testing.T) {
+	for _, target := range messageFramingTargets() {
+		t.Run(target.name, func(t *testing.T) {
+			for _, tc := range messageFramingMalformedCases(target) {
+				t.Run(tc.name, func(t *testing.T) {
+					assertMessageFramingError(t, target.decode(tc.msg), tc.wantErrContains)
+				})
+			}
+		})
 	}
-	cases := []struct {
-		name string
-		msg  []byte
-	}{
-		{"truncated", msgA[:len(msgA)-1]},
-		{"trailing", append(clone(msgA), 0)},
-		{"format", append([]byte{0}, msgA[1:]...)},
-		{"suite", append([]byte{msgA[0], 0}, msgA[2:]...)},
-		{"role", append([]byte{msgA[0], msgA[1], roleB}, msgA[3:]...)},
-		{"swapped format suite", append([]byte{wireSuite, wireFormatV1}, msgA[2:]...)},
+}
+
+func TestMessageFramingCataloguePinsAggregateSizePrecedence(t *testing.T) {
+	for _, target := range messageFramingTargets() {
+		t.Run(target.name, func(t *testing.T) {
+			for _, tc := range messageFramingAggregateCases(target) {
+				t.Run(tc.name, func(t *testing.T) {
+					err := target.decode(tc.msg)
+					assertMessageFramingError(t, err, tc.wantErrContains)
+					if tc.wantErrContains != "message too large" && strings.Contains(err.Error(), "message too large") {
+						t.Fatalf("decode oversized %s err=%v reached size check before %q", target.name, err, tc.wantErrContains)
+					}
+				})
+			}
+		})
 	}
-	for _, tc := range cases {
+}
+
+func TestMessageFramingCatalogueAcceptsMaxFields(t *testing.T) {
+	for _, tc := range messageFramingMaxFieldCases() {
 		t.Run(tc.name, func(t *testing.T) {
-			if _, err := decodeMessageA(tc.msg); err == nil {
-				t.Fatalf("decode succeeded")
+			if len(tc.msg) >= maxMessageLength {
+				t.Fatalf("max-size message len=%d exceeds aggregate cap %d", len(tc.msg), maxMessageLength)
+			}
+			if err := decodeMessageFromCatalogue(tc.msg); err != nil {
+				t.Fatalf("decode max fields: %v", err)
 			}
 		})
 	}
 }
 
-func TestMessageFramingAggregateSizeCap(t *testing.T) {
-	tooLarge := append([]byte{wireFormatV1, wireSuite, roleA}, bytes.Repeat([]byte{0x80}, maxMessageLength)...)
-	if _, err := decodeMessageA(tooLarge); !errors.Is(err, ErrMessage) ||
-		!strings.Contains(err.Error(), "message too large") {
-		t.Fatalf("decode oversized message err=%v", err)
-	}
-
-	wrongSuite := clone(tooLarge)
-	wrongSuite[1] ^= 0xff
-	if _, err := decodeMessageA(wrongSuite); !errors.Is(err, ErrMessage) ||
-		!strings.Contains(err.Error(), "wrong suite") ||
-		strings.Contains(err.Error(), "message too large") {
-		t.Fatalf("decode oversized wrong-suite message err=%v", err)
+func TestMessageFramingCatalogueRejectsFieldLimits(t *testing.T) {
+	for _, tc := range messageFramingFieldLimitCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			assertMessageFramingError(t, decodeMessageFromCatalogue(tc.msg), tc.wantErrContains)
+		})
 	}
 }
 
-func TestMessageParserFieldSizeLimits(t *testing.T) {
-	point := bytes.Repeat([]byte{0x42}, pointSize)
-	tag := bytes.Repeat([]byte{0x99}, tagSize)
-
-	msgA := encodeMessageA(bytes.Repeat([]byte{0x11}, maxSessionIDLength), point, bytes.Repeat([]byte{0x22}, maxAssociatedDataLength))
-	if len(msgA) >= maxMessageLength {
-		t.Fatalf("max-size message A len=%d exceeds aggregate cap %d", len(msgA), maxMessageLength)
+func assertMessageFramingError(t *testing.T, err error, wantErrContains string) {
+	t.Helper()
+	if !errors.Is(err, ErrMessage) {
+		t.Fatalf("decode err=%v want ErrMessage", err)
 	}
-	if _, err := decodeMessageA(msgA); err != nil {
-		t.Fatalf("decode A max-size fields: %v", err)
-	}
-	casesA := []struct {
-		name string
-		msg  []byte
-	}{
-		{"sid oversized", encodeMessageA(bytes.Repeat([]byte{0x11}, maxSessionIDLength+1), point, nil)},
-		{"point oversized", encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, pointSize+1), nil)},
-		{"ad oversized", encodeMessageA([]byte("sid"), point, bytes.Repeat([]byte{0x22}, maxAssociatedDataLength+1))},
-	}
-	for _, tc := range casesA {
-		t.Run("A "+tc.name, func(t *testing.T) {
-			if _, err := decodeMessageA(tc.msg); !errors.Is(err, ErrMessage) {
-				t.Fatalf("decode A err=%v", err)
-			}
-		})
-	}
-
-	msgB := encodeMessageB(point, bytes.Repeat([]byte{0x33}, maxAssociatedDataLength), tag)
-	if _, err := decodeMessageB(msgB); err != nil {
-		t.Fatalf("decode B max-size fields: %v", err)
-	}
-	casesB := []struct {
-		name string
-		msg  []byte
-	}{
-		{"point oversized", encodeMessageB(bytes.Repeat([]byte{0x42}, pointSize+1), nil, tag)},
-		{"ad oversized", encodeMessageB(point, bytes.Repeat([]byte{0x33}, maxAssociatedDataLength+1), tag)},
-		{"tag oversized", encodeMessageB(point, nil, bytes.Repeat([]byte{0x99}, tagSize+1))},
-	}
-	for _, tc := range casesB {
-		t.Run("B "+tc.name, func(t *testing.T) {
-			if _, err := decodeMessageB(tc.msg); !errors.Is(err, ErrMessage) {
-				t.Fatalf("decode B err=%v", err)
-			}
-		})
-	}
-
-	if _, err := decodeMessageC(encodeMessageC(tag)); err != nil {
-		t.Fatalf("decode C exact tag: %v", err)
-	}
-	if _, err := decodeMessageC(encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize+1))); !errors.Is(err, ErrMessage) {
-		t.Fatalf("decode C oversized tag err=%v", err)
-	}
-}
-
-func TestMessageParsersRejectMalformedBAndC(t *testing.T) {
-	msgB := encodeMessageB(bytes.Repeat([]byte{0x42}, pointSize), []byte("ADb"), bytes.Repeat([]byte{0x99}, tagSize))
-	oversizedBAd := []byte{wireFormatV1, wireSuite, roleB}
-	oversizedBAd = append(oversizedBAd, prependLen(bytes.Repeat([]byte{0x42}, pointSize))...)
-	oversizedBAd = append(oversizedBAd, encodeLEB128(maxAssociatedDataLength+1)...)
-	casesB := []struct {
-		name string
-		msg  []byte
-	}{
-		{"truncated", msgB[:len(msgB)-1]},
-		{"trailing", append(clone(msgB), 0)},
-		{"format", append([]byte{0}, msgB[1:]...)},
-		{"suite", append([]byte{msgB[0], 0}, msgB[2:]...)},
-		{"role", append([]byte{msgB[0], msgB[1], roleA}, msgB[3:]...)},
-		{"swapped format suite", append([]byte{wireSuite, wireFormatV1}, msgB[2:]...)},
-		{"point len", encodeMessageB(bytes.Repeat([]byte{0x42}, pointSize-1), nil, bytes.Repeat([]byte{0x99}, tagSize))},
-		{"tag len", encodeMessageB(bytes.Repeat([]byte{0x42}, pointSize), nil, bytes.Repeat([]byte{0x99}, tagSize-1))},
-		{"leb128", []byte{wireFormatV1, wireSuite, roleB, 0x80, 0x00}},
-		{"oversized ad", oversizedBAd},
-	}
-	for _, tc := range casesB {
-		t.Run("B "+tc.name, func(t *testing.T) {
-			if _, err := decodeMessageB(tc.msg); err == nil {
-				t.Fatalf("decode B succeeded")
-			}
-		})
-	}
-
-	msgC := encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize))
-	casesC := []struct {
-		name string
-		msg  []byte
-	}{
-		{"truncated", msgC[:len(msgC)-1]},
-		{"trailing", append(clone(msgC), 0)},
-		{"format", append([]byte{0}, msgC[1:]...)},
-		{"suite", append([]byte{msgC[0], 0}, msgC[2:]...)},
-		{"role", append([]byte{msgC[0], msgC[1], roleA}, msgC[3:]...)},
-		{"swapped format suite", append([]byte{wireSuite, wireFormatV1}, msgC[2:]...)},
-		{"tag len", encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize-1))},
-		{"leb128", []byte{wireFormatV1, wireSuite, roleC, 0x80, 0x00}},
-		{"oversized tag", encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize+1))},
-	}
-	for _, tc := range casesC {
-		t.Run("C "+tc.name, func(t *testing.T) {
-			if _, err := decodeMessageC(tc.msg); err == nil {
-				t.Fatalf("decode C succeeded")
-			}
-		})
+	if wantErrContains != "" && !strings.Contains(err.Error(), wantErrContains) {
+		t.Fatalf("decode err=%q missing %q", err, wantErrContains)
 	}
 }
 

@@ -33,21 +33,6 @@ func TestStringUtilitiesDraftVectors(t *testing.T) {
 	}
 }
 
-func TestLEB128ReaderRejectsMalformed(t *testing.T) {
-	cases := [][]byte{
-		{wireFormatV1, wireSuite, roleC},
-		{wireFormatV1, wireSuite, roleC, 0x80},
-		{wireFormatV1, wireSuite, roleC, 0x80, 0x00},
-		append([]byte{wireFormatV1, wireSuite, roleC, 0xc0, 0x00}, bytes.Repeat([]byte{0x99}, tagSize)...),
-		{wireFormatV1, wireSuite, roleC, 0x80, 0x80, 0x80, 0x80, 0x00},
-	}
-	for _, tc := range cases {
-		if _, err := decodeMessageC(tc); err == nil {
-			t.Fatalf("decodeMessageC(%x) succeeded", tc)
-		}
-	}
-}
-
 func TestWireFormatPrefixByte(t *testing.T) {
 	if wireFormatV1 != 0xc1 {
 		t.Fatalf("wireFormatV1=%#x, want 0xc1", wireFormatV1)

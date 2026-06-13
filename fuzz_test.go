@@ -112,13 +112,9 @@ func loadDraftInvalidVectorJSON(in []byte) (draftInvalidVector, error) {
 func FuzzDecodeMessageA(f *testing.F) {
 	_, _, _, msgA, msgB, _ := makeFuzzExchange(f)
 	invalid := fuzzDraftInvalidVector(f)
-	f.Add(msgA)
-	f.Add(msgA[:len(msgA)-1])
-	f.Add(withFuzzRole(msgA, roleB))
-	f.Add([]byte{wireFormatV1, wireSuite, roleA, 0x80, 0x00})
-	f.Add(encodeMessageA([]byte("sid"), identityEncoding, nil))
-	f.Add(encodeMessageA([]byte("sid"), invalid.InvalidY1, nil))
-	f.Add(msgB)
+	for _, seed := range messageAFuzzSeeds(msgA, msgB, invalid.InvalidY1) {
+		f.Add(seed)
+	}
 	f.Fuzz(func(t *testing.T, in []byte) {
 		_, _ = decodeMessageA(in)
 	})
@@ -127,14 +123,9 @@ func FuzzDecodeMessageA(f *testing.F) {
 func FuzzDecodeMessageB(f *testing.F) {
 	_, _, _, _, msgB, msgC := makeFuzzExchange(f)
 	invalid := fuzzDraftInvalidVector(f)
-	f.Add(msgB)
-	f.Add(msgB[:len(msgB)-1])
-	f.Add(withFuzzRole(msgB, roleA))
-	f.Add([]byte{wireFormatV1, wireSuite, roleB, 0x80, 0x00})
-	f.Add(encodeMessageB(identityEncoding, nil, make([]byte, tagSize)))
-	f.Add(encodeMessageB(invalid.InvalidY1, nil, make([]byte, tagSize)))
-	f.Add(withFuzzTamperedLastByte(msgB))
-	f.Add(msgC)
+	for _, seed := range messageBFuzzSeeds(msgB, msgC, invalid.InvalidY1) {
+		f.Add(seed)
+	}
 	f.Fuzz(func(t *testing.T, in []byte) {
 		_, _ = decodeMessageB(in)
 	})
@@ -142,13 +133,9 @@ func FuzzDecodeMessageB(f *testing.F) {
 
 func FuzzDecodeMessageC(f *testing.F) {
 	_, _, _, msgA, _, msgC := makeFuzzExchange(f)
-	f.Add(msgC)
-	f.Add(msgC[:len(msgC)-1])
-	f.Add(withFuzzRole(msgC, roleA))
-	f.Add([]byte{wireFormatV1, wireSuite, roleC, 0x80, 0x00})
-	f.Add(encodeMessageC(make([]byte, tagSize-1)))
-	f.Add(withFuzzTamperedLastByte(msgC))
-	f.Add(msgA)
+	for _, seed := range messageCFuzzSeeds(msgC, msgA) {
+		f.Add(seed)
+	}
 	f.Fuzz(func(t *testing.T, in []byte) {
 		_, _ = decodeMessageC(in)
 	})
@@ -243,14 +230,9 @@ func FuzzProtocolMismatch(f *testing.F) {
 func FuzzRespondWithFuzzedMessageA(f *testing.F) {
 	_, _, _, msgA, msgB, _ := makeFuzzExchange(f)
 	invalid := fuzzDraftInvalidVector(f)
-	f.Add(msgA)
-	f.Add(msgA[:len(msgA)-1])
-	f.Add(withFuzzRole(msgA, roleB))
-	f.Add([]byte{wireFormatV1, wireSuite, roleA, 0x80, 0x00})
-	f.Add(encodeMessageA([]byte("sid"), identityEncoding, nil))
-	f.Add(encodeMessageA([]byte("sid"), invalid.InvalidY1, nil))
-	f.Add(encodeMessageA([]byte("other sid"), bytes.Repeat([]byte{0x42}, pointSize), nil))
-	f.Add(msgB)
+	for _, seed := range messageAProtocolFuzzSeeds(msgA, msgB, invalid.InvalidY1) {
+		f.Add(seed)
+	}
 	f.Fuzz(func(t *testing.T, messageA []byte) {
 		if len(messageA) > fuzzProtocolInputCap {
 			t.Skip()
@@ -268,14 +250,9 @@ func FuzzRespondWithFuzzedMessageA(f *testing.F) {
 func FuzzInitiatorFinishWithFuzzedMessageB(f *testing.F) {
 	_, _, _, _, msgB, msgC := makeFuzzExchange(f)
 	invalid := fuzzDraftInvalidVector(f)
-	f.Add(msgB)
-	f.Add(msgB[:len(msgB)-1])
-	f.Add(withFuzzRole(msgB, roleA))
-	f.Add([]byte{wireFormatV1, wireSuite, roleB, 0x80, 0x00})
-	f.Add(encodeMessageB(identityEncoding, nil, make([]byte, tagSize)))
-	f.Add(encodeMessageB(invalid.InvalidY1, nil, make([]byte, tagSize)))
-	f.Add(withFuzzTamperedLastByte(msgB))
-	f.Add(msgC)
+	for _, seed := range messageBFuzzSeeds(msgB, msgC, invalid.InvalidY1) {
+		f.Add(seed)
+	}
 	f.Fuzz(func(t *testing.T, messageB []byte) {
 		if len(messageB) > fuzzProtocolInputCap {
 			t.Skip()
@@ -298,13 +275,9 @@ func FuzzInitiatorFinishWithFuzzedMessageB(f *testing.F) {
 
 func FuzzResponderFinishWithFuzzedMessageC(f *testing.F) {
 	_, _, _, msgA, _, msgC := makeFuzzExchange(f)
-	f.Add(msgC)
-	f.Add(msgC[:len(msgC)-1])
-	f.Add(withFuzzRole(msgC, roleA))
-	f.Add([]byte{wireFormatV1, wireSuite, roleC, 0x80, 0x00})
-	f.Add(encodeMessageC(make([]byte, tagSize-1)))
-	f.Add(withFuzzTamperedLastByte(msgC))
-	f.Add(msgA)
+	for _, seed := range messageCFuzzSeeds(msgC, msgA) {
+		f.Add(seed)
+	}
 	f.Fuzz(func(t *testing.T, messageC []byte) {
 		if len(messageC) > fuzzProtocolInputCap {
 			t.Skip()
@@ -506,20 +479,4 @@ func fuzzDraftInvalidVector(tb fuzzFataler) draftInvalidVector {
 		tb.Fatalf("invalid vector fixture failed to load: %v", err)
 	}
 	return v
-}
-
-func withFuzzRole(msg []byte, role byte) []byte {
-	out := clone(msg)
-	if len(out) > 2 {
-		out[2] = role
-	}
-	return out
-}
-
-func withFuzzTamperedLastByte(msg []byte) []byte {
-	out := clone(msg)
-	if len(out) > 0 {
-		out[len(out)-1] ^= 0x01
-	}
-	return out
 }
