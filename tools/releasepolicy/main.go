@@ -15,10 +15,21 @@ import (
 
 var shaRef = regexp.MustCompile(`^[0-9a-f]{40}$`)
 
+// The checker intentionally snapshots the accepted ADR-0007 release workflow.
+// Benign workflow edits may need lockstep updates here so release-critical
+// shell and permission controls do not silently drift.
 const (
 	tagGuard            = "github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')"
 	unsupportedRefGuard = "github.event_name == 'workflow_dispatch' && !(" + tagGuard + ")"
 	publishGuard        = "github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')"
+	expectedSigners     = `the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFDxEpP8Q6LERBcA5//zwD5dBisHL7uHQsFa+TTibRXC
+the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFF32/OwUJwQ/8OX5i2VNBO8oZf6B8l07U/R5n1rj0z6
+the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILlg3QNI+Zsnt6pR2Aip97Ak7VOajBeo+AlhIGfDYlPk
+the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILvdes5QNqI3PpKK6ksX6FtlL4LQgkq61AGflWVqoV0L
+the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJaEbAxjr0LjcZKsqfUvrHDZJVmvL/AEIg+WSQGt+75v
+the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBc0CLdNLHpbdkrEf/WLR3YH8oHyxsvSeaCwQ6MvlW4q
+the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEd3JYo6vayWkANtsMbPx81ilaiq7a4oPpW6A0uD6TkF
+`
 )
 
 type finding struct {
@@ -36,6 +47,12 @@ func main() {
 		os.Exit(2)
 	}
 	if len(findings) > 0 {
+		sort.Slice(findings, func(i, j int) bool {
+			if findings[i].path == findings[j].path {
+				return findings[i].msg < findings[j].msg
+			}
+			return findings[i].path < findings[j].path
+		})
 		for _, f := range findings {
 			fmt.Fprintf(os.Stderr, "%s: %s\n", f.path, f.msg)
 		}
@@ -88,7 +105,9 @@ func checkWorkflow(path string, root *yaml.Node) []finding {
 	c.checkVerifyTagJob(jobs)
 	c.checkNeeds(jobs)
 	c.checkActionPins(jobs)
+	c.checkCheckoutCredentials(jobs)
 	c.checkNoRunExpressions(jobs)
+	c.checkValidationJobs(jobs)
 	c.checkSBOMJob(jobs)
 	c.checkSBOMAttestationJob(jobs)
 	c.checkReleaseJob(jobs)
@@ -215,7 +234,7 @@ func (c *checker) checkUnsupportedRefJob(jobs *yaml.Node) {
 		return
 	}
 	run := scalar(mapping(steps[0], "run"))
-	requireScriptLines(c, "jobs.unsupported-ref.steps[0].run", run, []string{
+	requireExactScriptLines(c, "jobs.unsupported-ref.steps[0].run", run, []string{
 		`echo "Release Validation workflow_dispatch runs must target a signed v* tag ref."`,
 		`echo "Use the regular CI workflows for branch validation."`,
 		`exit 1`,
@@ -245,7 +264,7 @@ func (c *checker) checkVerifyTagJob(jobs *yaml.Node) {
 		return
 	}
 	run := scalar(mapping(verifyStep, "run"))
-	requireScriptLines(c, "jobs.verify-tag.steps.Verify tag object and signature.run", run, []string{
+	requireExactScriptLines(c, "jobs.verify-tag.steps.Verify tag object and signature.run", run, []string{
 		`git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"`,
 		`tag_type="$(git cat-file -t "$GITHUB_REF_NAME")"`,
 		`printf '%s\n' "$tag_type"`,
@@ -257,7 +276,7 @@ func (c *checker) checkVerifyTagJob(jobs *yaml.Node) {
 	if metaStep == nil {
 		c.fail("jobs.verify-tag.steps", "missing release tag metadata step")
 	} else {
-		requireScriptLines(c, "jobs.verify-tag.steps.Validate release tag metadata.run", scalar(mapping(metaStep, "run")), []string{
+		requireExactScriptLines(c, "jobs.verify-tag.steps.Validate release tag metadata.run", scalar(mapping(metaStep, "run")), []string{
 			`scripts/release-tag-metadata.sh "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"`,
 		})
 	}
@@ -299,12 +318,86 @@ func (c *checker) checkActionPins(jobs *yaml.Node) {
 	}
 }
 
+func (c *checker) checkCheckoutCredentials(jobs *yaml.Node) {
+	for _, jobName := range mapKeys(jobs) {
+		job := mapping(jobs, jobName)
+		for idx, step := range steps(job) {
+			uses := scalar(mapping(step, "uses"))
+			if !strings.HasPrefix(uses, "actions/checkout@") {
+				continue
+			}
+			with := mapping(step, "with")
+			if scalar(mapping(with, "persist-credentials")) != "false" {
+				c.fail(fmt.Sprintf("jobs.%s.steps[%d].with.persist-credentials", jobName, idx), "checkout steps must set persist-credentials: false")
+			}
+		}
+	}
+}
+
 func (c *checker) checkNoRunExpressions(jobs *yaml.Node) {
 	for _, ref := range runSteps(jobs) {
 		if strings.Contains(ref.run, "${{") {
 			c.fail(ref.path+".run", "run steps must not interpolate GitHub expression contexts; pass values through env")
 		}
 	}
+}
+
+func (c *checker) checkValidationJobs(jobs *yaml.Node) {
+	check := mapping(jobs, "check")
+	if check != nil {
+		runTests := stepByName(check, "Run tests")
+		if runTests == nil {
+			c.fail("jobs.check.steps", "missing Run tests step")
+		} else {
+			requireExactScriptLines(c, "jobs.check.steps.Run tests.run", scalar(mapping(runTests, "run")), []string{`go test ./...`})
+		}
+	}
+	race := mapping(jobs, "race")
+	if race != nil {
+		runRace := stepByName(race, "Run race tests")
+		if runRace == nil {
+			c.fail("jobs.race.steps", "missing Run race tests step")
+		} else {
+			requireExactScriptLines(c, "jobs.race.steps.Run race tests.run", scalar(mapping(runRace, "run")), []string{`go test -race ./...`})
+		}
+	}
+	vuln := mapping(jobs, "vuln")
+	if vuln != nil {
+		requireRunStep(c, vuln, "jobs.vuln", "Install task", []string{`go install github.com/go-task/task/v3/cmd/task@v3.50.0`})
+		requireRunStep(c, vuln, "jobs.vuln", "Install govulncheck", []string{`go install golang.org/x/vuln/cmd/govulncheck@v1.3.0`})
+		requireRunStep(c, vuln, "jobs.vuln", "Run vulnerability scan", []string{`task vuln`})
+	}
+	gosec := mapping(jobs, "gosec")
+	if gosec != nil {
+		requireRunStep(c, gosec, "jobs.gosec", "Install task", []string{`go install github.com/go-task/task/v3/cmd/task@v3.50.0`})
+		requireRunStep(c, gosec, "jobs.gosec", "Install gosec", []string{`go install github.com/securego/gosec/v2/cmd/gosec@v2.26.1`})
+		requireRunStep(c, gosec, "jobs.gosec", "Run gosec scan", []string{`task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'`})
+		upload := stepByName(gosec, "Upload gosec SARIF to code scanning")
+		if upload == nil {
+			c.fail("jobs.gosec.steps", "missing gosec SARIF upload step")
+		} else {
+			if scalar(mapping(upload, "if")) != "always() && hashFiles('gosec.sarif') != ''" {
+				c.fail("jobs.gosec.steps.Upload gosec SARIF to code scanning.if", "gosec SARIF upload guard changed")
+			}
+			if !strings.HasPrefix(scalar(mapping(upload, "uses")), "github/codeql-action/upload-sarif@") {
+				c.fail("jobs.gosec.steps.Upload gosec SARIF to code scanning.uses", "gosec SARIF upload must use github/codeql-action/upload-sarif")
+			}
+			expectScalars(c, "jobs.gosec.steps.Upload gosec SARIF to code scanning.with", mapping(upload, "with"), map[string]string{
+				"sarif_file": "gosec.sarif",
+				"category":   "gosec-release",
+			})
+		}
+		requireRunStep(c, gosec, "jobs.gosec", "Report gosec result", []string{`exit 1`})
+	}
+}
+
+func requireRunStep(c *checker, job *yaml.Node, jobPath, name string, want []string) {
+	step := stepByName(job, name)
+	if step == nil {
+		c.fail(jobPath+".steps", "missing "+name+" step")
+		return
+	}
+	requireExactScriptLines(c, jobPath+".steps."+name+".run", scalar(mapping(step, "run")), want)
 }
 
 func (c *checker) checkSBOMJob(jobs *yaml.Node) {
@@ -338,10 +431,11 @@ func (c *checker) checkSBOMJob(jobs *yaml.Node) {
 	if validate == nil {
 		c.fail("jobs.sbom.steps", "missing SBOM validation step")
 	} else {
-		requireScriptLines(c, "jobs.sbom.steps.Validate SBOM and compute checksum.run", scalar(mapping(validate, "run")), []string{
+		requireExactScriptLines(c, "jobs.sbom.steps.Validate SBOM and compute checksum.run", scalar(mapping(validate, "run")), []string{
 			`sbom_file="$SBOM_FILE"`,
 			`scripts/validate-cyclonedx-sbom.sh "$sbom_file"`,
 			`sbom_sha256="$(sha256sum "$sbom_file" | awk '{ print $1 }')"`,
+			`{`,
 			`echo "sbom-file=$sbom_file"`,
 			`echo "sbom-sha256=$sbom_sha256"`,
 			`} >> "$GITHUB_OUTPUT"`,
@@ -358,7 +452,7 @@ func (c *checker) checkSBOMAttestationJob(jobs *yaml.Node) {
 	if validate == nil {
 		c.fail("jobs.sbom-attestation.steps", "missing downloaded SBOM validation step")
 	} else {
-		requireScriptLines(c, "jobs.sbom-attestation.steps.Validate downloaded SBOM.run", scalar(mapping(validate, "run")), []string{
+		requireExactScriptLines(c, "jobs.sbom-attestation.steps.Validate downloaded SBOM.run", scalar(mapping(validate, "run")), []string{
 			`scripts/validate-cyclonedx-sbom.sh "dist/$SBOM_FILE"`,
 		})
 	}
@@ -379,7 +473,7 @@ func (c *checker) checkSBOMAttestationJob(jobs *yaml.Node) {
 	if prepare == nil {
 		c.fail("jobs.sbom-attestation.steps", "missing Sigstore bundle preparation step")
 	} else {
-		requireScriptLines(c, "jobs.sbom-attestation.steps.Prepare Sigstore bundle asset.run", scalar(mapping(prepare, "run")), []string{
+		requireExactScriptLines(c, "jobs.sbom-attestation.steps.Prepare Sigstore bundle asset.run", scalar(mapping(prepare, "run")), []string{
 			`bundle_dst="dist/${SBOM_FILE}.sigstore.json"`,
 			`cp "$ATTESTATION_BUNDLE_PATH" "$bundle_dst"`,
 			`test -s "$bundle_dst"`,
@@ -397,7 +491,7 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 		c.fail("jobs.release.steps", "missing release preparation step")
 	} else {
 		run := scalar(mapping(prepare, "run"))
-		requireScriptLines(c, "jobs.release.steps.Prepare release notes and assets.run", run, []string{
+		requireExactScriptLines(c, "jobs.release.steps.Prepare release notes and assets.run", run, []string{
 			`sbom_path="dist/$SBOM_FILE"`,
 			`bundle_path="${sbom_path}.sigstore.json"`,
 			`test -s "$sbom_path"`,
@@ -406,15 +500,18 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 			`computed_sha256="$(sha256sum "$sbom_path" | awk '{ print $1 }')"`,
 			`test "$computed_sha256" = "$SBOM_SHA256"`,
 			`scripts/extract-release-notes.sh CHANGELOG.md "$RELEASE_TAG" > release-notes.md`,
+			`run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"`,
+			`{`,
+			`cat release-notes.md`,
+			`printf "\n## Supply-chain artifacts\n\n"`,
+			`printf -- "- Release validation: %s\n" "$run_url"`,
+			"printf -- \"- SBOM: \\`%s\\`\\n\" \"$SBOM_FILE\"",
+			"printf -- \"- SBOM SHA-256 (corruption detection only): \\`%s\\`\\n\" \"$computed_sha256\"",
+			"printf -- \"- SBOM attestation bundle: \\`%s.sigstore.json\\`\\n\" \"$SBOM_FILE\"",
+			"printf -- \"- Verification instructions: \\`docs/release-verification.md\\`\\n\"",
+			`} > release-body.md`,
+			`echo "Prepared release body and assets for $RELEASE_TAG."`,
 		})
-		for _, fragment := range []string{
-			`SBOM SHA-256 (corruption detection only)`,
-			`SBOM attestation bundle`,
-		} {
-			if !strings.Contains(run, fragment) {
-				c.fail("jobs.release.steps.Prepare release notes and assets.run", "missing required fragment: "+fragment)
-			}
-		}
 	}
 	publish := stepByName(job, "Publish GitHub Release")
 	if publish == nil {
@@ -425,11 +522,18 @@ func (c *checker) checkReleaseJob(jobs *yaml.Node) {
 		c.fail("jobs.release.steps.Publish GitHub Release.if", "publishing must be limited to v* tag pushes")
 	}
 	run := scalar(mapping(publish, "run"))
-	requireScriptLines(c, "jobs.release.steps.Publish GitHub Release.run", run, []string{
+	requireExactScriptLines(c, "jobs.release.steps.Publish GitHub Release.run", run, []string{
 		`set -euo pipefail`,
 		`tag="$RELEASE_TAG"`,
 		`sbom_path="dist/$SBOM_FILE"`,
 		`bundle_path="${sbom_path}.sigstore.json"`,
+		`release_args=()`,
+		`if [ "$RELEASE_PRERELEASE" = "true" ]; then`,
+		`release_args+=(--prerelease)`,
+		`fi`,
+		`if [ "$RELEASE_LATEST" = "false" ]; then`,
+		`release_args+=(--latest=false)`,
+		`fi`,
 		`if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then`,
 		`echo "GitHub Release already exists for $tag; refusing automated in-place asset replacement." >&2`,
 		`echo "Delete the draft/release or repair it manually before rerunning Release Validation." >&2`,
@@ -454,8 +558,8 @@ func checkAllowedSigners(repoRoot string) []finding {
 	if err != nil {
 		return []finding{{path: path, msg: err.Error()}}
 	}
-	if !strings.Contains(string(in), "the-sarge@the-sarge.com ") {
-		return []finding{{path: path, msg: "missing documented maintainer principal"}}
+	if string(in) != expectedSigners {
+		return []finding{{path: path, msg: "allowed_signers must exactly match the accepted maintainer signing keys"}}
 	}
 	return nil
 }
@@ -507,13 +611,12 @@ func expectExactScalars(c *checker, nodePath string, n *yaml.Node, want map[stri
 	}
 }
 
-func requireScriptLines(c *checker, nodePath, run string, want []string) {
+func requireExactScriptLines(c *checker, nodePath, run string, want []string) {
 	lines := scriptLines(run)
-	for _, line := range want {
-		if !contains(lines, line) {
-			c.fail(nodePath, "missing exact required command line: "+line)
-		}
+	if sameStringSlice(lines, want) {
+		return
 	}
+	c.fail(nodePath, fmt.Sprintf("script lines must exactly match accepted release policy: got %q, want %q", lines, want))
 }
 
 func scriptLines(run string) []string {
@@ -659,6 +762,18 @@ func sameStringSet(got, want []string) bool {
 	}
 	for _, item := range want {
 		if !contains(got, item) {
+			return false
+		}
+	}
+	return true
+}
+
+func sameStringSlice(got, want []string) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if got[i] != want[i] {
 			return false
 		}
 	}
