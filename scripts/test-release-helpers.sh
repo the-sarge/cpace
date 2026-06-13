@@ -42,6 +42,31 @@ if "$repo_root/scripts/extract-release-notes.sh" "$changelog" v0.0.1 >"$tmpdir/e
   exit 1
 fi
 
+prerelease_changelog="$tmpdir/PRERELEASE_CHANGELOG.md"
+cat >"$prerelease_changelog" <<'EOF'
+# Changelog
+
+## Unreleased
+
+- Work in progress.
+
+## v1.2.3-rc.1 - 2026-06-13
+
+- Release candidate note.
+
+## v1.2.2 - 2026-06-12
+
+- Prior release.
+EOF
+
+if "$repo_root/scripts/extract-release-notes.sh" "$prerelease_changelog" v1.2.3 >"$tmpdir/stable-from-rc.txt" 2>"$tmpdir/stable-from-rc.err"; then
+  echo "stable tag unexpectedly matched prerelease notes" >&2
+  exit 1
+fi
+
+"$repo_root/scripts/extract-release-notes.sh" "$prerelease_changelog" v1.2.3-rc.1 >"$tmpdir/prerelease-notes.txt"
+grep -q 'Release candidate note' "$tmpdir/prerelease-notes.txt"
+
 sbom="$tmpdir/cpace-v1.2.3.cdx.json"
 cat >"$sbom" <<'EOF'
 {

@@ -19,17 +19,18 @@ if [ ! -f "$changelog" ]; then
 fi
 
 awk -v tag="$tag" '
-  function header_matches(line, body, next_char) {
+  function header_matches(line, body, suffix) {
     body = line
     sub(/^##[[:space:]]+/, "", body)
+    sub(/[[:space:]]+$/, "", body)
     if (body == tag) {
       return 1
     }
     if (substr(body, 1, length(tag)) != tag) {
       return 0
     }
-    next_char = substr(body, length(tag) + 1, 1)
-    return next_char == " " || next_char == "-"
+    suffix = substr(body, length(tag) + 1)
+    return suffix ~ /^[[:space:]]+-[[:space:]]+.+/
   }
 
   /^##[[:space:]]+/ {
