@@ -9,12 +9,6 @@ const (
 	roleB        byte = 0x02
 	roleC        byte = 0x03
 
-	maxPasswordLength       = 4 << 10
-	maxIDLength             = 4 << 10
-	maxContextLength        = 1 << 10
-	maxSessionIDLength      = 1 << 10
-	maxAssociatedDataLength = 64 << 10
-
 	// maxMessageLength is an aggregate invalid-message cap. It is intentionally
 	// above every valid package-owned Message framing shape, so valid wire bytes
 	// remain governed by the per-field caps below.
@@ -69,44 +63,32 @@ type messageSpec struct {
 	fields []messageFieldSpec
 }
 
-type messageFieldSpec struct {
-	name   string
-	length int
-	exact  bool
-}
+type messageFieldSpec = packageCapField
 
 var (
 	messageASpec = messageSpec{
 		role: roleA,
 		fields: []messageFieldSpec{
-			cappedField("message A session id", maxSessionIDLength),
-			exactField("message A point", pointSize),
-			cappedField("message A associated data", maxAssociatedDataLength),
+			messageASessionIDCap,
+			messageAPointCap,
+			messageAAssociatedDataCap,
 		},
 	}
 	messageBSpec = messageSpec{
 		role: roleB,
 		fields: []messageFieldSpec{
-			exactField("message B point", pointSize),
-			cappedField("message B associated data", maxAssociatedDataLength),
-			exactField("message B tag", tagSize),
+			messageBPointCap,
+			messageBAssociatedDataCap,
+			messageBTagCap,
 		},
 	}
 	messageCSpec = messageSpec{
 		role: roleC,
 		fields: []messageFieldSpec{
-			exactField("message C tag", tagSize),
+			messageCTagCap,
 		},
 	}
 )
-
-func cappedField(name string, maxLen int) messageFieldSpec {
-	return messageFieldSpec{name: name, length: maxLen}
-}
-
-func exactField(name string, wantLen int) messageFieldSpec {
-	return messageFieldSpec{name: name, length: wantLen, exact: true}
-}
 
 func encodeMessageA(sid, ya, ada []byte) []byte {
 	return encodeMessage(messageASpec, sid, ya, ada)

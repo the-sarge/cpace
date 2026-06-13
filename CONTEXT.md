@@ -20,6 +20,10 @@ _Avoid_: handle, context (Go's `context.Context` is unrelated).
 The package-owned binary envelope for CPace messages A, B, and C: format byte, suite byte, role byte, and length-value encoded fields with package-owned caps. Message framing sits in front of the **CPace core**; decoded cryptographic fields cross that seam, but parsing, role checks, size caps, and wire bytes stay here.
 _Avoid_: wire protocol, transport, serialization helper.
 
+**Package-owned cap policy**:
+The internal policy that names and caps caller-provided `Config` fields and package-owned **Message framing** fields before they can drive allocation, parsing, or CPace computation. It is not a public profile knob: changing a cap is an observable behavior change and must be treated as release-policy work.
+_Avoid_: limit constants, validation helpers, size settings.
+
 **Release policy checker**:
 The tooling module that validates accepted release-pipeline policy, especially ADR-0007, against the Release Validation workflow and local release helper files. It is validation-only: it parses workflow YAML, checks tag-only execution, signed-tag verification, SBOM and attestation publication, action pinning, least permissions, release-note extraction, and no in-place release replacement, but it does not generate release workflow YAML and does not query live GitHub ruleset state.
 _Avoid_: release generator, CI abstraction, policy engine.

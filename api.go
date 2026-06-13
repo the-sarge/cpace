@@ -228,23 +228,23 @@ func normalizeConfig(cfg Config) (normalizedConfig, error) {
 	if len(cfg.SessionID) == 0 && !cfg.AllowEmptySessionID {
 		return normalizedConfig{}, fmt.Errorf("%w: %w", ErrInvalidInput, ErrEmptySessionID)
 	}
-	if len(cfg.Password) > maxPasswordLength {
-		return normalizedConfig{}, fmt.Errorf("%w: password too large", ErrInvalidInput)
+	if len(cfg.Password) > passwordCap.length {
+		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, passwordCap.name)
 	}
-	if len(cfg.InitiatorID) > maxIDLength {
-		return normalizedConfig{}, fmt.Errorf("%w: initiator id too large", ErrInvalidInput)
+	if len(cfg.InitiatorID) > initiatorIDCap.length {
+		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, initiatorIDCap.name)
 	}
-	if len(cfg.ResponderID) > maxIDLength {
-		return normalizedConfig{}, fmt.Errorf("%w: responder id too large", ErrInvalidInput)
+	if len(cfg.ResponderID) > responderIDCap.length {
+		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, responderIDCap.name)
 	}
-	if len(cfg.Context) > maxContextLength {
-		return normalizedConfig{}, fmt.Errorf("%w: context too large", ErrInvalidInput)
+	if len(cfg.Context) > contextCap.length {
+		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, contextCap.name)
 	}
-	if len(cfg.SessionID) > maxSessionIDLength {
-		return normalizedConfig{}, fmt.Errorf("%w: session id too large", ErrInvalidInput)
+	if len(cfg.SessionID) > sessionIDCap.length {
+		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, sessionIDCap.name)
 	}
-	if len(cfg.AssociatedData) > maxAssociatedDataLength {
-		return normalizedConfig{}, fmt.Errorf("%w: associated data too large", ErrInvalidInput)
+	if len(cfg.AssociatedData) > associatedDataCap.length {
+		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, associatedDataCap.name)
 	}
 	return normalizedConfig{
 		password:    clone(cfg.Password),

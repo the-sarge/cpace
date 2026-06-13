@@ -51,15 +51,15 @@ func messageFramingTargets() []messageFramingTarget {
 }
 
 func validMessageAForCatalogue() []byte {
-	return encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, pointSize), []byte("ADa"))
+	return encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length), []byte("ADa"))
 }
 
 func validMessageBForCatalogue() []byte {
-	return encodeMessageB(bytes.Repeat([]byte{0x42}, pointSize), []byte("ADb"), bytes.Repeat([]byte{0x99}, tagSize))
+	return encodeMessageB(bytes.Repeat([]byte{0x42}, messageBPointCap.length), []byte("ADb"), bytes.Repeat([]byte{0x99}, messageBTagCap.length))
 }
 
 func validMessageCForCatalogue() []byte {
-	return encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize))
+	return encodeMessageC(bytes.Repeat([]byte{0x99}, messageCTagCap.length))
 }
 
 func messageFramingMalformedCases(target messageFramingTarget) []messageFramingCase {
@@ -81,7 +81,7 @@ func messageFramingLEB128Cases(role byte) []messageFramingCase {
 		{"missing length prefix", messageHeader(role), "truncated LEB128"},
 		{"truncated LEB128 continuation", append(messageHeader(role), 0x80), "truncated LEB128"},
 		{"non-canonical zero LEB128", append(messageHeader(role), 0x80, 0x00), "non-canonical LEB128"},
-		{"non-canonical value LEB128", append(append(messageHeader(role), 0xc0, 0x00), bytes.Repeat([]byte{0x99}, tagSize)...), "non-canonical LEB128"},
+		{"non-canonical value LEB128", append(append(messageHeader(role), 0xc0, 0x00), bytes.Repeat([]byte{0x99}, messageCTagCap.length)...), "non-canonical LEB128"},
 		{"malformed LEB128", append(messageHeader(role), 0x80, 0x80, 0x80, 0x80, 0x00), "malformed LEB128"},
 	}
 }
@@ -109,33 +109,33 @@ func messageFramingAggregateCases(target messageFramingTarget) []messageFramingC
 }
 
 func messageFramingMaxFieldCases() []messageFramingCase {
-	point := bytes.Repeat([]byte{0x42}, pointSize)
-	tag := bytes.Repeat([]byte{0x99}, tagSize)
+	point := bytes.Repeat([]byte{0x42}, messageAPointCap.length)
+	tag := bytes.Repeat([]byte{0x99}, messageBTagCap.length)
 	return []messageFramingCase{
-		{"A max fields", encodeMessageA(bytes.Repeat([]byte{0x11}, maxSessionIDLength), point, bytes.Repeat([]byte{0x22}, maxAssociatedDataLength)), ""},
-		{"B max fields", encodeMessageB(point, bytes.Repeat([]byte{0x33}, maxAssociatedDataLength), tag), ""},
+		{"A max fields", encodeMessageA(bytes.Repeat([]byte{0x11}, messageASessionIDCap.length), point, bytes.Repeat([]byte{0x22}, messageAAssociatedDataCap.length)), ""},
+		{"B max fields", encodeMessageB(point, bytes.Repeat([]byte{0x33}, messageBAssociatedDataCap.length), tag), ""},
 		{"C exact tag", encodeMessageC(tag), ""},
 	}
 }
 
 func messageFramingFieldLimitCases() []messageFramingCase {
-	point := bytes.Repeat([]byte{0x42}, pointSize)
-	tag := bytes.Repeat([]byte{0x99}, tagSize)
+	point := bytes.Repeat([]byte{0x42}, messageAPointCap.length)
+	tag := bytes.Repeat([]byte{0x99}, messageBTagCap.length)
 	overDeclaredBAd := append(messageHeader(roleB), prependLen(point)...)
-	overDeclaredBAd = append(overDeclaredBAd, encodeLEB128(uint64(maxAssociatedDataLength+1))...)
+	overDeclaredBAd = append(overDeclaredBAd, encodeLEB128(uint64(messageBAssociatedDataCap.length+1))...)
 	return []messageFramingCase{
-		{"A session id oversized", encodeMessageA(bytes.Repeat([]byte{0x11}, maxSessionIDLength+1), point, nil), "message A session id field too large"},
-		{"A point short", encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, pointSize-1), nil), "message A point length"},
-		{"A point long", encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, pointSize+1), nil), "message A point length"},
-		{"A associated data oversized", encodeMessageA([]byte("sid"), point, bytes.Repeat([]byte{0x22}, maxAssociatedDataLength+1)), "message A associated data field too large"},
-		{"B point short", encodeMessageB(bytes.Repeat([]byte{0x42}, pointSize-1), nil, tag), "message B point length"},
-		{"B point long", encodeMessageB(bytes.Repeat([]byte{0x42}, pointSize+1), nil, tag), "message B point length"},
-		{"B associated data oversized", encodeMessageB(point, bytes.Repeat([]byte{0x33}, maxAssociatedDataLength+1), tag), "message B associated data field too large"},
+		{"A session id oversized", encodeMessageA(bytes.Repeat([]byte{0x11}, messageASessionIDCap.length+1), point, nil), "message A session id field too large"},
+		{"A point short", encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length-1), nil), "message A point length"},
+		{"A point long", encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length+1), nil), "message A point length"},
+		{"A associated data oversized", encodeMessageA([]byte("sid"), point, bytes.Repeat([]byte{0x22}, messageAAssociatedDataCap.length+1)), "message A associated data field too large"},
+		{"B point short", encodeMessageB(bytes.Repeat([]byte{0x42}, messageBPointCap.length-1), nil, tag), "message B point length"},
+		{"B point long", encodeMessageB(bytes.Repeat([]byte{0x42}, messageBPointCap.length+1), nil, tag), "message B point length"},
+		{"B associated data oversized", encodeMessageB(point, bytes.Repeat([]byte{0x33}, messageBAssociatedDataCap.length+1), tag), "message B associated data field too large"},
 		{"B associated data over-declared absent bytes", overDeclaredBAd, "message B associated data field too large"},
-		{"B tag short", encodeMessageB(point, nil, bytes.Repeat([]byte{0x99}, tagSize-1)), "message B tag length"},
-		{"B tag long", encodeMessageB(point, nil, bytes.Repeat([]byte{0x99}, tagSize+1)), "message B tag length"},
-		{"C tag short", encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize-1)), "message C tag length"},
-		{"C tag long", encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize+1)), "message C tag length"},
+		{"B tag short", encodeMessageB(point, nil, bytes.Repeat([]byte{0x99}, messageBTagCap.length-1)), "message B tag length"},
+		{"B tag long", encodeMessageB(point, nil, bytes.Repeat([]byte{0x99}, messageBTagCap.length+1)), "message B tag length"},
+		{"C tag short", encodeMessageC(bytes.Repeat([]byte{0x99}, messageCTagCap.length-1)), "message C tag length"},
+		{"C tag long", encodeMessageC(bytes.Repeat([]byte{0x99}, messageCTagCap.length+1)), "message C tag length"},
 	}
 }
 
@@ -153,7 +153,7 @@ func messageAFuzzSeeds(validA, crossRoleB, invalidY []byte) [][]byte {
 
 func messageAProtocolFuzzSeeds(validA, crossRoleB, invalidY []byte) [][]byte {
 	seeds := messageAFuzzSeeds(validA, crossRoleB, invalidY)
-	seeds = append(seeds, encodeMessageA([]byte("other sid"), bytes.Repeat([]byte{0x42}, pointSize), nil))
+	seeds = append(seeds, encodeMessageA([]byte("other sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length), nil))
 	return seeds
 }
 
@@ -163,8 +163,8 @@ func messageBFuzzSeeds(validB, crossRoleC, invalidY []byte) [][]byte {
 		truncatedMessage(validB),
 		withMessageRole(validB, roleA),
 		append(messageHeader(roleB), 0x80, 0x00),
-		encodeMessageB(identityEncoding, nil, bytes.Repeat([]byte{0x99}, tagSize)),
-		encodeMessageB(invalidY, nil, bytes.Repeat([]byte{0x99}, tagSize)),
+		encodeMessageB(identityEncoding, nil, bytes.Repeat([]byte{0x99}, messageBTagCap.length)),
+		encodeMessageB(invalidY, nil, bytes.Repeat([]byte{0x99}, messageBTagCap.length)),
 		withMessageTamperedLastByte(validB),
 		clone(crossRoleC),
 	}
@@ -176,7 +176,7 @@ func messageCFuzzSeeds(validC, crossRoleA []byte) [][]byte {
 		truncatedMessage(validC),
 		withMessageRole(validC, roleA),
 		append(messageHeader(roleC), 0x80, 0x00),
-		encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize-1)),
+		encodeMessageC(bytes.Repeat([]byte{0x99}, messageCTagCap.length-1)),
 		withMessageTamperedLastByte(validC),
 		clone(crossRoleA),
 	}

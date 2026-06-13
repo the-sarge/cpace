@@ -159,7 +159,7 @@ func FuzzProtocolConsistency(f *testing.F) {
 	f.Add([]byte("sid"), []byte("ctx"), []byte("ADa"), []byte("ADb"))
 	f.Add([]byte("sid2"), []byte{}, []byte{}, []byte{})
 	f.Fuzz(func(t *testing.T, sid, ctx, ada, adb []byte) {
-		if len(sid) == 0 || len(sid) > 1024 || len(ctx) > 1024 || len(ada) > 1024 || len(adb) > 1024 {
+		if len(sid) == 0 || len(sid) > sessionIDCap.length || len(ctx) > contextCap.length || len(ada) > 1024 || len(adb) > 1024 {
 			t.Skip()
 		}
 		initCfg := Config{
@@ -199,7 +199,7 @@ func FuzzProtocolMismatch(f *testing.F) {
 	f.Add([]byte("sid2"), []byte{}, []byte{}, []byte{})
 	f.Fuzz(func(t *testing.T, sid, ctx, ada, adb []byte) {
 		// respCfg.Context appends one byte below; ada/adb use a fuzz-budget cap.
-		if len(sid) == 0 || len(sid) > maxSessionIDLength || len(ctx) >= maxContextLength || len(ada) > 1024 || len(adb) > 1024 {
+		if len(sid) == 0 || len(sid) > sessionIDCap.length || len(ctx) >= contextCap.length || len(ada) > 1024 || len(adb) > 1024 {
 			t.Skip()
 		}
 		initCfg := Config{
@@ -355,16 +355,16 @@ func FuzzScalarMultVFY(f *testing.F) {
 }
 
 func FuzzMessageARoundTrip(f *testing.F) {
-	f.Add([]byte("sid"), bytes.Repeat([]byte{0x42}, pointSize), []byte("ADa"))
+	f.Add([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length), []byte("ADa"))
 	f.Add([]byte{}, identityEncoding, []byte{})
-	f.Add(bytes.Repeat([]byte{0x01}, 8), bytes.Repeat([]byte{0x02}, pointSize-1), bytes.Repeat([]byte{0x03}, 8))
+	f.Add(bytes.Repeat([]byte{0x01}, 8), bytes.Repeat([]byte{0x02}, messageAPointCap.length-1), bytes.Repeat([]byte{0x03}, 8))
 	f.Fuzz(func(t *testing.T, sid, ya, ada []byte) {
 		if len(sid) > fuzzProtocolInputCap || len(ya) > fuzzProtocolInputCap || len(ada) > fuzzProtocolInputCap {
 			t.Skip()
 		}
 		msg := encodeMessageA(sid, ya, ada)
 		got, err := decodeMessageA(msg)
-		if len(sid) > maxSessionIDLength || len(ya) != pointSize || len(ada) > maxAssociatedDataLength {
+		if len(sid) > messageASessionIDCap.length || len(ya) != messageAPointCap.length || len(ada) > messageAAssociatedDataCap.length {
 			if err == nil {
 				t.Fatalf("decodeMessageA accepted lengths sid=%d ya=%d ada=%d", len(sid), len(ya), len(ada))
 			}
@@ -380,16 +380,16 @@ func FuzzMessageARoundTrip(f *testing.F) {
 }
 
 func FuzzMessageBRoundTrip(f *testing.F) {
-	f.Add(bytes.Repeat([]byte{0x42}, pointSize), []byte("ADb"), bytes.Repeat([]byte{0x99}, tagSize))
-	f.Add(identityEncoding, []byte{}, bytes.Repeat([]byte{0x00}, tagSize))
-	f.Add(bytes.Repeat([]byte{0x02}, pointSize-1), bytes.Repeat([]byte{0x03}, 8), bytes.Repeat([]byte{0x04}, tagSize-1))
+	f.Add(bytes.Repeat([]byte{0x42}, messageBPointCap.length), []byte("ADb"), bytes.Repeat([]byte{0x99}, messageBTagCap.length))
+	f.Add(identityEncoding, []byte{}, bytes.Repeat([]byte{0x00}, messageBTagCap.length))
+	f.Add(bytes.Repeat([]byte{0x02}, messageBPointCap.length-1), bytes.Repeat([]byte{0x03}, 8), bytes.Repeat([]byte{0x04}, messageBTagCap.length-1))
 	f.Fuzz(func(t *testing.T, yb, adb, tag []byte) {
 		if len(yb) > fuzzProtocolInputCap || len(adb) > fuzzProtocolInputCap || len(tag) > fuzzProtocolInputCap {
 			t.Skip()
 		}
 		msg := encodeMessageB(yb, adb, tag)
 		got, err := decodeMessageB(msg)
-		if len(yb) != pointSize || len(adb) > maxAssociatedDataLength || len(tag) != tagSize {
+		if len(yb) != messageBPointCap.length || len(adb) > messageBAssociatedDataCap.length || len(tag) != messageBTagCap.length {
 			if err == nil {
 				t.Fatalf("decodeMessageB accepted lengths yb=%d adb=%d tag=%d", len(yb), len(adb), len(tag))
 			}
@@ -405,16 +405,16 @@ func FuzzMessageBRoundTrip(f *testing.F) {
 }
 
 func FuzzMessageCRoundTrip(f *testing.F) {
-	f.Add(bytes.Repeat([]byte{0x99}, tagSize))
-	f.Add(bytes.Repeat([]byte{0x00}, tagSize))
-	f.Add(bytes.Repeat([]byte{0x04}, tagSize-1))
+	f.Add(bytes.Repeat([]byte{0x99}, messageCTagCap.length))
+	f.Add(bytes.Repeat([]byte{0x00}, messageCTagCap.length))
+	f.Add(bytes.Repeat([]byte{0x04}, messageCTagCap.length-1))
 	f.Fuzz(func(t *testing.T, tag []byte) {
 		if len(tag) > fuzzProtocolInputCap {
 			t.Skip()
 		}
 		msg := encodeMessageC(tag)
 		got, err := decodeMessageC(msg)
-		if len(tag) != tagSize {
+		if len(tag) != messageCTagCap.length {
 			if err == nil {
 				t.Fatalf("decodeMessageC accepted tag length %d", len(tag))
 			}

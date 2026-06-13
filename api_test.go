@@ -758,30 +758,31 @@ func TestInputValidation(t *testing.T) {
 
 func TestConfigFieldSizeLimits(t *testing.T) {
 	cases := []struct {
-		name string
-		max  int
-		edit func(*Config, []byte)
+		field packageCapField
+		edit  func(*Config, []byte)
 	}{
-		{"password", maxPasswordLength, func(c *Config, b []byte) { c.Password = b }},
-		{"initiator id", maxIDLength, func(c *Config, b []byte) { c.InitiatorID = b }},
-		{"responder id", maxIDLength, func(c *Config, b []byte) { c.ResponderID = b }},
-		{"context", maxContextLength, func(c *Config, b []byte) { c.Context = b }},
-		{"session id", maxSessionIDLength, func(c *Config, b []byte) { c.SessionID = b }},
-		{"associated data", maxAssociatedDataLength, func(c *Config, b []byte) { c.AssociatedData = b }},
+		{passwordCap, func(c *Config, b []byte) { c.Password = b }},
+		{initiatorIDCap, func(c *Config, b []byte) { c.InitiatorID = b }},
+		{responderIDCap, func(c *Config, b []byte) { c.ResponderID = b }},
+		{contextCap, func(c *Config, b []byte) { c.Context = b }},
+		{sessionIDCap, func(c *Config, b []byte) { c.SessionID = b }},
+		{associatedDataCap, func(c *Config, b []byte) { c.AssociatedData = b }},
 	}
 	for _, tc := range cases {
-		t.Run(tc.name+" max", func(t *testing.T) {
+		t.Run(tc.field.name+" max", func(t *testing.T) {
 			cfg := testConfig()
-			tc.edit(&cfg, bytes.Repeat([]byte{0x42}, tc.max))
+			tc.edit(&cfg, bytes.Repeat([]byte{0x42}, tc.field.length))
 			if _, _, err := startTestInitiator(cfg); err != nil {
 				t.Fatalf("Start rejected max-size field: %v", err)
 			}
 		})
-		t.Run(tc.name+" oversized", func(t *testing.T) {
+		t.Run(tc.field.name+" oversized", func(t *testing.T) {
 			cfg := testConfig()
-			tc.edit(&cfg, bytes.Repeat([]byte{0x42}, tc.max+1))
+			tc.edit(&cfg, bytes.Repeat([]byte{0x42}, tc.field.length+1))
 			if _, _, err := startTestInitiator(cfg); !errors.Is(err, ErrInvalidInput) {
 				t.Fatalf("Start err=%v", err)
+			} else if want := ErrInvalidInput.Error() + ": " + tc.field.name + " too large"; err.Error() != want {
+				t.Fatalf("Start err=%q want %q", err.Error(), want)
 			}
 		})
 	}
