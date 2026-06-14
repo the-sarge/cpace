@@ -1205,3 +1205,33 @@ PR #107 applied the current `go fix -diff` suggestions to the nested `tools/rele
 
 - Local pre-merge gates passed: `go fix -diff ./...`, `(cd tools/releasepolicy && go fix -diff ./...)`, `(cd tools/releasepolicy && go test ./...)`, `go test ./...`, and `git diff --check`.
 - GitHub checks on PR #107 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone `gosec` child check was neutral.
+
+---
+
+## Evidence baseline validator merged - 2026-06-14 16:11 EDT
+
+**Main:** `149c3d1e96a8`
+**Actor:** Codex
+
+**Summary**
+
+PR #109 merged the Evidence baseline validator adapter. The change adds a read-only checker for `docs/evidence-baseline.md` and committed `docs/evidence/**` bundles, plus CI/local routing so evidence-related changes validate the pinned baseline without changing public API, CPace protocol behavior, package-profile policy, or release-readiness claims.
+
+**Completed**
+
+- Merged PR #109 as `149c3d1e96a860bf594991b90392583217a0cd92` from final head `2c9e256a42a2621893fba3f74e1dc3dd34a084f2`.
+- Added `tools/evidencebaseline`, `scripts/check-evidence-baseline.sh`, `scripts/classify-check-changes.sh`, and `scripts/test-ci-classifier.sh`.
+- Wired `task evidence:baseline`, `task evidence:lint`, and `task ci:classifier` into `task check` and `task check:changed`.
+- Updated CI so code/workflow changes, evidence bundle/index changes, and docs-only changes to summary docs referenced from the Baseline Index run the evidence validator; unrelated Markdown-only PRs still stay on docs validation without Go setup.
+- Hardened validation against malformed Baseline Index separators, unsafe refs, symlinked path ancestors, symlinked `docs/evidence`, symlinked bundle roots, symlinked raw artifacts, symlinked summary docs, symlinked bundle control files, uncovered nested raw files, invalid checksums, duplicate checksum paths, empty checksum files, and optional `SHA256SUMS.sig` symlinks.
+- Ran RAS review-fix twice. The first run `20260614T175357-d523fd0c2f4aa165464a8758` blocked on an all-docs Go policy expansion, which was removed. The fresh run `20260614T185112-6107f291c7955d2908cacb85` reached `max_review_loops` after three builder passes; its final pushed head fixed the last reported fix-first findings, and no low/nit finding was left intentionally deferred into a follow-up issue.
+
+**Validation**
+
+- Local final gates passed on `main` after merge: `scripts/test-ci-classifier.sh`, `scripts/check-evidence-baseline.sh`, `(cd tools/evidencebaseline && go test ./... && go vet ./... && staticcheck ./...)`, `task evidence:lint`, `task check:changed`, `task check`, and `go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12`.
+- `task check` included docs validation, release-helper smoke tests, CI classifier tests, evidence baseline validation, nested evidence-checker linting, root tests, race tests, gofmt/goimports checks, root `go vet`, root Staticcheck, ast-grep, and `govulncheck -test ./...`; the helper script skipped only optional real Syft SBOM validation because `syft` was not installed.
+- GitHub checks on final head `2c9e256a42a2621893fba3f74e1dc3dd34a084f2` passed before merge: Check, Actionlint, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Keep the release evidence caveat intact: this validator improves consistency checks for existing pinned evidence, but stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, Capslock, and security/spec-audit evidence against the exact candidate commit.
