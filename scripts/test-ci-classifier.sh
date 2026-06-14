@@ -59,4 +59,21 @@ git -C "$rename_repo" diff --name-only --no-renames HEAD >"$tmpdir/rename.paths"
 grep -Fxq "docs_only=true" "$tmpdir/rename.out"
 grep -Fxq "evidence_changed=true" "$tmpdir/rename.out"
 
+fakebin="$tmpdir/fakebin"
+mkdir "$fakebin"
+printf '#!/bin/sh\nexit 42\n' >"$fakebin/awk"
+chmod +x "$fakebin/awk"
+if PATH="$fakebin:$PATH" "$repo_root/scripts/classify-check-changes.sh" --list-summary-docs >"$tmpdir/awk-failure.out" 2>"$tmpdir/awk-failure.err"; then
+  echo "expected classifier to fail when awk fails" >&2
+  exit 1
+else
+  status=$?
+fi
+[ "$status" -eq 42 ] || {
+  echo "expected awk failure status 42, got $status" >&2
+  cat "$tmpdir/awk-failure.out" >&2
+  cat "$tmpdir/awk-failure.err" >&2
+  exit 1
+}
+
 echo "CI change classifier tests passed"

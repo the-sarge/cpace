@@ -6,7 +6,8 @@ baseline="$repo_root/docs/evidence-baseline.md"
 
 summary_doc_refs() {
   [ -f "$baseline" ] || return 0
-  awk -F '|' '
+  refs=$(
+    awk -F '|' '
     /^## / {
       if (in_section) {
         exit
@@ -29,7 +30,9 @@ summary_doc_refs() {
         cell = substr(cell, RSTART + RLENGTH)
       }
     }
-  ' "$baseline" | sort -u
+  ' "$baseline"
+  ) || return $?
+  [ -z "$refs" ] || printf '%s\n' "$refs" | sort -u
 }
 
 case "${1:-}" in
