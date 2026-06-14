@@ -40,6 +40,15 @@ func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
 		if job.name == "" {
 			t.Fatal("job name is empty")
 		}
+		if job.displayName == "" {
+			t.Fatalf("job %q has empty display name", job.name)
+		}
+		if job.runsOn == "" {
+			t.Fatalf("job %q has empty runner", job.name)
+		}
+		if job.timeoutMinutes == "" {
+			t.Fatalf("job %q has empty timeout", job.name)
+		}
 		if seenJobs[job.name] {
 			t.Fatalf("duplicate job %q", job.name)
 		}
@@ -191,14 +200,14 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, "    if: "+tagGuard+"\n", "    if: "+tagGuard+" || github.event_name == 'workflow_dispatch'\n")
 			},
-			want: "must run only for signed v* tag refs",
+			want: "jobs.verify-tag.if",
 		},
 		{
 			name: "unsupported ref missing negation",
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, "    if: "+unsupportedRefGuard+"\n", "    if: github.event_name == 'workflow_dispatch' && ("+tagGuard+")\n")
 			},
-			want: "unsupported-ref job must be limited",
+			want: "jobs.unsupported-ref.if",
 		},
 		{
 			name: "unpinned action",
@@ -220,6 +229,35 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 				return replaceOnce(t, in, "          persist-credentials: false\n", "")
 			},
 			want: "persist-credentials",
+		},
+		{
+			name: "setup go action changed",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0", "uses: actions/cache@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0")
+			},
+			want: "uses must start with actions/setup-go@",
+		},
+		{
+			name: "go environment report changed",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "          go env GOTOOLCHAIN GOPROXY GOSUMDB", "          go env GOTOOLCHAIN")
+			},
+			want: "go env GOTOOLCHAIN GOPROXY GOSUMDB",
+		},
+		{
+			name: "alias valued unexpected step guard",
+			mutate: func(t *testing.T, in string) string {
+				out := replaceOnce(t, in, "  cancel-in-progress: false\n", "  cancel-in-progress: &skip false\n")
+				return replaceOnce(t, out, "      - name: Verify tag object and signature\n        run: |", "      - name: Verify tag object and signature\n        if: *skip\n        run: |")
+			},
+			want: "jobs.verify-tag.steps[1].if",
+		},
+		{
+			name: "scalar unexpected step guard",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      - name: Verify tag object and signature\n        run: |", "      - name: Verify tag object and signature\n        if: false\n        run: |")
+			},
+			want: "jobs.verify-tag.steps[1].if",
 		},
 		{
 			name: "check job no longer runs tests",
@@ -268,7 +306,7 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, "        if: steps.gosec.outcome == 'failure'", "        if: false")
 			},
-			want: "gosec failure report guard changed",
+			want: "jobs.gosec.steps[7].if",
 		},
 		{
 			name: "verify tag output rewired",
@@ -276,6 +314,20 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 				return replaceOnce(t, in, "      release-tag: ${{ steps.release-tag.outputs.release-tag }}", "      release-tag: ${{ github.ref_name }}")
 			},
 			want: "jobs.verify-tag.outputs.release-tag",
+		},
+		{
+			name: "sbom output rewired",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      sbom-file: ${{ steps.sbom-metadata.outputs.sbom-file }}", "      sbom-file: ${{ github.ref_name }}")
+			},
+			want: "jobs.sbom.outputs.sbom-file",
+		},
+		{
+			name: "attestation id changed",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        id: attest-sbom", "        id: other")
+			},
+			want: "jobs.sbom-attestation.steps[3].id",
 		},
 		{
 			name: "root defaults injected",
@@ -299,6 +351,126 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			requireFinding(t, findings, tt.want)
 		})
 	}
+}
+
+func TestReleasePolicyRejectsDuplicateWorkflowKeys(t *testing.T) {
+	base := currentWorkflow(t)
+	tests := []struct {
+		name     string
+		mutate   func(*testing.T, string) string
+		wantPath string
+	}{
+		{
+			name: "duplicate setup-go uses",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0\n        with:", "        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0\n        uses: actions/cache@4a3601121dd01d1626a1e23e37211e3254c1c06c\n        with:")
+			},
+			wantPath: "release.yml:jobs.check.steps[1].uses",
+		},
+		{
+			name: "duplicate run",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        run: |\n          go version\n          go env GOTOOLCHAIN GOPROXY GOSUMDB\n", "        run: |\n          go version\n          go env GOTOOLCHAIN GOPROXY GOSUMDB\n        run: true\n")
+			},
+			wantPath: "release.yml:jobs.check.steps[2].run",
+		},
+		{
+			name: "duplicate job if",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "  check:\n    name: Check\n    if: "+tagGuard+"\n", "  check:\n    name: Check\n    if: "+tagGuard+"\n    if: always()\n")
+			},
+			wantPath: "release.yml:jobs.check.if",
+		},
+		{
+			name: "duplicate output",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      sbom-file: ${{ steps.release-tag.outputs.sbom-file }}\n", "      sbom-file: ${{ steps.release-tag.outputs.sbom-file }}\n      sbom-file: ${{ github.ref_name }}\n")
+			},
+			wantPath: "release.yml:jobs.verify-tag.outputs.sbom-file",
+		},
+		{
+			name: "duplicate with entry",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "          cache: true\n", "          cache: true\n          cache: false\n")
+			},
+			wantPath: "release.yml:jobs.check.steps[1].with.cache",
+		},
+		{
+			name: "duplicate env entry",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "          SBOM_FILE: ${{ needs.verify-tag.outputs.sbom-file }}\n", "          SBOM_FILE: ${{ needs.verify-tag.outputs.sbom-file }}\n          SBOM_FILE: other.json\n")
+			},
+			wantPath: "release.yml:jobs.sbom.steps[2].env.SBOM_FILE",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			findings := findingsForWorkflow(t, tt.mutate(t, base))
+			requireOnlyFinding(t, findings, tt.wantPath, "duplicate YAML key")
+		})
+	}
+}
+
+func TestReleasePolicyReportsMissingModeledCheckoutHardeningOnce(t *testing.T) {
+	base := currentWorkflow(t)
+	workflow := replaceOnce(t, base, "          persist-credentials: false\n", "")
+
+	findings := findingsForWorkflow(t, workflow)
+	if got := countFindingsContaining(findings, "persist-credentials"); got != 1 {
+		t.Fatalf("expected one persist-credentials finding, got %d: %#v", got, findings)
+	}
+}
+
+func TestReleasePolicyReportsMissingSBOMOutputOnce(t *testing.T) {
+	base := currentWorkflow(t)
+	workflow := replaceOnce(t, base, "      sbom-file: ${{ steps.sbom-metadata.outputs.sbom-file }}\n", "")
+
+	findings := findingsForWorkflow(t, workflow)
+	if got := countFindingsContaining(findings, "jobs.sbom.outputs.sbom-file"); got != 1 {
+		t.Fatalf("expected one sbom-file output finding, got %d: %#v", got, findings)
+	}
+}
+
+func TestReleasePolicyStillChecksCheckoutHardeningForUnexpectedJobs(t *testing.T) {
+	base := currentWorkflow(t)
+	workflow := replaceOnce(t, base, "\n  release:\n", "\n  rogue:\n    name: Rogue\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2\n        with: {}\n\n  release:\n")
+
+	findings := findingsForWorkflow(t, workflow)
+	requireFinding(t, findings, "jobs.rogue.steps[0].with.persist-credentials")
+}
+
+func TestReleasePolicyStopsStepValidationAfterIdentityMismatch(t *testing.T) {
+	base := currentWorkflow(t)
+	original := `      - name: Verify tag object and signature
+        run: |
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          tag_type="$(git cat-file -t "$GITHUB_REF_NAME")"
+          printf '%s\n' "$tag_type"
+          test "$tag_type" = tag
+          git config gpg.ssh.allowedSignersFile .github/allowed_signers
+          git verify-tag "$GITHUB_REF_NAME"
+
+      - name: Validate release tag metadata
+        id: release-tag
+        run: scripts/release-tag-metadata.sh "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+`
+	swapped := `      - name: Validate release tag metadata
+        id: release-tag
+        run: scripts/release-tag-metadata.sh "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag object and signature
+        run: |
+          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+          tag_type="$(git cat-file -t "$GITHUB_REF_NAME")"
+          printf '%s\n' "$tag_type"
+          test "$tag_type" = tag
+          git config gpg.ssh.allowedSignersFile .github/allowed_signers
+          git verify-tag "$GITHUB_REF_NAME"
+`
+
+	findings := findingsForWorkflow(t, replaceOnce(t, base, original, swapped))
+	requireOnlyFinding(t, findings, "release.yml:jobs.verify-tag.steps", "steps must exactly match")
 }
 
 func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
@@ -363,6 +535,26 @@ func requireFinding(t *testing.T, findings []finding, want string) {
 		}
 	}
 	t.Fatalf("missing finding containing %q; got %#v", want, findings)
+}
+
+func requireOnlyFinding(t *testing.T, findings []finding, wantPath, wantMsg string) {
+	t.Helper()
+	if len(findings) != 1 {
+		t.Fatalf("expected one finding, got %#v", findings)
+	}
+	if findings[0].path != wantPath || !strings.Contains(findings[0].msg, wantMsg) {
+		t.Fatalf("expected finding %q containing %q, got %#v", wantPath, wantMsg, findings[0])
+	}
+}
+
+func countFindingsContaining(findings []finding, want string) int {
+	var count int
+	for _, finding := range findings {
+		if strings.Contains(finding.path, want) || strings.Contains(finding.msg, want) {
+			count++
+		}
+	}
+	return count
 }
 
 func replaceOnce(t *testing.T, in, old, new string) string {
