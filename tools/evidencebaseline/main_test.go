@@ -147,6 +147,56 @@ func TestEvidenceBaselineRejectsSymlinkedChecksumEntry(t *testing.T) {
 	requireFinding(t, findings, "checksum references symlink")
 }
 
+func TestEvidenceBaselineRejectsSymlinkedBundleRoot(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	outside := filepath.Join(repoRoot, "outside-evidence")
+	writeFile(t, filepath.Join(outside, "README.md"), "# Outside Evidence\n")
+	writeFile(t, filepath.Join(outside, "analysis.log"), "analysis\n")
+	writeFile(t, filepath.Join(outside, "fuzz.log"), "fuzz\n")
+	writeSHA256SUMS(t, outside, "analysis.log", "fuzz.log")
+
+	bundle := filepath.Join(repoRoot, "docs", "evidence", "candidate")
+	removeAll(t, bundle)
+	if err := os.Symlink(outside, bundle); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "evidence bundle root must not be a symlink")
+}
+
+func TestEvidenceBaselineRejectsSymlinkedControlFiles(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+	}{
+		{"readme", "README.md"},
+		{"checksums", "SHA256SUMS"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoRoot := validFixtureRepo(t)
+			outside := filepath.Join(repoRoot, "outside-"+tt.file)
+			writeFile(t, outside, "outside\n")
+			link := filepath.Join(repoRoot, "docs", "evidence", "candidate", tt.file)
+			remove(t, link)
+			if err := os.Symlink(outside, link); err != nil {
+				t.Skipf("symlink unavailable: %v", err)
+			}
+
+			findings, err := checkRepo(repoRoot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			requireFinding(t, findings, tt.file)
+			requireFinding(t, findings, "control file must not be a symlink")
+		})
+	}
+}
+
 func TestEvidenceBaselineRejectsUnsafeBaselineRef(t *testing.T) {
 	repoRoot := validFixtureRepo(t)
 	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
@@ -162,6 +212,45 @@ func TestEvidenceBaselineRejectsUnsafeBaselineRef(t *testing.T) {
 		t.Fatal(err)
 	}
 	requireFinding(t, findings, "unsafe baseline ref")
+}
+
+func TestEvidenceBaselineParserRejectsMalformedBaselineHeader(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
+	replaceInFile(t, baseline, "| Evidence lane | Pinned baseline | Raw artifacts | Summary docs | Freshness rule |", "| Lane | Pinned baseline | Raw artifacts | Summary docs | Freshness rule |")
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "Baseline Index header got")
+}
+
+func TestEvidenceBaselineParserRejectsDuplicateLane(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
+	replaceInFile(t, baseline, "| Fuzzing | `abc123` |", "| Dependency review | `abc123` |")
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "duplicate evidence lane")
+}
+
+func TestEvidenceBaselineParserRejectsSummaryDocDirectory(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	summary := filepath.Join(repoRoot, "docs", "dependency-review.md")
+	remove(t, summary)
+	if err := os.Mkdir(summary, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "referenced summary doc is a directory")
 }
 
 func TestEvidenceBaselineIgnoresLocalDSStore(t *testing.T) {
@@ -198,6 +287,39 @@ func TestEvidenceBaselineRejectsUnsafeChecksumPath(t *testing.T) {
 		t.Fatal(err)
 	}
 	requireFinding(t, findings, "safe bundle-relative path")
+}
+
+func TestEvidenceBaselineRejectsMalformedChecksumHash(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), "zzzz  analysis.log\n")
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "checksum hash must be 64 lowercase hex characters")
+}
+
+func TestEvidenceBaselineRejectsDuplicateChecksumPath(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	appendSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "analysis.log", "analysis\n")
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "duplicate checksum path")
+}
+
+func TestEvidenceBaselineRejectsEmptyChecksumFile(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), "\n")
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "contains no checksum entries")
 }
 
 func validFixtureRepo(t *testing.T) string {
@@ -279,9 +401,29 @@ func appendFile(t *testing.T, path, content string) {
 	}
 }
 
+func replaceInFile(t *testing.T, path, old, new string) {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated := strings.Replace(string(content), old, new, 1)
+	if updated == string(content) {
+		t.Fatalf("did not find %q in %s", old, path)
+	}
+	writeFile(t, path, updated)
+}
+
 func remove(t *testing.T, path string) {
 	t.Helper()
 	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func removeAll(t *testing.T, path string) {
+	t.Helper()
+	if err := os.RemoveAll(path); err != nil {
 		t.Fatal(err)
 	}
 }

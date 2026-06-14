@@ -65,13 +65,15 @@ func checkRepo(repoRoot string) ([]finding, error) {
 		findings = append(findings, rawFindings...)
 		for _, ref := range rawRefs {
 			full := filepath.Join(repoRoot, filepath.FromSlash(ref))
-			info, err := os.Stat(full)
+			info, err := os.Lstat(full)
 			switch {
 			case errors.Is(err, fs.ErrNotExist):
 				findings = append(findings, finding{path: baselinePath + ":" + row.lane, msg: "referenced raw artifact does not exist: " + ref})
 				continue
 			case err != nil:
 				return nil, err
+			case info.Mode()&fs.ModeSymlink != 0:
+				findings = append(findings, finding{path: baselinePath + ":" + row.lane, msg: "referenced raw artifact is a symlink: " + ref})
 			}
 			bundle := evidenceBundleForRef(ref, info)
 			if bundle != "" {
@@ -279,7 +281,7 @@ func evidenceBundleForRef(ref string, info os.FileInfo) string {
 	if len(parts) < 3 || parts[0] != "docs" || parts[1] != "evidence" {
 		return ""
 	}
-	if info.IsDir() {
+	if info.IsDir() || info.Mode()&fs.ModeSymlink != 0 || strings.HasSuffix(ref, "/") {
 		return strings.Join(parts[:3], "/")
 	}
 	if len(parts) >= 4 {
@@ -296,7 +298,10 @@ func discoverEvidenceBundles(repoRoot string) ([]string, error) {
 	}
 	var bundles []string
 	for _, entry := range entries {
-		if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+		if strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+		if !entry.IsDir() && entry.Type()&fs.ModeSymlink == 0 {
 			continue
 		}
 		bundles = append(bundles, "docs/evidence/"+entry.Name())
@@ -309,24 +314,29 @@ func checkBundle(repoRoot, bundle string) []finding {
 	bundlePath := filepath.Join(repoRoot, filepath.FromSlash(bundle))
 	var findings []finding
 
-	readme := filepath.Join(bundlePath, "README.md")
-	if info, err := os.Stat(readme); err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			findings = append(findings, finding{path: bundle, msg: "evidence bundle is missing README.md"})
-		} else {
-			findings = append(findings, finding{path: bundle, msg: err.Error()})
-		}
-	} else if info.IsDir() {
-		findings = append(findings, finding{path: bundle + "/README.md", msg: "expected file, got directory"})
+	info, err := os.Lstat(bundlePath)
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return []finding{{path: bundle, msg: "evidence bundle root does not exist"}}
+	case err != nil:
+		return []finding{{path: bundle, msg: err.Error()}}
+	case info.Mode()&fs.ModeSymlink != 0:
+		return []finding{{path: bundle, msg: "evidence bundle root must not be a symlink"}}
+	case !info.IsDir():
+		return []finding{{path: bundle, msg: "evidence bundle root is not a directory"}}
 	}
 
+	readmeFindings, _ := validateBundleControlFile(bundlePath, bundle, "README.md")
+	findings = append(findings, readmeFindings...)
+
 	sumPath := filepath.Join(bundlePath, "SHA256SUMS")
+	sumFileFindings, ok := validateBundleControlFile(bundlePath, bundle, "SHA256SUMS")
+	findings = append(findings, sumFileFindings...)
+	if !ok {
+		return findings
+	}
 	entries, sumFindings, err := parseSHA256SUMS(sumPath)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			findings = append(findings, finding{path: bundle, msg: "evidence bundle is missing SHA256SUMS"})
-			return findings
-		}
 		findings = append(findings, finding{path: bundle + "/SHA256SUMS", msg: err.Error()})
 		return findings
 	}
@@ -353,6 +363,23 @@ func checkBundle(repoRoot, bundle string) []finding {
 		}
 	}
 	return findings
+}
+
+func validateBundleControlFile(bundlePath, bundle, name string) ([]finding, bool) {
+	path := filepath.Join(bundlePath, name)
+	info, err := os.Lstat(path)
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return []finding{{path: bundle, msg: "evidence bundle is missing " + name}}, false
+	case err != nil:
+		return []finding{{path: bundle + "/" + name, msg: err.Error()}}, false
+	case info.Mode()&fs.ModeSymlink != 0:
+		return []finding{{path: bundle + "/" + name, msg: "evidence bundle control file must not be a symlink"}}, false
+	case !info.Mode().IsRegular():
+		return []finding{{path: bundle + "/" + name, msg: "evidence bundle control file must be a regular file"}}, false
+	default:
+		return nil, true
+	}
 }
 
 type checksumEntry struct {
