@@ -134,9 +134,7 @@ func (c *checker) checkRoot(root *yaml.Node) {
 	if !sameStringSet(mapKeys(root), policy.rootKeys) {
 		c.fail("$", "workflow root keys must exactly match the accepted release workflow")
 	}
-	if scalar(mapping(root, "name")) != policy.workflowName {
-		c.fail("name", "workflow name must be Release Validation")
-	}
+	expectExactScalar(c, "name", mapping(root, "name"), policy.workflowName)
 	expectExactScalars(c, "env", mapping(root, "env"), policy.env)
 	expectExactScalars(c, "concurrency", mapping(root, "concurrency"), policy.concurrency)
 }
@@ -174,9 +172,7 @@ func (c *checker) checkTopPermissions(root *yaml.Node) {
 		c.fail("permissions", "missing top-level permissions")
 		return
 	}
-	if scalar(mapping(permissions, "contents")) != policy.topPermission["contents"] {
-		c.fail("permissions.contents", "top-level contents permission must be read")
-	}
+	expectExactScalar(c, "permissions.contents", mapping(permissions, "contents"), policy.topPermission["contents"])
 	for _, key := range mapKeys(permissions) {
 		if _, ok := policy.topPermission[key]; !ok {
 			c.fail("permissions."+key, "unexpected top-level permission")
@@ -240,11 +236,6 @@ func (c *checker) checkAcceptedJob(jobPath string, job *yaml.Node, policy releas
 	} else {
 		expectExactScalars(c, jobPath+".outputs", outputs, policy.outputs)
 	}
-	for _, name := range policy.requiredOutputs {
-		if scalar(mapping(outputs, name)) == "" {
-			c.fail(jobPath+".outputs."+name, "missing required output")
-		}
-	}
 
 	jobSteps := steps(job)
 	gotStepIdentities := make([]string, 0, len(jobSteps))
@@ -272,22 +263,38 @@ func (c *checker) checkAcceptedStep(stepPath string, step *yaml.Node, policy rel
 	expectOptionalExactScalar(c, stepPath+".shell", mapping(step, "shell"), policy.shell)
 	expectOptionalExactScalar(c, stepPath+".continue-on-error", mapping(step, "continue-on-error"), policy.continueOnError)
 
-	uses := scalar(mapping(step, "uses"))
+	usesNode := mapping(step, "uses")
 	if policy.usesPrefix == "" {
-		if uses != "" {
+		if usesNode != nil {
 			c.fail(stepPath+".uses", "unexpected uses")
 		}
-	} else if !strings.HasPrefix(uses, policy.usesPrefix) {
-		c.fail(stepPath+".uses", "uses must start with "+policy.usesPrefix)
+	} else {
+		uses, ok := scalarValue(usesNode)
+		switch {
+		case usesNode == nil:
+			c.fail(stepPath+".uses", "uses must start with "+policy.usesPrefix)
+		case !ok:
+			c.fail(stepPath+".uses", "uses must be a scalar")
+		case !strings.HasPrefix(uses, policy.usesPrefix):
+			c.fail(stepPath+".uses", "uses must start with "+policy.usesPrefix)
+		}
 	}
 
-	run := scalar(mapping(step, "run"))
+	runNode := mapping(step, "run")
 	if policy.runLines == nil {
-		if run != "" {
+		if runNode != nil {
 			c.fail(stepPath+".run", "unexpected run")
 		}
 	} else {
-		requireExactScriptLines(c, stepPath+".run", run, policy.runLines)
+		run, ok := scalarValue(runNode)
+		switch {
+		case runNode == nil:
+			c.fail(stepPath+".run", "missing run")
+		case !ok:
+			c.fail(stepPath+".run", "run must be a scalar")
+		default:
+			requireExactScriptLines(c, stepPath+".run", run, policy.runLines)
+		}
 	}
 
 	expectOptionalExactScalars(c, stepPath+".with", mapping(step, "with"), policy.with)
@@ -359,21 +366,23 @@ func checkRequiredScripts(repoRoot string) []finding {
 	return findings
 }
 
-func expectScalars(c *checker, nodePath string, n *yaml.Node, want map[string]string) {
+func expectScalars(c *checker, nodePath string, n *yaml.Node, want map[string]string) bool {
 	if n == nil {
 		c.fail(nodePath, "missing mapping")
-		return
+		return false
+	}
+	if n.Kind != yaml.MappingNode {
+		c.fail(nodePath, "must be a mapping")
+		return false
 	}
 	for key, expected := range want {
-		if got := scalar(mapping(n, key)); got != expected {
-			c.fail(nodePath+"."+key, fmt.Sprintf("got %q, want %q", got, expected))
-		}
+		expectExactScalar(c, nodePath+"."+key, mapping(n, key), expected)
 	}
+	return true
 }
 
 func expectExactScalars(c *checker, nodePath string, n *yaml.Node, want map[string]string) {
-	expectScalars(c, nodePath, n, want)
-	if n == nil {
+	if !expectScalars(c, nodePath, n, want) {
 		return
 	}
 	for _, key := range mapKeys(n) {
@@ -384,17 +393,26 @@ func expectExactScalars(c *checker, nodePath string, n *yaml.Node, want map[stri
 }
 
 func expectExactScalar(c *checker, nodePath string, n *yaml.Node, want string) {
-	if got := scalar(n); got != want {
+	got, ok := scalarValue(n)
+	if n != nil && !ok {
+		c.fail(nodePath, "must be a scalar")
+		return
+	}
+	if got != want {
 		c.fail(nodePath, fmt.Sprintf("got %q, want %q", got, want))
 	}
 }
 
 func expectOptionalExactScalar(c *checker, nodePath string, n *yaml.Node, want string) {
-	got := scalar(n)
 	if want == "" {
-		if got != "" {
+		if n != nil {
 			c.fail(nodePath, "unexpected value")
 		}
+		return
+	}
+	got, ok := scalarValue(n)
+	if n != nil && !ok {
+		c.fail(nodePath, "must be a scalar")
 		return
 	}
 	if got != want {
@@ -528,10 +546,15 @@ func mapping(n *yaml.Node, key string) *yaml.Node {
 }
 
 func scalar(n *yaml.Node) string {
+	value, _ := scalarValue(n)
+	return value
+}
+
+func scalarValue(n *yaml.Node) (string, bool) {
 	if n == nil || n.Kind != yaml.ScalarNode {
-		return ""
+		return "", false
 	}
-	return n.Value
+	return n.Value, true
 }
 
 func seqStrings(n *yaml.Node) []string {

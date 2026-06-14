@@ -29,16 +29,15 @@ type releasePolicy struct {
 }
 
 type releaseJobPolicy struct {
-	name            string
-	displayName     string
-	runsOn          string
-	timeoutMinutes  string
-	ifCond          string
-	needs           []string
-	permissions     map[string]string
-	outputs         map[string]string
-	requiredOutputs []string
-	steps           []releaseStepPolicy
+	name           string
+	displayName    string
+	runsOn         string
+	timeoutMinutes string
+	ifCond         string
+	needs          []string
+	permissions    map[string]string
+	outputs        map[string]string
+	steps          []releaseStepPolicy
 }
 
 type releaseStepPolicy struct {
@@ -253,7 +252,6 @@ var acceptedReleasePolicy = releasePolicy{
 				"sbom-file":   "${{ steps.sbom-metadata.outputs.sbom-file }}",
 				"sbom-sha256": "${{ steps.sbom-metadata.outputs.sbom-sha256 }}",
 			},
-			requiredOutputs: []string{"sbom-file", "sbom-sha256"},
 			steps: []releaseStepPolicy{
 				checkoutStep(nil),
 				{

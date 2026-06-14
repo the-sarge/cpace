@@ -245,6 +245,21 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			want: "go env GOTOOLCHAIN GOPROXY GOSUMDB",
 		},
 		{
+			name: "alias valued unexpected step guard",
+			mutate: func(t *testing.T, in string) string {
+				out := replaceOnce(t, in, "  cancel-in-progress: false\n", "  cancel-in-progress: &skip false\n")
+				return replaceOnce(t, out, "      - name: Verify tag object and signature\n        run: |", "      - name: Verify tag object and signature\n        if: *skip\n        run: |")
+			},
+			want: "jobs.verify-tag.steps[1].if",
+		},
+		{
+			name: "scalar unexpected step guard",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      - name: Verify tag object and signature\n        run: |", "      - name: Verify tag object and signature\n        if: false\n        run: |")
+			},
+			want: "jobs.verify-tag.steps[1].if",
+		},
+		{
 			name: "check job no longer runs tests",
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, "        run: go test ./...", "        run: true")
@@ -404,6 +419,16 @@ func TestReleasePolicyReportsMissingModeledCheckoutHardeningOnce(t *testing.T) {
 	findings := findingsForWorkflow(t, workflow)
 	if got := countFindingsContaining(findings, "persist-credentials"); got != 1 {
 		t.Fatalf("expected one persist-credentials finding, got %d: %#v", got, findings)
+	}
+}
+
+func TestReleasePolicyReportsMissingSBOMOutputOnce(t *testing.T) {
+	base := currentWorkflow(t)
+	workflow := replaceOnce(t, base, "      sbom-file: ${{ steps.sbom-metadata.outputs.sbom-file }}\n", "")
+
+	findings := findingsForWorkflow(t, workflow)
+	if got := countFindingsContaining(findings, "jobs.sbom.outputs.sbom-file"); got != 1 {
+		t.Fatalf("expected one sbom-file output finding, got %d: %#v", got, findings)
 	}
 }
 
