@@ -1182,3 +1182,26 @@ PR #104 merged the Peer-share rejection module deepening after the DCO-only rewr
 **Next**
 
 - Keep the release evidence caveat intact: PR #104 is security-relevant code movement, so stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, Capslock, and security/spec-audit evidence against the exact candidate commit.
+
+---
+
+## Go fix release policy cleanup landed - 2026-06-14 07:27 EDT
+
+**Main:** `d5048eb5ac29`
+**Actor:** Codex
+
+**Summary**
+
+PR #107 applied the current `go fix -diff` suggestions to the nested `tools/releasepolicy` module. The root module dry run was already clean; the nested module had only the `strings.SplitSeq` iterator modernization and the `slices.Contains` membership simplification.
+
+**Completed**
+
+- Merged PR #107 as `d5048eb5ac2968721af2b4b370885ffaa78edf8f` from head `fdf0e5b87d9723d526b57c8389af1bd604358c4d`.
+- Updated `tools/releasepolicy/main.go` to iterate script lines with `strings.SplitSeq` and replace the local `contains` loop with `slices.Contains`.
+- Ran RAS review-fix on PR #107; implementation id `20260614T112349-ede9cb520bc21187472dc9c5` finished `done` with no actionable findings.
+- Kept the change scoped to the internal release policy tool; no public API, crypto, framing, package-profile policy, or release evidence files changed.
+
+**Validation**
+
+- Local pre-merge gates passed: `go fix -diff ./...`, `(cd tools/releasepolicy && go fix -diff ./...)`, `(cd tools/releasepolicy && go test ./...)`, `go test ./...`, and `git diff --check`.
+- GitHub checks on PR #107 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone `gosec` child check was neutral.
