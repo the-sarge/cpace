@@ -1235,3 +1235,32 @@ PR #109 merged the Evidence baseline validator adapter. The change adds a read-o
 **Next**
 
 - Keep the release evidence caveat intact: this validator improves consistency checks for existing pinned evidence, but stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, Capslock, and security/spec-audit evidence against the exact candidate commit.
+
+---
+
+## Evidence baseline summary discovery merged - 2026-06-14 17:31 EDT
+
+**Main:** `2eab91502ee5`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR #111 to make Evidence baseline own summary-doc discovery while preserving pre-Go CI classification. The Go checker now parses the Baseline Index, writes and validates `docs/evidence-baseline-summary-docs.txt`, and the shell classifier reads that generated adapter instead of reparsing Markdown.
+
+**Completed**
+
+- Added the generated summary-doc manifest and documented its regeneration command.
+- Replaced the classifier's AWK Baseline Index parser with manifest reading.
+- Added manifest freshness, whitespace, symlink, write-path, and missing-manifest coverage.
+- Updated README and CI policy prose so the generated manifest is listed as an evidence-validator trigger.
+- Opened follow-up issue #112 for non-blocking adapter hardening left by the clean RAS review loop.
+
+**Validation**
+
+- Local: `scripts/check-evidence-baseline.sh`, `task ci:classifier`, `task evidence:lint`, `task docs:check`, `go test ./...`, and `task check:changed` passed before merge.
+- RAS: `ras review-fix` run `20260614T204231-f0307881a12cf606d27b9ee5` completed with final status `done` at PR head `ec6c41ffe96dfac9b0b1dc757aa4233a398832bc`.
+- GitHub: PR #111 merged cleanly as `2eab91502ee5b7125cb9def8d8dccb7eb0debb69`; required checks were green at the reviewed head.
+
+**Next**
+
+- Issue #112 tracks low/nit follow-up hardening for manifest shape guards, explicit shell error propagation, and a short note on the Go `--list-summary-docs` inspection flag.
