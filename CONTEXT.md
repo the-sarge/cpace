@@ -28,6 +28,10 @@ _Avoid_: limit constants, validation helpers, size settings.
 The tooling module that validates accepted release-pipeline policy, especially ADR-0007, against the Release Validation workflow and local release helper files. It is validation-only: it parses workflow YAML, checks tag-only execution, signed-tag verification, SBOM and attestation publication, action pinning, least permissions, release-note extraction, and no in-place release replacement, but it does not generate release workflow YAML and does not query live GitHub ruleset state.
 _Avoid_: release generator, CI abstraction, policy engine.
 
+**Accepted release policy**:
+The internal catalogue of ADR-0007 release-pipeline facts that the **Release policy checker** applies to repository files: workflow shape, jobs, step order, `needs`, permissions, exact protected shell snippets, required helper scripts, and maintainer signing keys. It is a validation input, not a workflow template; changing it changes what release drift the checker accepts.
+_Avoid_: workflow template, release spec, generated CI.
+
 **ISK**:
 The Intermediate Session Key — the shared secret CPace derives by hashing the sid, the Diffie-Hellman result, and the transcript. Ownership is role-asymmetric. The responder derives its ISK at construction and holds a working copy in `responderCore` until cleanup by `clear()`. The initiator's ISK exists only as a local inside the core's `finish`, cleared before `Finish` returns — it is never stored on the initiator or its core. A confirmed **Session** holds its own independent clone. Each owner clears its own copy.
 _Avoid_: session key, shared secret, master key.

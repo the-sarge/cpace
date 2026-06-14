@@ -22,6 +22,63 @@ func TestCurrentRepositoryReleasePolicy(t *testing.T) {
 	}
 }
 
+func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
+	if acceptedReleasePolicy.workflowName == "" {
+		t.Fatal("workflow name is empty")
+	}
+	if len(acceptedReleasePolicy.rootKeys) == 0 {
+		t.Fatal("root keys are empty")
+	}
+	if len(acceptedReleasePolicy.jobs) == 0 {
+		t.Fatal("jobs are empty")
+	}
+	if acceptedReleasePolicy.expectedSigners == "" {
+		t.Fatal("expected signers are empty")
+	}
+	seenJobs := map[string]bool{}
+	for _, job := range acceptedReleasePolicy.jobs {
+		if job.name == "" {
+			t.Fatal("job name is empty")
+		}
+		if seenJobs[job.name] {
+			t.Fatalf("duplicate job %q", job.name)
+		}
+		seenJobs[job.name] = true
+		if job.ifCond == "" {
+			t.Fatalf("job %q has empty if condition", job.name)
+		}
+		if len(job.steps) == 0 {
+			t.Fatalf("job %q has no steps", job.name)
+		}
+		seenSteps := map[string]bool{}
+		for _, step := range job.steps {
+			if step.identity == "" {
+				t.Fatalf("job %q has a step with empty identity", job.name)
+			}
+			if seenSteps[step.identity] {
+				t.Fatalf("job %q has duplicate step identity %q", job.name, step.identity)
+			}
+			seenSteps[step.identity] = true
+			if step.name == "" && step.usesPrefix == "" {
+				t.Fatalf("job %q step %q has no name or action prefix", job.name, step.identity)
+			}
+			if step.name != "" && step.identity != step.name {
+				t.Fatalf("job %q step %q identity does not match name %q", job.name, step.identity, step.name)
+			}
+		}
+	}
+	seenScripts := map[string]bool{}
+	for _, path := range acceptedReleasePolicy.requiredScripts {
+		if path == "" {
+			t.Fatal("required script path is empty")
+		}
+		if seenScripts[path] {
+			t.Fatalf("duplicate required script %q", path)
+		}
+		seenScripts[path] = true
+	}
+}
+
 func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 	base := currentWorkflow(t)
 	tests := []struct {
@@ -247,7 +304,7 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
 	repoRoot := t.TempDir()
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "release.yml"), []byte(currentWorkflow(t)), 0o644)
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(expectedSigners), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(acceptedReleasePolicy.expectedSigners), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-tag-metadata.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "validate-cyclonedx-sbom.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "extract-release-notes.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
@@ -261,7 +318,7 @@ func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
 
 func TestReleasePolicyRejectsUnexpectedAllowedSigners(t *testing.T) {
 	repoRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(expectedSigners+"the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFake\n"), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(acceptedReleasePolicy.expectedSigners+"the-sarge@the-sarge.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFake\n"), 0o644)
 
 	findings := checkAllowedSigners(repoRoot)
 	requireFinding(t, findings, "allowed_signers must exactly match")
@@ -269,7 +326,7 @@ func TestReleasePolicyRejectsUnexpectedAllowedSigners(t *testing.T) {
 
 func TestReleasePolicyAcceptsCRLFAllowedSigners(t *testing.T) {
 	repoRoot := t.TempDir()
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(strings.ReplaceAll(expectedSigners, "\n", "\r\n")), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(strings.ReplaceAll(acceptedReleasePolicy.expectedSigners, "\n", "\r\n")), 0o644)
 
 	findings := checkAllowedSigners(repoRoot)
 	if len(findings) > 0 {
