@@ -220,20 +220,30 @@ func readSummaryDocsManifest(repoRoot string) ([]string, []finding, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	return parseSummaryDocsManifest(string(in)), nil, nil
+	return parseSummaryDocsManifest(string(in))
 }
 
-func parseSummaryDocsManifest(content string) []string {
+func parseSummaryDocsManifest(content string) ([]string, []finding, error) {
 	var refs []string
+	var findings []finding
 	scanner := bufio.NewScanner(strings.NewReader(content))
+	lineNo := 0
 	for scanner.Scan() {
-		ref := strings.TrimSpace(scanner.Text())
+		lineNo++
+		ref := scanner.Text()
 		if ref == "" || strings.HasPrefix(ref, "#") {
+			continue
+		}
+		if strings.TrimSpace(ref) != ref {
+			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", summaryDocsManifestRef, lineNo), msg: "summary-doc manifest entries must not have leading or trailing whitespace"})
 			continue
 		}
 		refs = append(refs, ref)
 	}
-	return refs
+	if err := scanner.Err(); err != nil {
+		return nil, nil, err
+	}
+	return refs, findings, nil
 }
 
 func writeSummaryDocsManifest(repoRoot string, refs []string) error {

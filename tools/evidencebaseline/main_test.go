@@ -80,7 +80,7 @@ func TestSummaryDocClassifierRefsMatchBaselineParser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	got := strings.Fields(string(out))
+	got := outputLines(out)
 	sort.Strings(got)
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Fatalf("summary doc parser drift:\ngot:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
@@ -119,6 +119,57 @@ func TestEvidenceBaselineRejectsStaleSummaryDocsManifest(t *testing.T) {
 	}
 	requireFinding(t, findings, "summary-doc manifest got")
 	requireFinding(t, findings, "docs/fuzz-evidence.md")
+}
+
+func TestEvidenceBaselineRejectsSummaryDocsManifestWhitespace(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	writeFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), strings.Join([]string{
+		"# Generated from docs/evidence-baseline.md by tools/evidencebaseline --write-summary-docs.",
+		" docs/dependency-review.md ",
+		"docs/fuzz-evidence.md",
+		"",
+	}, "\n"))
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, summaryDocsManifestRef+":2")
+	requireFinding(t, findings, "leading or trailing whitespace")
+}
+
+func TestEvidenceBaselineWriteSummaryDocsFlagRoundTrip(t *testing.T) {
+	repoRoot := validFixtureRepo(t)
+	writeFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), "stale\n")
+
+	cmd := exec.Command("go", "run", ".", "--repo-root", repoRoot, "--write-summary-docs")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("go run --write-summary-docs failed: %v\n%s", err, out)
+	}
+
+	content, err := os.ReadFile(filepath.Join(repoRoot, summaryDocsManifestRef))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != fixtureSummaryDocsManifest() {
+		t.Fatalf("summary-doc manifest content:\ngot:\n%s\nwant:\n%s", content, fixtureSummaryDocsManifest())
+	}
+	findings := checkSummaryDocsManifest(repoRoot, []string{"docs/dependency-review.md", "docs/fuzz-evidence.md"})
+	if len(findings) > 0 {
+		t.Fatalf("expected regenerated manifest to pass, got %#v", findings)
+	}
+}
+
+func TestEvidenceBaselineRejectsMutuallyExclusiveSummaryDocFlags(t *testing.T) {
+	cmd := exec.Command("go", "run", ".", "--list-summary-docs", "--write-summary-docs")
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("expected mutually exclusive flags to fail, got success:\n%s", out)
+	}
+	if !strings.Contains(string(out), "mutually exclusive") {
+		t.Fatalf("expected mutually exclusive error, got:\n%s", out)
+	}
 }
 
 func TestEvidenceBaselineRejectsSymlinkedSummaryDoc(t *testing.T) {
@@ -543,13 +594,25 @@ func validFixtureRepo(t *testing.T) string {
 		"Keep this short in fixtures.",
 		"",
 	}, "\n"))
-	writeFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), strings.Join([]string{
+	writeFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), fixtureSummaryDocsManifest())
+	return repoRoot
+}
+
+func fixtureSummaryDocsManifest() string {
+	return strings.Join([]string{
 		"# Generated from docs/evidence-baseline.md by tools/evidencebaseline --write-summary-docs.",
 		"docs/dependency-review.md",
 		"docs/fuzz-evidence.md",
 		"",
-	}, "\n"))
-	return repoRoot
+	}, "\n")
+}
+
+func outputLines(out []byte) []string {
+	text := strings.TrimSuffix(string(out), "\n")
+	if text == "" {
+		return nil
+	}
+	return strings.Split(text, "\n")
 }
 
 func writeSHA256SUMS(t *testing.T, dir string, files ...string) {
