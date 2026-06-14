@@ -1062,3 +1062,34 @@ PR #98 merged the Package-owned cap policy refactor into `main` at merge commit 
 **Next**
 
 - Refresh pinned dependency-review, fuzz, and security-audit evidence against the exact post-merge candidate commit before making stronger release-readiness claims from this `main` line.
+
+---
+
+## Release policy checker catalogue merged - 2026-06-13 21:52 EDT
+
+**Main:** `63c15b202c53`
+**Actor:** Codex
+
+**Summary**
+
+PR #100 merged the Accepted release policy catalogue refactor into `main` at squash merge commit `63c15b202c53201ed6303760b5794c73cfc3b2d8`. The change deepens the Release policy checker catalogue by moving accepted ADR-0007 workflow facts into a dedicated internal policy catalogue while preserving the frozen public API and package-profile policy.
+
+**Completed**
+
+- Added `tools/releasepolicy/policy.go` as the internal catalogue of accepted release-policy facts for required workflows, jobs, permissions, pinned-action rules, artifact conventions, and expected advisory-gate outcomes.
+- Refactored `tools/releasepolicy/main.go` so workflow checks read from the accepted policy catalogue instead of duplicating release-policy facts inline.
+- Added catalogue integrity coverage in `tools/releasepolicy/main_test.go` so the shipped policy facts stay complete and searchable by workflow, job, and expected finding.
+- Added the Accepted release policy term to `CONTEXT.md`.
+- Ran RAS review-fix loop `20260614T002318-407d88529b264e3db0345f62`; the loop completed with no merge-blocking findings remaining under the configured gate policy.
+
+**Validation**
+
+- Local validation passed before PR creation: `go test ./...`, `(cd tools/releasepolicy && go test ./...)`, `scripts/test-release-helpers.sh`, and `task docs:check`.
+- `scripts/test-release-helpers.sh` skipped only the optional real Syft SBOM validation path because `syft` was not installed.
+- GitHub checks for PR #100 passed on amended head `5d34db41d8da58314d8a45c5e5213fbbc706dc19`: CI, CodeQL, Cross-Platform Smoke on macOS and Windows, DCO, Dependency Gate, SAST Gate, and Staticcheck Advisory. The standalone gosec annotation was neutral/skipping while SAST Gate was green.
+- The PR was merged into `main` as `63c15b202c53201ed6303760b5794c73cfc3b2d8`.
+
+**Next**
+
+- Keep the release evidence caveat intact: stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit.
+- Optional follow-up: decide whether the Release policy checker should also expose the existing catalogue lookup drift and setup/report/SBOM coverage gaps as normal findings rather than implementation panics or implicit expectations.
