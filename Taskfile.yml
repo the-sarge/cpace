@@ -177,11 +177,16 @@ tasks:
 
         docs_only=true
         evidence_changed=false
+        evidence_checker_changed=false
         while IFS= read -r path; do
           [ -z "$path" ] && continue
           case "$path" in
             docs/evidence-baseline.md|docs/evidence/*)
               evidence_changed=true
+              ;;
+            scripts/check-evidence-baseline.sh|tools/evidencebaseline/*)
+              evidence_changed=true
+              evidence_checker_changed=true
               ;;
           esac
           case "$path" in
@@ -202,6 +207,10 @@ tasks:
         if [ "$evidence_changed" = "true" ]; then
           echo "Evidence baseline changes detected; running evidence baseline validation."
           task evidence:baseline
+        fi
+        if [ "$evidence_checker_changed" = "true" ]; then
+          echo "Evidence checker changes detected; running evidence checker lint."
+          task evidence:lint
         fi
 
   check:
