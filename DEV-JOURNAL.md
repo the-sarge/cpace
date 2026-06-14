@@ -1155,3 +1155,30 @@ PR #104 deepens Peer-share rejection behind a role-aware internal module without
 
 - Rewrite the PR branch with signed-off commits if the maintainer authorizes the required force-push, then rerun GitHub checks and merge PR #104 once branch protection is satisfied.
 - Keep the release evidence caveat intact: this is security-relevant code movement, so stronger release-readiness claims require refreshing pinned dependency-review, fuzz, and security/spec-audit evidence against the exact candidate commit.
+
+---
+
+## Peer-share rejection merged - 2026-06-14 06:14 EDT
+
+**Main:** `aa3b30fe6f89`
+**Actor:** Codex
+
+**Summary**
+
+PR #104 merged the Peer-share rejection module deepening after the DCO-only rewrite. The final merged shape keeps public API, wire format, exported sentinels, package-profile policy, and observable error strings unchanged while giving peer public share validation and shared-secret rejection one role-aware internal module.
+
+**Completed**
+
+- Rewrote the PR branch with DCO signoff only after maintainer approval, using `git rebase --signoff origin/main` and `git push --force-with-lease`.
+- Merged PR #104 at `aa3b30fe6f895655d2d2259e9e1e62c3ad34dc97` from signed head `acf9e06e3d610b98ba16356864cb95347202358c`.
+- Installed a repo-local `.git/hooks/commit-msg` hook in this checkout so future local commits automatically receive the configured `Signed-off-by` trailer before GitHub DCO sees them.
+- Updated OmniFocus task `c10wiAvxUJl` so the evidence-refresh tracker points at the merged PR #104 candidate instead of the temporary DCO blocker note.
+
+**Validation**
+
+- GitHub checks on the signed PR head passed before merge: Check, DCO, Dependency Gate, SAST Gate, CodeQL Analyze/CodeQL, Staticcheck, macOS smoke, and Windows smoke; the standalone gosec child check was neutral/skipping as expected.
+- Local checkout was fast-forwarded to the merge commit, and the DCO hook was verified against a throwaway commit message.
+
+**Next**
+
+- Keep the release evidence caveat intact: PR #104 is security-relevant code movement, so stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, Capslock, and security/spec-audit evidence against the exact candidate commit.
