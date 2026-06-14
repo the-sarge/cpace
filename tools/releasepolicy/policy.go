@@ -529,12 +529,3 @@ func (j releaseJobPolicy) stepIdentities() []string {
 	}
 	return out
 }
-
-func (j releaseJobPolicy) stepByIdentity(identity string) (releaseStepPolicy, bool) {
-	for _, step := range j.steps {
-		if step.identity == identity {
-			return step, true
-		}
-	}
-	return releaseStepPolicy{}, false
-}

@@ -71,6 +71,10 @@ func loadYAML(path string) (*yaml.Node, error) {
 
 func checkWorkflow(path string, root *yaml.Node) []finding {
 	c := checker{path: path}
+	c.checkDuplicateKeys("$", root)
+	if len(c.findings) > 0 {
+		return c.findings
+	}
 	c.checkRoot(root)
 	c.checkTriggers(root)
 	c.checkTopPermissions(root)
@@ -94,6 +98,32 @@ type checker struct {
 
 func (c *checker) fail(nodePath, msg string) {
 	c.findings = append(c.findings, finding{path: c.path + ":" + nodePath, msg: msg})
+}
+
+func (c *checker) checkDuplicateKeys(nodePath string, n *yaml.Node) {
+	if n == nil {
+		return
+	}
+	switch n.Kind {
+	case yaml.MappingNode:
+		seen := map[string]bool{}
+		for i := 0; i+1 < len(n.Content); i += 2 {
+			key := n.Content[i]
+			value := n.Content[i+1]
+			valuePath := yamlPath(nodePath, key.Value)
+			if key.Kind == yaml.ScalarNode {
+				if seen[key.Value] {
+					c.fail(valuePath, "duplicate YAML key")
+				}
+				seen[key.Value] = true
+			}
+			c.checkDuplicateKeys(valuePath, value)
+		}
+	case yaml.SequenceNode:
+		for idx, item := range n.Content {
+			c.checkDuplicateKeys(fmt.Sprintf("%s[%d]", nodePath, idx), item)
+		}
+	}
 }
 
 func (c *checker) checkRoot(root *yaml.Node) {
@@ -216,18 +246,19 @@ func (c *checker) checkAcceptedJob(jobPath string, job *yaml.Node, policy releas
 		}
 	}
 
-	gotStepIdentities := make([]string, 0, len(steps(job)))
-	for _, step := range steps(job) {
+	jobSteps := steps(job)
+	gotStepIdentities := make([]string, 0, len(jobSteps))
+	for _, step := range jobSteps {
 		gotStepIdentities = append(gotStepIdentities, stepIdentity(step))
 	}
 	wantStepIdentities := policy.stepIdentities()
 	if !sameStringSlice(gotStepIdentities, wantStepIdentities) {
 		c.fail(jobPath+".steps", fmt.Sprintf("steps must exactly match accepted release policy: got %q, want %q", gotStepIdentities, wantStepIdentities))
+		return
 	}
 	for idx, stepPolicy := range policy.steps {
-		jobSteps := steps(job)
 		if idx >= len(jobSteps) {
-			return
+			break
 		}
 		c.checkAcceptedStep(fmt.Sprintf("%s.steps[%d]", jobPath, idx), jobSteps[idx], stepPolicy)
 	}
@@ -275,21 +306,15 @@ func (c *checker) checkActionPins(jobs *yaml.Node) {
 func (c *checker) checkCheckoutCredentials(jobs *yaml.Node) {
 	for _, jobName := range mapKeys(jobs) {
 		job := mapping(jobs, jobName)
-		policy, ok := acceptedReleasePolicy.job(jobName)
+		if _, ok := acceptedReleasePolicy.job(jobName); ok {
+			continue
+		}
 		for idx, step := range steps(job) {
 			uses := scalar(mapping(step, "uses"))
 			if !strings.HasPrefix(uses, "actions/checkout@") {
 				continue
 			}
 			want := map[string]string{"persist-credentials": "false"}
-			if ok {
-				checkout, ok := policy.stepByIdentity("uses:actions/checkout")
-				if !ok {
-					c.fail(fmt.Sprintf("jobs.%s.steps[%d]", jobName, idx), "checkout step is not part of accepted release policy")
-					continue
-				}
-				want = checkout.with
-			}
 			expectExactScalars(c, fmt.Sprintf("jobs.%s.steps[%d].with", jobName, idx), mapping(step, "with"), want)
 		}
 	}
@@ -530,6 +555,13 @@ func mapKeys(n *yaml.Node) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+func yamlPath(parent, child string) string {
+	if parent == "" || parent == "$" {
+		return child
+	}
+	return parent + "." + child
 }
 
 func contains(items []string, want string) bool {
