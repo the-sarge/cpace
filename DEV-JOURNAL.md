@@ -1093,3 +1093,33 @@ PR #100 merged the Accepted release policy catalogue refactor into `main` at squ
 
 - Keep the release evidence caveat intact: stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit.
 - Optional follow-up: decide whether the Release policy checker should also expose the existing catalogue lookup drift and setup/report/SBOM coverage gaps as normal findings rather than implementation panics or implicit expectations.
+
+---
+
+## Release policy catalogue validation merged - 2026-06-14 05:02 EDT
+
+**Main:** `bdfe57f3053f`
+**Actor:** Codex
+
+**Summary**
+
+PR #102 deepened the Release policy checker catalogue by moving accepted ADR-0007 job and step facts into `tools/releasepolicy/policy.go` and replacing many bespoke per-job checks with generic catalogue validation. The change preserves the release workflow YAML, public Go package surface, CPace protocol behavior, and package-profile policy.
+
+**Completed**
+
+- Merged PR #102 as `bdfe57f3053fa85735ad9ea093490bb042c165f9` with squash subject `refactor: deepen release policy catalogue validation`.
+- Expanded the Accepted release policy catalogue with job display names, runners, timeouts, outputs, setup/report steps, step IDs, and exact step controls.
+- Refactored `tools/releasepolicy/main.go` so accepted jobs and steps are validated through one catalogue-driven module while global checks still enforce action SHA pinning, checkout credential hardening, and shell expression restrictions.
+- Hardened the checker against duplicate YAML keys and alias-valued scalar-control bypasses before semantic validation.
+- Removed redundant `requiredOutputs` validation after exact SBOM output checks made it duplicate reporting.
+- Added regression coverage for duplicate keys, alias-valued controls, checkout hardening single-report behavior, rogue checkout fallback coverage, swapped-step diagnostics, unexpected job/step keys, SBOM output validation, and attestation step IDs.
+- Ran RAS review-fix on PR #102; implementation id `20260614T044228-fd8cab0d1575b5003e538c5a` finished `done` after two fix cycles and a final clean gate-policy result. The final RAS synthesis left only a low-severity test-coverage follow-up, which was folded into the signed PR branch before merge.
+
+**Validation**
+
+- Local gate before merge: `task check` passed; the release helper smoke test skipped only the optional real Syft SBOM validation path because `syft` was not installed.
+- GitHub checks on the final signed PR head `7e61f2fb22c1a41fd6e523b998ec4c7fe13fccae` passed: Check, DCO, Dependency Gate, SAST Gate, CodeQL Analyze/CodeQL, Staticcheck, macOS smoke, and Windows smoke. The standalone `gosec` child check was `skipping` as expected.
+
+**Next**
+
+- Keep the release evidence caveat intact: stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit.
