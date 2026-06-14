@@ -35,6 +35,8 @@ func (r peerShareRole) sharedSecret(s *ristretto255.Scalar, encoded []byte) ([]b
 // peer-share sentinels are rewrapped from the plain sentinel, never from the
 // helper's already-ErrAbort-wrapped error, with role context added.
 // Non-sentinel defensive errors pass through unchanged.
+// A new peer-share sentinel added in decodePublicShare must get a case here,
+// or it surfaces without role context.
 func (r peerShareRole) wrapError(err error) error {
 	switch {
 	case errors.Is(err, ErrPeerShareEncoding):
