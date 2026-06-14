@@ -40,6 +40,15 @@ func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
 		if job.name == "" {
 			t.Fatal("job name is empty")
 		}
+		if job.displayName == "" {
+			t.Fatalf("job %q has empty display name", job.name)
+		}
+		if job.runsOn == "" {
+			t.Fatalf("job %q has empty runner", job.name)
+		}
+		if job.timeoutMinutes == "" {
+			t.Fatalf("job %q has empty timeout", job.name)
+		}
 		if seenJobs[job.name] {
 			t.Fatalf("duplicate job %q", job.name)
 		}
@@ -191,14 +200,14 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, "    if: "+tagGuard+"\n", "    if: "+tagGuard+" || github.event_name == 'workflow_dispatch'\n")
 			},
-			want: "must run only for signed v* tag refs",
+			want: "jobs.verify-tag.if",
 		},
 		{
 			name: "unsupported ref missing negation",
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, "    if: "+unsupportedRefGuard+"\n", "    if: github.event_name == 'workflow_dispatch' && ("+tagGuard+")\n")
 			},
-			want: "unsupported-ref job must be limited",
+			want: "jobs.unsupported-ref.if",
 		},
 		{
 			name: "unpinned action",
@@ -220,6 +229,20 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 				return replaceOnce(t, in, "          persist-credentials: false\n", "")
 			},
 			want: "persist-credentials",
+		},
+		{
+			name: "setup go action changed",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0", "uses: actions/cache@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0")
+			},
+			want: "uses must start with actions/setup-go@",
+		},
+		{
+			name: "go environment report changed",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "          go env GOTOOLCHAIN GOPROXY GOSUMDB", "          go env GOTOOLCHAIN")
+			},
+			want: "go env GOTOOLCHAIN GOPROXY GOSUMDB",
 		},
 		{
 			name: "check job no longer runs tests",
@@ -268,7 +291,7 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 			mutate: func(t *testing.T, in string) string {
 				return replaceOnce(t, in, "        if: steps.gosec.outcome == 'failure'", "        if: false")
 			},
-			want: "gosec failure report guard changed",
+			want: "jobs.gosec.steps[7].if",
 		},
 		{
 			name: "verify tag output rewired",
@@ -276,6 +299,20 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 				return replaceOnce(t, in, "      release-tag: ${{ steps.release-tag.outputs.release-tag }}", "      release-tag: ${{ github.ref_name }}")
 			},
 			want: "jobs.verify-tag.outputs.release-tag",
+		},
+		{
+			name: "sbom output rewired",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "      sbom-file: ${{ steps.sbom-metadata.outputs.sbom-file }}", "      sbom-file: ${{ github.ref_name }}")
+			},
+			want: "jobs.sbom.outputs.sbom-file",
+		},
+		{
+			name: "attestation id changed",
+			mutate: func(t *testing.T, in string) string {
+				return replaceOnce(t, in, "        id: attest-sbom", "        id: other")
+			},
+			want: "jobs.sbom-attestation.steps[3].id",
 		},
 		{
 			name: "root defaults injected",

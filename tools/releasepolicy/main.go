@@ -80,18 +80,10 @@ func checkWorkflow(path string, root *yaml.Node) []finding {
 		return c.findings
 	}
 	c.checkJobSet(jobs)
-	c.checkStepSets(jobs)
-	c.checkJobPermissions(jobs)
-	c.checkUnsupportedRefJob(jobs)
-	c.checkVerifyTagJob(jobs)
-	c.checkNeeds(jobs)
+	c.checkAcceptedJobs(jobs)
 	c.checkActionPins(jobs)
 	c.checkCheckoutCredentials(jobs)
 	c.checkNoRunExpressions(jobs)
-	c.checkValidationJobs(jobs)
-	c.checkSBOMJob(jobs)
-	c.checkSBOMAttestationJob(jobs)
-	c.checkReleaseJob(jobs)
 	return c.findings
 }
 
@@ -176,103 +168,99 @@ func (c *checker) checkJobSet(jobs *yaml.Node) {
 	}
 }
 
-func (c *checker) checkStepSets(jobs *yaml.Node) {
-	for _, jobName := range mapKeys(jobs) {
-		job := mapping(jobs, jobName)
-		expected, ok := acceptedReleasePolicy.job(jobName)
-		if !ok || job == nil {
-			continue
-		}
-		var got []string
-		for _, step := range steps(job) {
-			got = append(got, stepIdentity(step))
-		}
-		want := expected.stepIdentities()
-		if !sameStringSlice(got, want) {
-			c.fail("jobs."+jobName+".steps", fmt.Sprintf("steps must exactly match accepted release policy: got %q, want %q", got, want))
-		}
-	}
-}
-
-func (c *checker) checkJobPermissions(jobs *yaml.Node) {
+func (c *checker) checkAcceptedJobs(jobs *yaml.Node) {
 	for _, policy := range acceptedReleasePolicy.jobs {
 		job := mapping(jobs, policy.name)
 		if job == nil {
 			continue
 		}
-		permissions := mapping(job, "permissions")
-		if policy.permissions == nil {
-			if permissions != nil {
-				c.fail("jobs."+policy.name+".permissions", "job must inherit top-level contents: read and must not declare permissions")
-			}
-			continue
+		c.checkAcceptedJob("jobs."+policy.name, job, policy)
+	}
+}
+
+func (c *checker) checkAcceptedJob(jobPath string, job *yaml.Node, policy releaseJobPolicy) {
+	expectOnlyKeys(c, jobPath, job, []string{"name", "if", "needs", "runs-on", "timeout-minutes", "permissions", "outputs", "steps"})
+	expectExactScalar(c, jobPath+".name", mapping(job, "name"), policy.displayName)
+	expectExactScalar(c, jobPath+".runs-on", mapping(job, "runs-on"), policy.runsOn)
+	expectExactScalar(c, jobPath+".timeout-minutes", mapping(job, "timeout-minutes"), policy.timeoutMinutes)
+	expectExactScalar(c, jobPath+".if", mapping(job, "if"), policy.ifCond)
+
+	gotNeeds := needs(job)
+	switch {
+	case policy.needs == nil && mapping(job, "needs") != nil:
+		c.fail(jobPath+".needs", "job must not declare needs")
+	case !sameStringSet(gotNeeds, policy.needs):
+		c.fail(jobPath+".needs", "needs must exactly match: "+strings.Join(policy.needs, ", "))
+	}
+
+	permissions := mapping(job, "permissions")
+	if policy.permissions == nil {
+		if permissions != nil {
+			c.fail(jobPath+".permissions", "job must inherit top-level contents: read and must not declare permissions")
 		}
-		expectExactScalars(c, "jobs."+policy.name+".permissions", permissions, policy.permissions)
-	}
-}
-
-func (c *checker) checkUnsupportedRefJob(jobs *yaml.Node) {
-	policy := acceptedJobPolicy("unsupported-ref")
-	job := mapping(jobs, "unsupported-ref")
-	if job == nil {
-		return
-	}
-	ifCond := scalar(mapping(job, "if"))
-	if ifCond != policy.ifCond {
-		c.fail("jobs.unsupported-ref.if", "unsupported-ref job must be limited to non-v* workflow_dispatch refs")
-	}
-	steps := steps(job)
-	if len(steps) != 1 {
-		c.fail("jobs.unsupported-ref.steps", "unsupported-ref job should have one explanatory failing step")
-		return
-	}
-	run := scalar(mapping(steps[0], "run"))
-	requireExactScriptLines(c, "jobs.unsupported-ref.steps[0].run", run, acceptedStepPolicy("unsupported-ref", "Explain unsupported ref").runLines)
-}
-
-func (c *checker) checkVerifyTagJob(jobs *yaml.Node) {
-	policy := acceptedJobPolicy("verify-tag")
-	job := mapping(jobs, "verify-tag")
-	if job == nil {
-		return
-	}
-	if needs(job) != nil {
-		c.fail("jobs.verify-tag.needs", "verify-tag must not depend on another job")
-	}
-	if scalar(mapping(job, "if")) != policy.ifCond {
-		c.fail("jobs.verify-tag.if", "verify-tag must run only for signed v* tag refs")
-	}
-	outputs := mapping(job, "outputs")
-	expectExactScalars(c, "jobs.verify-tag.outputs", outputs, policy.outputs)
-	verifyStep := stepByName(job, "Verify tag object and signature")
-	if verifyStep == nil {
-		c.fail("jobs.verify-tag.steps", "missing tag verification step")
-		return
-	}
-	run := scalar(mapping(verifyStep, "run"))
-	requireExactScriptLines(c, "jobs.verify-tag.steps.Verify tag object and signature.run", run, acceptedStepPolicy("verify-tag", "Verify tag object and signature").runLines)
-	metaStep := stepByName(job, "Validate release tag metadata")
-	if metaStep == nil {
-		c.fail("jobs.verify-tag.steps", "missing release tag metadata step")
 	} else {
-		requireExactScriptLines(c, "jobs.verify-tag.steps.Validate release tag metadata.run", scalar(mapping(metaStep, "run")), acceptedStepPolicy("verify-tag", "Validate release tag metadata").runLines)
+		expectExactScalars(c, jobPath+".permissions", permissions, policy.permissions)
+	}
+
+	outputs := mapping(job, "outputs")
+	if policy.outputs == nil {
+		if outputs != nil {
+			c.fail(jobPath+".outputs", "job must not declare outputs")
+		}
+	} else {
+		expectExactScalars(c, jobPath+".outputs", outputs, policy.outputs)
+	}
+	for _, name := range policy.requiredOutputs {
+		if scalar(mapping(outputs, name)) == "" {
+			c.fail(jobPath+".outputs."+name, "missing required output")
+		}
+	}
+
+	gotStepIdentities := make([]string, 0, len(steps(job)))
+	for _, step := range steps(job) {
+		gotStepIdentities = append(gotStepIdentities, stepIdentity(step))
+	}
+	wantStepIdentities := policy.stepIdentities()
+	if !sameStringSlice(gotStepIdentities, wantStepIdentities) {
+		c.fail(jobPath+".steps", fmt.Sprintf("steps must exactly match accepted release policy: got %q, want %q", gotStepIdentities, wantStepIdentities))
+	}
+	for idx, stepPolicy := range policy.steps {
+		jobSteps := steps(job)
+		if idx >= len(jobSteps) {
+			return
+		}
+		c.checkAcceptedStep(fmt.Sprintf("%s.steps[%d]", jobPath, idx), jobSteps[idx], stepPolicy)
 	}
 }
 
-func (c *checker) checkNeeds(jobs *yaml.Node) {
-	for _, policy := range acceptedReleasePolicy.jobs {
-		job := mapping(jobs, policy.name)
-		if job == nil {
-			continue
+func (c *checker) checkAcceptedStep(stepPath string, step *yaml.Node, policy releaseStepPolicy) {
+	expectOnlyKeys(c, stepPath, step, []string{"name", "id", "if", "uses", "run", "with", "env", "shell", "continue-on-error"})
+	expectOptionalExactScalar(c, stepPath+".name", mapping(step, "name"), policy.name)
+	expectOptionalExactScalar(c, stepPath+".id", mapping(step, "id"), policy.id)
+	expectOptionalExactScalar(c, stepPath+".if", mapping(step, "if"), policy.ifCond)
+	expectOptionalExactScalar(c, stepPath+".shell", mapping(step, "shell"), policy.shell)
+	expectOptionalExactScalar(c, stepPath+".continue-on-error", mapping(step, "continue-on-error"), policy.continueOnError)
+
+	uses := scalar(mapping(step, "uses"))
+	if policy.usesPrefix == "" {
+		if uses != "" {
+			c.fail(stepPath+".uses", "unexpected uses")
 		}
-		got := needs(job)
-		if !sameStringSet(got, policy.needs) {
-			c.fail("jobs."+policy.name+".needs", "needs must exactly match: "+strings.Join(policy.needs, ", "))
-		}
-		if policy.name != "unsupported-ref" && scalar(mapping(job, "if")) != policy.ifCond {
-			c.fail("jobs."+policy.name+".if", "job must run only for signed v* tag refs")
-		}
+	} else if !strings.HasPrefix(uses, policy.usesPrefix) {
+		c.fail(stepPath+".uses", "uses must start with "+policy.usesPrefix)
 	}
+
+	run := scalar(mapping(step, "run"))
+	if policy.runLines == nil {
+		if run != "" {
+			c.fail(stepPath+".run", "unexpected run")
+		}
+	} else {
+		requireExactScriptLines(c, stepPath+".run", run, policy.runLines)
+	}
+
+	expectOptionalExactScalars(c, stepPath+".with", mapping(step, "with"), policy.with)
+	expectOptionalExactScalars(c, stepPath+".env", mapping(step, "env"), policy.env)
 }
 
 func (c *checker) checkActionPins(jobs *yaml.Node) {
@@ -313,229 +301,6 @@ func (c *checker) checkNoRunExpressions(jobs *yaml.Node) {
 			c.fail(ref.path+".run", "run steps must not interpolate GitHub expression contexts; pass values through env")
 		}
 	}
-}
-
-func (c *checker) checkValidationJobs(jobs *yaml.Node) {
-	check := mapping(jobs, "check")
-	if check != nil {
-		runTests := stepByName(check, "Run tests")
-		if runTests == nil {
-			c.fail("jobs.check.steps", "missing Run tests step")
-		} else {
-			requireExactScriptLines(c, "jobs.check.steps.Run tests.run", scalar(mapping(runTests, "run")), acceptedStepPolicy("check", "Run tests").runLines)
-		}
-	}
-	race := mapping(jobs, "race")
-	if race != nil {
-		runRace := stepByName(race, "Run race tests")
-		if runRace == nil {
-			c.fail("jobs.race.steps", "missing Run race tests step")
-		} else {
-			requireExactScriptLines(c, "jobs.race.steps.Run race tests.run", scalar(mapping(runRace, "run")), acceptedStepPolicy("race", "Run race tests").runLines)
-		}
-	}
-	vuln := mapping(jobs, "vuln")
-	if vuln != nil {
-		requireRunStep(c, vuln, "jobs.vuln", "Install task", acceptedStepPolicy("vuln", "Install task").runLines)
-		requireRunStep(c, vuln, "jobs.vuln", "Install govulncheck", acceptedStepPolicy("vuln", "Install govulncheck").runLines)
-		requireRunStep(c, vuln, "jobs.vuln", "Run vulnerability scan", acceptedStepPolicy("vuln", "Run vulnerability scan").runLines)
-	}
-	gosec := mapping(jobs, "gosec")
-	if gosec != nil {
-		requireRunStep(c, gosec, "jobs.gosec", "Install task", acceptedStepPolicy("gosec", "Install task").runLines)
-		requireRunStep(c, gosec, "jobs.gosec", "Install gosec", acceptedStepPolicy("gosec", "Install gosec").runLines)
-		scanPolicy := acceptedStepPolicy("gosec", "Run gosec scan")
-		scan := requireRunStep(c, gosec, "jobs.gosec", "Run gosec scan", scanPolicy.runLines)
-		if scan != nil {
-			if scalar(mapping(scan, "id")) != scanPolicy.id {
-				c.fail("jobs.gosec.steps.Run gosec scan.id", "gosec scan step id must be gosec")
-			}
-			if scalar(mapping(scan, "continue-on-error")) != scanPolicy.continueOnError {
-				c.fail("jobs.gosec.steps.Run gosec scan.continue-on-error", "gosec scan must continue so the report step can fail explicitly")
-			}
-		}
-		upload := stepByName(gosec, "Upload gosec SARIF to code scanning")
-		uploadPolicy := acceptedStepPolicy("gosec", "Upload gosec SARIF to code scanning")
-		if upload == nil {
-			c.fail("jobs.gosec.steps", "missing gosec SARIF upload step")
-		} else {
-			if scalar(mapping(upload, "if")) != uploadPolicy.ifCond {
-				c.fail("jobs.gosec.steps.Upload gosec SARIF to code scanning.if", "gosec SARIF upload guard changed")
-			}
-			if !strings.HasPrefix(scalar(mapping(upload, "uses")), uploadPolicy.usesPrefix) {
-				c.fail("jobs.gosec.steps.Upload gosec SARIF to code scanning.uses", "gosec SARIF upload must use github/codeql-action/upload-sarif")
-			}
-			expectExactScalars(c, "jobs.gosec.steps.Upload gosec SARIF to code scanning.with", mapping(upload, "with"), uploadPolicy.with)
-		}
-		reportPolicy := acceptedStepPolicy("gosec", "Report gosec result")
-		report := requireRunStep(c, gosec, "jobs.gosec", "Report gosec result", reportPolicy.runLines)
-		if report != nil && scalar(mapping(report, "if")) != reportPolicy.ifCond {
-			c.fail("jobs.gosec.steps.Report gosec result.if", "gosec failure report guard changed")
-		}
-	}
-}
-
-func requireRunStep(c *checker, job *yaml.Node, jobPath, name string, want []string) *yaml.Node {
-	step := stepByName(job, name)
-	if step == nil {
-		c.fail(jobPath+".steps", "missing "+name+" step")
-		return nil
-	}
-	requireExactScriptLines(c, jobPath+".steps."+name+".run", scalar(mapping(step, "run")), want)
-	return step
-}
-
-func acceptedJobPolicy(name string) releaseJobPolicy {
-	job, ok := acceptedReleasePolicy.job(name)
-	if !ok {
-		panic("release policy catalogue missing job " + name)
-	}
-	return job
-}
-
-func acceptedStepPolicy(jobName, stepName string) releaseStepPolicy {
-	job := acceptedJobPolicy(jobName)
-	step, ok := job.step(stepName)
-	if !ok {
-		panic("release policy catalogue missing step " + jobName + "/" + stepName)
-	}
-	return step
-}
-
-func (c *checker) checkSBOMJob(jobs *yaml.Node) {
-	policy := acceptedJobPolicy("sbom")
-	job := mapping(jobs, "sbom")
-	if job == nil {
-		return
-	}
-	outputs := mapping(job, "outputs")
-	for _, name := range policy.requiredOutputs {
-		if scalar(mapping(outputs, name)) == "" {
-			c.fail("jobs.sbom.outputs."+name, "missing SBOM output")
-		}
-	}
-	gen := stepByName(job, "Generate CycloneDX SBOM")
-	genPolicy := acceptedStepPolicy("sbom", "Generate CycloneDX SBOM")
-	if gen == nil {
-		c.fail("jobs.sbom.steps", "missing SBOM generation step")
-		return
-	}
-	if !strings.HasPrefix(scalar(mapping(gen, "uses")), genPolicy.usesPrefix) {
-		c.fail("jobs.sbom.steps.Generate CycloneDX SBOM.uses", "SBOM generation must use anchore/sbom-action")
-	}
-	expectExactScalars(c, "jobs.sbom.steps.Generate CycloneDX SBOM.with", mapping(gen, "with"), genPolicy.with)
-	validate := stepByName(job, "Validate SBOM and compute checksum")
-	validatePolicy := acceptedStepPolicy("sbom", "Validate SBOM and compute checksum")
-	if validate == nil {
-		c.fail("jobs.sbom.steps", "missing SBOM validation step")
-	} else {
-		requireExactScriptLines(c, "jobs.sbom.steps.Validate SBOM and compute checksum.run", scalar(mapping(validate, "run")), validatePolicy.runLines)
-		expectExactScalars(c, "jobs.sbom.steps.Validate SBOM and compute checksum.env", mapping(validate, "env"), validatePolicy.env)
-	}
-	upload := stepByName(job, "Upload SBOM artifact")
-	uploadPolicy := acceptedStepPolicy("sbom", "Upload SBOM artifact")
-	if upload == nil {
-		c.fail("jobs.sbom.steps", "missing SBOM artifact upload step")
-	} else {
-		if !strings.HasPrefix(scalar(mapping(upload, "uses")), uploadPolicy.usesPrefix) {
-			c.fail("jobs.sbom.steps.Upload SBOM artifact.uses", "SBOM artifact upload must use actions/upload-artifact")
-		}
-		expectExactScalars(c, "jobs.sbom.steps.Upload SBOM artifact.with", mapping(upload, "with"), uploadPolicy.with)
-	}
-}
-
-func (c *checker) checkSBOMAttestationJob(jobs *yaml.Node) {
-	job := mapping(jobs, "sbom-attestation")
-	if job == nil {
-		return
-	}
-	download := stepByName(job, "Download SBOM artifact")
-	downloadPolicy := acceptedStepPolicy("sbom-attestation", "Download SBOM artifact")
-	if download == nil {
-		c.fail("jobs.sbom-attestation.steps", "missing SBOM artifact download step")
-	} else {
-		if !strings.HasPrefix(scalar(mapping(download, "uses")), downloadPolicy.usesPrefix) {
-			c.fail("jobs.sbom-attestation.steps.Download SBOM artifact.uses", "SBOM download must use actions/download-artifact")
-		}
-		expectExactScalars(c, "jobs.sbom-attestation.steps.Download SBOM artifact.with", mapping(download, "with"), downloadPolicy.with)
-	}
-	validate := stepByName(job, "Validate downloaded SBOM")
-	validatePolicy := acceptedStepPolicy("sbom-attestation", "Validate downloaded SBOM")
-	if validate == nil {
-		c.fail("jobs.sbom-attestation.steps", "missing downloaded SBOM validation step")
-	} else {
-		requireExactScriptLines(c, "jobs.sbom-attestation.steps.Validate downloaded SBOM.run", scalar(mapping(validate, "run")), validatePolicy.runLines)
-		expectExactScalars(c, "jobs.sbom-attestation.steps.Validate downloaded SBOM.env", mapping(validate, "env"), validatePolicy.env)
-	}
-	attest := stepByName(job, "Attest SBOM")
-	attestPolicy := acceptedStepPolicy("sbom-attestation", "Attest SBOM")
-	if attest == nil {
-		c.fail("jobs.sbom-attestation.steps", "missing SBOM attestation step")
-		return
-	}
-	if !strings.HasPrefix(scalar(mapping(attest, "uses")), attestPolicy.usesPrefix) {
-		c.fail("jobs.sbom-attestation.steps.Attest SBOM.uses", "SBOM attestation must use actions/attest")
-	}
-	expectExactScalars(c, "jobs.sbom-attestation.steps.Attest SBOM.with", mapping(attest, "with"), attestPolicy.with)
-	prepare := stepByName(job, "Prepare Sigstore bundle asset")
-	preparePolicy := acceptedStepPolicy("sbom-attestation", "Prepare Sigstore bundle asset")
-	if prepare == nil {
-		c.fail("jobs.sbom-attestation.steps", "missing Sigstore bundle preparation step")
-	} else {
-		requireExactScriptLines(c, "jobs.sbom-attestation.steps.Prepare Sigstore bundle asset.run", scalar(mapping(prepare, "run")), preparePolicy.runLines)
-		expectExactScalars(c, "jobs.sbom-attestation.steps.Prepare Sigstore bundle asset.env", mapping(prepare, "env"), preparePolicy.env)
-	}
-	upload := stepByName(job, "Upload release assets artifact")
-	uploadPolicy := acceptedStepPolicy("sbom-attestation", "Upload release assets artifact")
-	if upload == nil {
-		c.fail("jobs.sbom-attestation.steps", "missing release assets upload step")
-	} else {
-		if !strings.HasPrefix(scalar(mapping(upload, "uses")), uploadPolicy.usesPrefix) {
-			c.fail("jobs.sbom-attestation.steps.Upload release assets artifact.uses", "release assets upload must use actions/upload-artifact")
-		}
-		expectExactScalars(c, "jobs.sbom-attestation.steps.Upload release assets artifact.with", mapping(upload, "with"), uploadPolicy.with)
-	}
-}
-
-func (c *checker) checkReleaseJob(jobs *yaml.Node) {
-	job := mapping(jobs, "release")
-	if job == nil {
-		return
-	}
-	download := stepByName(job, "Download prepared release assets")
-	downloadPolicy := acceptedStepPolicy("release", "Download prepared release assets")
-	if download == nil {
-		c.fail("jobs.release.steps", "missing prepared release assets download step")
-	} else {
-		if !strings.HasPrefix(scalar(mapping(download, "uses")), downloadPolicy.usesPrefix) {
-			c.fail("jobs.release.steps.Download prepared release assets.uses", "release asset download must use actions/download-artifact")
-		}
-		expectExactScalars(c, "jobs.release.steps.Download prepared release assets.with", mapping(download, "with"), downloadPolicy.with)
-	}
-	prepare := stepByName(job, "Prepare release notes and assets")
-	preparePolicy := acceptedStepPolicy("release", "Prepare release notes and assets")
-	if prepare == nil {
-		c.fail("jobs.release.steps", "missing release preparation step")
-	} else {
-		run := scalar(mapping(prepare, "run"))
-		requireExactScriptLines(c, "jobs.release.steps.Prepare release notes and assets.run", run, preparePolicy.runLines)
-		expectExactScalars(c, "jobs.release.steps.Prepare release notes and assets.env", mapping(prepare, "env"), preparePolicy.env)
-	}
-	publish := stepByName(job, "Publish GitHub Release")
-	publishPolicy := acceptedStepPolicy("release", "Publish GitHub Release")
-	if publish == nil {
-		c.fail("jobs.release.steps", "missing publishing step")
-		return
-	}
-	if scalar(mapping(publish, "if")) != publishPolicy.ifCond {
-		c.fail("jobs.release.steps.Publish GitHub Release.if", "publishing must be limited to v* tag pushes")
-	}
-	if scalar(mapping(publish, "shell")) != publishPolicy.shell {
-		c.fail("jobs.release.steps.Publish GitHub Release.shell", "publishing must use bash")
-	}
-	run := scalar(mapping(publish, "run"))
-	requireExactScriptLines(c, "jobs.release.steps.Publish GitHub Release.run", run, publishPolicy.runLines)
-	expectExactScalars(c, "jobs.release.steps.Publish GitHub Release.env", mapping(publish, "env"), publishPolicy.env)
 }
 
 func checkAllowedSigners(repoRoot string) []finding {
@@ -588,6 +353,47 @@ func expectExactScalars(c *checker, nodePath string, n *yaml.Node, want map[stri
 	}
 	for _, key := range mapKeys(n) {
 		if _, ok := want[key]; !ok {
+			c.fail(nodePath+"."+key, "unexpected key")
+		}
+	}
+}
+
+func expectExactScalar(c *checker, nodePath string, n *yaml.Node, want string) {
+	if got := scalar(n); got != want {
+		c.fail(nodePath, fmt.Sprintf("got %q, want %q", got, want))
+	}
+}
+
+func expectOptionalExactScalar(c *checker, nodePath string, n *yaml.Node, want string) {
+	got := scalar(n)
+	if want == "" {
+		if got != "" {
+			c.fail(nodePath, "unexpected value")
+		}
+		return
+	}
+	if got != want {
+		c.fail(nodePath, fmt.Sprintf("got %q, want %q", got, want))
+	}
+}
+
+func expectOptionalExactScalars(c *checker, nodePath string, n *yaml.Node, want map[string]string) {
+	if want == nil {
+		if n != nil {
+			c.fail(nodePath, "unexpected mapping")
+		}
+		return
+	}
+	expectExactScalars(c, nodePath, n, want)
+}
+
+func expectOnlyKeys(c *checker, nodePath string, n *yaml.Node, want []string) {
+	if n == nil || n.Kind != yaml.MappingNode {
+		c.fail(nodePath, "missing mapping")
+		return
+	}
+	for _, key := range mapKeys(n) {
+		if !contains(want, key) {
 			c.fail(nodePath+"."+key, "unexpected key")
 		}
 	}
@@ -649,15 +455,6 @@ func runSteps(jobs *yaml.Node) []runRef {
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].path < out[j].path })
 	return out
-}
-
-func stepByName(job *yaml.Node, name string) *yaml.Node {
-	for _, step := range steps(job) {
-		if scalar(mapping(step, "name")) == name {
-			return step
-		}
-	}
-	return nil
 }
 
 func stepIdentity(step *yaml.Node) string {

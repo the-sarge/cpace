@@ -30,6 +30,9 @@ type releasePolicy struct {
 
 type releaseJobPolicy struct {
 	name            string
+	displayName     string
+	runsOn          string
+	timeoutMinutes  string
 	ifCond          string
 	needs           []string
 	permissions     map[string]string
@@ -69,8 +72,11 @@ var acceptedReleasePolicy = releasePolicy{
 	},
 	jobs: []releaseJobPolicy{
 		{
-			name:   "unsupported-ref",
-			ifCond: unsupportedRefGuard,
+			name:           "unsupported-ref",
+			displayName:    "Unsupported Dispatch Ref",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "2",
+			ifCond:         unsupportedRefGuard,
 			steps: []releaseStepPolicy{
 				{
 					name:     "Explain unsupported ref",
@@ -84,8 +90,11 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
-			name:   "verify-tag",
-			ifCond: tagGuard,
+			name:           "verify-tag",
+			displayName:    "Verify Signed Tag",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "5",
+			ifCond:         tagGuard,
 			outputs: map[string]string{
 				"release-tag": "${{ steps.release-tag.outputs.release-tag }}",
 				"sbom-file":   "${{ steps.release-tag.outputs.sbom-file }}",
@@ -112,6 +121,7 @@ var acceptedReleasePolicy = releasePolicy{
 				{
 					name:     "Validate release tag metadata",
 					identity: "Validate release tag metadata",
+					id:       "release-tag",
 					runLines: []string{
 						`scripts/release-tag-metadata.sh "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"`,
 					},
@@ -119,13 +129,16 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
-			name:   "check",
-			ifCond: tagGuard,
-			needs:  []string{"verify-tag"},
+			name:           "check",
+			displayName:    "Check",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "5",
+			ifCond:         tagGuard,
+			needs:          []string{"verify-tag"},
 			steps: []releaseStepPolicy{
 				checkoutStep(nil),
-				namedStep("Set up Go"),
-				namedStep("Report Go environment"),
+				setupGoStep(),
+				reportGoEnvironmentStep(),
 				{
 					name:     "Run tests",
 					identity: "Run tests",
@@ -134,13 +147,16 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
-			name:   "race",
-			ifCond: tagGuard,
-			needs:  []string{"verify-tag"},
+			name:           "race",
+			displayName:    "Race",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "10",
+			ifCond:         tagGuard,
+			needs:          []string{"verify-tag"},
 			steps: []releaseStepPolicy{
 				checkoutStep(nil),
-				namedStep("Set up Go"),
-				namedStep("Report Go environment"),
+				setupGoStep(),
+				reportGoEnvironmentStep(),
 				{
 					name:     "Run race tests",
 					identity: "Run race tests",
@@ -149,13 +165,16 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
-			name:   "vuln",
-			ifCond: tagGuard,
-			needs:  []string{"verify-tag"},
+			name:           "vuln",
+			displayName:    "Govulncheck",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "10",
+			ifCond:         tagGuard,
+			needs:          []string{"verify-tag"},
 			steps: []releaseStepPolicy{
 				checkoutStep(nil),
-				namedStep("Set up Go"),
-				namedStep("Report Go environment"),
+				setupGoStep(),
+				reportGoEnvironmentStep(),
 				{
 					name:     "Install task",
 					identity: "Install task",
@@ -174,17 +193,20 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
-			name:   "gosec",
-			ifCond: tagGuard,
-			needs:  []string{"verify-tag"},
+			name:           "gosec",
+			displayName:    "Gosec",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "10",
+			ifCond:         tagGuard,
+			needs:          []string{"verify-tag"},
 			permissions: map[string]string{
 				"contents":        "read",
 				"security-events": "write",
 			},
 			steps: []releaseStepPolicy{
 				checkoutStep(nil),
-				namedStep("Set up Go"),
-				namedStep("Report Go environment"),
+				setupGoStep(),
+				reportGoEnvironmentStep(),
 				{
 					name:     "Install task",
 					identity: "Install task",
@@ -221,9 +243,16 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
-			name:            "sbom",
-			ifCond:          tagGuard,
-			needs:           []string{"verify-tag", "check", "race", "vuln", "gosec"},
+			name:           "sbom",
+			displayName:    "SBOM",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "10",
+			ifCond:         tagGuard,
+			needs:          []string{"verify-tag", "check", "race", "vuln", "gosec"},
+			outputs: map[string]string{
+				"sbom-file":   "${{ steps.sbom-metadata.outputs.sbom-file }}",
+				"sbom-sha256": "${{ steps.sbom-metadata.outputs.sbom-sha256 }}",
+			},
 			requiredOutputs: []string{"sbom-file", "sbom-sha256"},
 			steps: []releaseStepPolicy{
 				checkoutStep(nil),
@@ -242,6 +271,7 @@ var acceptedReleasePolicy = releasePolicy{
 				{
 					name:     "Validate SBOM and compute checksum",
 					identity: "Validate SBOM and compute checksum",
+					id:       "sbom-metadata",
 					runLines: []string{
 						`sbom_file="$SBOM_FILE"`,
 						`scripts/validate-cyclonedx-sbom.sh "$sbom_file"`,
@@ -268,9 +298,12 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
-			name:   "sbom-attestation",
-			ifCond: tagGuard,
-			needs:  []string{"sbom"},
+			name:           "sbom-attestation",
+			displayName:    "SBOM Attestation",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "10",
+			ifCond:         tagGuard,
+			needs:          []string{"sbom"},
 			permissions: map[string]string{
 				"contents":     "read",
 				"id-token":     "write",
@@ -301,6 +334,7 @@ var acceptedReleasePolicy = releasePolicy{
 					name:       "Attest SBOM",
 					identity:   "Attest SBOM",
 					usesPrefix: "actions/attest@",
+					id:         "attest-sbom",
 					with: map[string]string{
 						"subject-path": "dist/${{ needs.sbom.outputs.sbom-file }}",
 						"sbom-path":    "dist/${{ needs.sbom.outputs.sbom-file }}",
@@ -332,9 +366,12 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
-			name:   "release",
-			ifCond: tagGuard,
-			needs:  []string{"verify-tag", "sbom", "sbom-attestation"},
+			name:           "release",
+			displayName:    "Release",
+			runsOn:         "ubuntu-latest",
+			timeoutMinutes: "10",
+			ifCond:         tagGuard,
+			needs:          []string{"verify-tag", "sbom", "sbom-attestation"},
 			permissions: map[string]string{
 				"contents": "write",
 			},
@@ -445,8 +482,27 @@ func checkoutStep(with map[string]string) releaseStepPolicy {
 	}
 }
 
-func namedStep(name string) releaseStepPolicy {
-	return releaseStepPolicy{name: name, identity: name}
+func setupGoStep() releaseStepPolicy {
+	return releaseStepPolicy{
+		name:       "Set up Go",
+		identity:   "Set up Go",
+		usesPrefix: "actions/setup-go@",
+		with: map[string]string{
+			"go-version-file": "go.mod",
+			"cache":           "true",
+		},
+	}
+}
+
+func reportGoEnvironmentStep() releaseStepPolicy {
+	return releaseStepPolicy{
+		name:     "Report Go environment",
+		identity: "Report Go environment",
+		runLines: []string{
+			`go version`,
+			`go env GOTOOLCHAIN GOPROXY GOSUMDB`,
+		},
+	}
 }
 
 func (p releasePolicy) jobNames() []string {
@@ -472,15 +528,6 @@ func (j releaseJobPolicy) stepIdentities() []string {
 		out = append(out, step.identity)
 	}
 	return out
-}
-
-func (j releaseJobPolicy) step(name string) (releaseStepPolicy, bool) {
-	for _, step := range j.steps {
-		if step.name == name {
-			return step, true
-		}
-	}
-	return releaseStepPolicy{}, false
 }
 
 func (j releaseJobPolicy) stepByIdentity(identity string) (releaseStepPolicy, bool) {
