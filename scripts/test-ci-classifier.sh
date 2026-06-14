@@ -68,4 +68,41 @@ PATH="$fakebin:$PATH" "$repo_root/scripts/classify-check-changes.sh" --list-summ
 grep -Fxq "docs/dependency-review.md" "$tmpdir/no-awk.out"
 grep -Fxq "docs/fuzz-evidence.md" "$tmpdir/no-awk.out"
 
+missing_repo="$tmpdir/missing-manifest-repo"
+mkdir -p "$missing_repo/scripts" "$missing_repo/docs"
+cp "$repo_root/scripts/classify-check-changes.sh" "$missing_repo/scripts/classify-check-changes.sh"
+chmod +x "$missing_repo/scripts/classify-check-changes.sh"
+
+set +e
+"$missing_repo/scripts/classify-check-changes.sh" --list-summary-docs >"$tmpdir/missing-list.out" 2>"$tmpdir/missing-list.err"
+status=$?
+set -e
+if [ "$status" -ne 2 ]; then
+  echo "missing-list: expected status 2, got $status" >&2
+  cat "$tmpdir/missing-list.out" >&2
+  cat "$tmpdir/missing-list.err" >&2
+  exit 1
+fi
+grep -Fq "missing summary-doc manifest" "$tmpdir/missing-list.err" || {
+  echo "missing-list: expected missing-manifest stderr" >&2
+  cat "$tmpdir/missing-list.err" >&2
+  exit 1
+}
+
+set +e
+printf 'docs/dependency-review.md\n' | "$missing_repo/scripts/classify-check-changes.sh" >"$tmpdir/missing-stdin.out" 2>"$tmpdir/missing-stdin.err"
+status=$?
+set -e
+if [ "$status" -ne 2 ]; then
+  echo "missing-stdin: expected status 2, got $status" >&2
+  cat "$tmpdir/missing-stdin.out" >&2
+  cat "$tmpdir/missing-stdin.err" >&2
+  exit 1
+fi
+grep -Fq "missing summary-doc manifest" "$tmpdir/missing-stdin.err" || {
+  echo "missing-stdin: expected missing-manifest stderr" >&2
+  cat "$tmpdir/missing-stdin.err" >&2
+  exit 1
+}
+
 echo "CI change classifier tests passed"
