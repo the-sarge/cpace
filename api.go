@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/sha512"
-	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -287,23 +286,4 @@ func clone(in []byte) []byte {
 	out := make([]byte, len(in))
 	copy(out, in)
 	return out
-}
-
-// wrapPeerShareError applies the ADR-0003 call-site sentinel mapping: the two
-// exported peer-share sentinels are rewrapped from the plain sentinel — never
-// from the helper's already-ErrAbort-wrapped error, which would duplicate the
-// "cpace: protocol abort" prefix — with role context added. Non-sentinel
-// defensive errors (wrong length, post-multiply neutral element) pass through
-// unchanged: they already wrap ErrAbort and are unreachable from the wire.
-// Callers pass a non-nil error; a new peer-share sentinel added in
-// decodePublicShare must get a case here, or it surfaces without role context.
-func wrapPeerShareError(err error, role string) error {
-	switch {
-	case errors.Is(err, ErrPeerShareEncoding):
-		return fmt.Errorf("%w: invalid %s share: %w", ErrAbort, role, ErrPeerShareEncoding)
-	case errors.Is(err, ErrPeerShareIdentity):
-		return fmt.Errorf("%w: invalid %s share: %w", ErrAbort, role, ErrPeerShareIdentity)
-	default:
-		return err
-	}
 }

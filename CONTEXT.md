@@ -20,6 +20,10 @@ _Avoid_: handle, context (Go's `context.Context` is unrelated).
 The package-owned binary envelope for CPace messages A, B, and C: format byte, suite byte, role byte, and length-value encoded fields with package-owned caps. Message framing sits in front of the **CPace core**; decoded cryptographic fields cross that seam, but parsing, role checks, size caps, and wire bytes stay here.
 _Avoid_: wire protocol, transport, serialization helper.
 
+**Peer-share rejection**:
+The internal module that classifies peer public share bytes, applies ADR-0003 role-context errors, and computes the Diffie-Hellman result only after validation. It sits inside the **CPace core** seam: **Message framing** enforces field size first, and the responder path calls this module before generator derivation or scalar sampling.
+_Avoid_: point validation helper, scalar multiplication wrapper, peer key parser.
+
 **Package-owned cap policy**:
 The internal policy that names and caps caller-provided `Config` fields and package-owned **Message framing** fields before they can drive allocation, parsing, or CPace computation. It is not a public profile knob: changing a cap is an observable behavior change and must be treated as release-policy work.
 _Avoid_: limit constants, validation helpers, size settings.

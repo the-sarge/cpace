@@ -1123,3 +1123,35 @@ PR #102 deepened the Release policy checker catalogue by moving accepted ADR-000
 **Next**
 
 - Keep the release evidence caveat intact: stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit.
+
+---
+
+## Peer-share rejection PR reviewed - 2026-06-14 05:58 EDT
+
+**Main:** `bff0c4aedb14`
+**Actor:** Codex
+
+**Summary**
+
+PR #104 deepens Peer-share rejection behind a role-aware internal module without changing public API, wire format, exported sentinels, or observable error strings. The CPace core now asks the module for peer public share validation and shared-secret computation, while Message framing remains responsible for wire size and role parsing.
+
+**Completed**
+
+- Added `peer_share.go` with `peerShareRole.validate`, `peerShareRole.sharedSecret`, ADR-0003 role-context error mapping, `scalarMultVFY`, and `decodePublicShare` colocated behind the Peer-share rejection module.
+- Updated `core.go` so initiator and responder flows call the role-aware Peer-share rejection seam rather than composing peer-share validation and error mapping in place.
+- Removed the old `wrapPeerShareError` helper from `api.go`, keeping the public shell out of the peer-share sentinel mapping details.
+- Added focused tests in `api_test.go` for role-context wrapping, valid shared-secret derivation, and non-sentinel defensive error pass-through.
+- Added the Peer-share rejection term to `CONTEXT.md`.
+- Opened PR #104 at `https://github.com/the-sarge/cpace/pull/104` from `codex/deepen-peer-share-rejection`.
+- Ran RAS review-fix twice: `20260614T094003-de7e34e42fbb5b171eb70955` found one low comment-maintenance issue, fixed by `e1a6d22c1468931bc0df1fe37032f222f790b7a9`; `20260614T094538-bfaaf38c09133da4b850667e` finished `done` with no merge-blocking work remaining and only a low, forward-looking test-hardening suggestion.
+
+**Validation**
+
+- Local gates passed on the PR branch: `go test ./...`, `go test -race ./...`, `(cd tools/releasepolicy && go test ./...)`, `task check`, and `rg -n "new peer-share sentinel|surfaces without role context|wrapError applies" peer_share.go`.
+- `task check` included docs UTF-8 validation, release helper smoke tests, release policy checker validation, root tests, race tests, gofmt/goimports checks, `go vet ./...`, `staticcheck ./...`, `ast-grep scan --error`, and `govulncheck -test ./...`; Syft was not installed, so the helper script skipped only optional real Syft SBOM validation.
+- GitHub checks on head `e1a6d22c1468931bc0df1fe37032f222f790b7a9` passed except DCO. DCO reported the two existing PR commits lack `Signed-off-by` trailers, so PR #104 is mergeable at Git level but branch-protection blocked until the commits are rewritten with signoffs.
+
+**Next**
+
+- Rewrite the PR branch with signed-off commits if the maintainer authorizes the required force-push, then rerun GitHub checks and merge PR #104 once branch protection is satisfied.
+- Keep the release evidence caveat intact: this is security-relevant code movement, so stronger release-readiness claims require refreshing pinned dependency-review, fuzz, and security/spec-audit evidence against the exact candidate commit.

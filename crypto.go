@@ -100,39 +100,6 @@ func scalarMult(s *ristretto255.Scalar, p *ristretto255.Element) []byte {
 	return ristretto255.NewIdentityElement().ScalarMult(s, p).Bytes()
 }
 
-func scalarMultVFY(s *ristretto255.Scalar, encoded []byte) ([]byte, error) {
-	p, err := decodePublicShare(encoded)
-	if err != nil {
-		return nil, err
-	}
-	out := ristretto255.NewIdentityElement().ScalarMult(s, p).Bytes()
-	if hmac.Equal(out, identityEncoding) {
-		// Unreachable in production for prime-order Ristretto255: every
-		// scalar sampleScalar can return is non-zero mod the group order, so
-		// s·p is non-identity for any decoded (non-identity) p. Kept as
-		// defense-in-depth; tests exercise it with a zero scalar.
-		return nil, fmt.Errorf("%w: neutral-element shared secret", ErrAbort)
-	}
-	return out, nil
-}
-
-func decodePublicShare(encoded []byte) (*ristretto255.Element, error) {
-	// Defensive for internal callers; public message decoders enforce
-	// pointSize, so malformed wire lengths surface as ErrMessage from framing
-	// and never reach this branch.
-	if len(encoded) != pointSize {
-		return nil, fmt.Errorf("%w: invalid peer share length", ErrAbort)
-	}
-	p, err := ristretto255.NewIdentityElement().SetCanonicalBytes(encoded)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrAbort, ErrPeerShareEncoding)
-	}
-	if hmac.Equal(p.Bytes(), identityEncoding) {
-		return nil, fmt.Errorf("%w: %w", ErrAbort, ErrPeerShareIdentity)
-	}
-	return p, nil
-}
-
 func deriveISK(sid, k, transcript []byte) []byte {
 	// lvCat fixes the DSI, sid, and K boundaries. The remaining raw transcript
 	// is injective for the public initiator-responder flow because transcriptIR

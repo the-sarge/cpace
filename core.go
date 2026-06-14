@@ -53,10 +53,10 @@ func newInitiatorCore(nc normalizedConfig, random io.Reader) (*initiatorCore, []
 }
 
 func (c *initiatorCore) finish(peerYb, peerAdb, peerTag []byte) ([]byte, *Session, error) {
-	k, err := scalarMultVFY(c.scalar, peerYb)
+	k, err := responderPeerShare.sharedSecret(c.scalar, peerYb)
 	defer clearBytes(k)
 	if err != nil {
-		return nil, nil, wrapPeerShareError(err, "responder")
+		return nil, nil, err
 	}
 	tr := transcriptIR(c.ya, c.ada, peerYb, peerAdb)
 	isk := deriveISK(c.sid, k, tr)
@@ -76,13 +76,13 @@ func newResponderCore(nc normalizedConfig, peerYa, peerAda []byte, random io.Rea
 	if random == nil {
 		random = rand.Reader
 	}
-	// Validate Ya FIRST — before generator derivation and scalar sampling;
+	// Validate Ya FIRST before generator derivation and scalar sampling;
 	// the ordering is pinned by
 	// TestResponderPrevalidatesInvalidInitiatorShareBeforeRandomness.
-	// scalarMultVFY revalidates the same bytes when computing K, so its
-	// sentinel branch below is defense-in-depth only.
-	if _, err := decodePublicShare(peerYa); err != nil {
-		return nil, nil, nil, wrapPeerShareError(err, "initiator")
+	// sharedSecret revalidates the same bytes when computing K, so its
+	// sentinel branch below is defense in depth only.
+	if err := initiatorPeerShare.validate(peerYa); err != nil {
+		return nil, nil, nil, err
 	}
 	g := calculateGenerator(nc.password, nc.ci, nc.sid)
 	defer clearElement(g)
@@ -96,10 +96,10 @@ func newResponderCore(nc normalizedConfig, peerYa, peerAda []byte, random io.Rea
 	}
 	defer clearScalar(y)
 	yb := scalarMult(y, g)
-	k, err := scalarMultVFY(y, peerYa)
+	k, err := initiatorPeerShare.sharedSecret(y, peerYa)
 	defer clearBytes(k)
 	if err != nil {
-		return nil, nil, nil, wrapPeerShareError(err, "initiator")
+		return nil, nil, nil, err
 	}
 	tr := transcriptIR(peerYa, peerAda, yb, nc.ad)
 	isk := deriveISK(nc.sid, k, tr)

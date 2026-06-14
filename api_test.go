@@ -1390,7 +1390,7 @@ func assertLengthDefenseError(t *testing.T, n int, err error) {
 	}
 }
 
-func TestWrapPeerShareErrorPassesThroughNonSentinelErrors(t *testing.T) {
+func TestPeerShareRolePassesThroughNonSentinelErrors(t *testing.T) {
 	// The ADR-0003 call-site mapping sanctions exactly two behaviors: rewrap
 	// the two exported sentinels with role context, and pass every other
 	// error through unchanged. Pin the pass-through half with the two real
@@ -1413,11 +1413,49 @@ func TestWrapPeerShareErrorPassesThroughNonSentinelErrors(t *testing.T) {
 		{"wrong length", lengthErr},
 		{"post-multiply neutral element", neutralErr},
 	} {
-		for _, role := range []string{"initiator", "responder"} {
-			if got := wrapPeerShareError(tc.err, role); got != tc.err {
-				t.Fatalf("%s/%s: wrapPeerShareError returned %v, want the identical error value", tc.name, role, got)
+		for _, role := range []peerShareRole{initiatorPeerShare, responderPeerShare} {
+			if got := role.wrapError(tc.err); got != tc.err {
+				t.Fatalf("%s/%s: wrapError returned %v, want the identical error value", tc.name, role, got)
 			}
 		}
+	}
+}
+
+func TestPeerShareRoleSharedSecretAddsRoleContext(t *testing.T) {
+	invalid := mustLoadDraftInvalidVector(t)
+	s, err := scalarFromCanonical(invalid.Valid["s"])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := responderPeerShare.sharedSecret(s, invalid.Valid["X"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := invalid.Valid["G.scalar_mult_vfy(s,X)"]; !bytes.Equal(got, want) {
+		t.Fatalf("sharedSecret got %x want %x", got, want)
+	}
+
+	_, err = responderPeerShare.sharedSecret(s, invalid.InvalidY1)
+	if err == nil {
+		t.Fatal("expected responder share rejection")
+	}
+	if !errors.Is(err, ErrAbort) || !errors.Is(err, ErrPeerShareEncoding) {
+		t.Fatalf("sharedSecret err=%v want ErrAbort and ErrPeerShareEncoding", err)
+	}
+	if want := "cpace: protocol abort: invalid responder share: cpace: peer share encoding"; err.Error() != want {
+		t.Fatalf("sharedSecret err=%q want %q", err.Error(), want)
+	}
+
+	err = initiatorPeerShare.validate(invalid.InvalidY2)
+	if err == nil {
+		t.Fatal("expected initiator share rejection")
+	}
+	if !errors.Is(err, ErrAbort) || !errors.Is(err, ErrPeerShareIdentity) {
+		t.Fatalf("validate err=%v want ErrAbort and ErrPeerShareIdentity", err)
+	}
+	if want := "cpace: protocol abort: invalid initiator share: cpace: peer share identity"; err.Error() != want {
+		t.Fatalf("validate err=%q want %q", err.Error(), want)
 	}
 }
 
