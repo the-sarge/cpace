@@ -32,6 +32,30 @@ EOF
 "$repo_root/scripts/extract-release-notes.sh" "$changelog" v1.2.3 >"$tmpdir/notes.txt"
 grep -q 'Release note one' "$tmpdir/notes.txt"
 
+if "$repo_root/scripts/extract-release-notes.sh" "$changelog" 1.2.3 >"$tmpdir/untagged-notes.txt" 2>"$tmpdir/untagged-notes.err"; then
+  echo "untagged release notes unexpectedly succeeded" >&2
+  exit 1
+fi
+
+if "$repo_root/scripts/extract-release-notes.sh" "$changelog" v1.2 >"$tmpdir/short-tag-notes.txt" 2>"$tmpdir/short-tag-notes.err"; then
+  echo "short release tag notes unexpectedly succeeded" >&2
+  exit 1
+fi
+
+invalid_tag_changelog="$tmpdir/INVALID_TAG_CHANGELOG.md"
+cat >"$invalid_tag_changelog" <<'EOF'
+# Changelog
+
+## 1.2.3 - 2026-06-13
+
+- Invalid unprefixed tag notes.
+EOF
+
+if "$repo_root/scripts/extract-release-notes.sh" "$invalid_tag_changelog" 1.2.3 >"$tmpdir/invalid-tag-notes.txt" 2>"$tmpdir/invalid-tag-notes.err"; then
+  echo "invalid release tag notes unexpectedly succeeded" >&2
+  exit 1
+fi
+
 if "$repo_root/scripts/extract-release-notes.sh" "$changelog" v9.9.9 >"$tmpdir/missing.txt" 2>"$tmpdir/missing.err"; then
   echo "missing release notes unexpectedly succeeded" >&2
   exit 1
@@ -84,6 +108,16 @@ assert_tag_metadata v1.0.0 false true
 assert_tag_metadata v1.0.0-rc.1 true false
 assert_tag_metadata v0.1.3 true false
 
+if "$repo_root/scripts/release-tag-metadata.sh" 'v01.0.0' >"$tmpdir/tag-leading-zero.out" 2>"$tmpdir/tag-leading-zero.err"; then
+  echo "leading-zero tag unexpectedly succeeded" >&2
+  exit 1
+fi
+
+if "$repo_root/scripts/release-tag-metadata.sh" 'v1.0.0-rc..1' >"$tmpdir/tag-empty-prerelease.out" 2>"$tmpdir/tag-empty-prerelease.err"; then
+  echo "empty prerelease tag component unexpectedly succeeded" >&2
+  exit 1
+fi
+
 if "$repo_root/scripts/release-tag-metadata.sh" 'v1#foo' >"$tmpdir/tag-hash.out" 2>"$tmpdir/tag-hash.err"; then
   echo "unsafe hash tag unexpectedly succeeded" >&2
   exit 1
@@ -121,8 +155,43 @@ EOF
 
 "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$sbom"
 
+wrong_name_sbom="$tmpdir/other-v1.2.3.cdx.json"
+cp "$sbom" "$wrong_name_sbom"
+if "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$wrong_name_sbom" >"$tmpdir/wrong-name-sbom.out" 2>"$tmpdir/wrong-name-sbom.err"; then
+  echo "wrongly named SBOM unexpectedly succeeded" >&2
+  exit 1
+fi
+
+substring_sbom="$tmpdir/cpace-v1.2.4.cdx.json"
+cat >"$substring_sbom" <<'EOF'
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "metadata": {
+    "component": {
+      "name": "github.com/the-sarge/cpace"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "github.com/example/not-github.com/gtank/ristretto255"
+    },
+    {
+      "type": "library",
+      "name": "github.com/example/not-filippo.io/edwards25519"
+    }
+  ]
+}
+EOF
+
+if "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$substring_sbom" >"$tmpdir/substring-sbom.out" 2>"$tmpdir/substring-sbom.err"; then
+  echo "substring-only SBOM module matches unexpectedly succeeded" >&2
+  exit 1
+fi
+
 if command -v syft >/dev/null 2>&1; then
-  real_sbom="$tmpdir/cpace-syft.cdx.json"
+  real_sbom="$tmpdir/cpace-v9.9.9.cdx.json"
   (cd "$repo_root" && syft dir:. -o "cyclonedx-json@1.5=$real_sbom" >/dev/null)
   "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$real_sbom"
 else

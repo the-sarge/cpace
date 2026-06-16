@@ -11,9 +11,27 @@ if [ "$#" -ne 1 ]; then
 fi
 
 sbom=$1
+sbom_name=${sbom##*/}
+semver_re='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?$'
 
 if [ ! -s "$sbom" ]; then
   echo "SBOM not found or empty: $sbom" >&2
+  exit 1
+fi
+
+case "$sbom_name" in
+  cpace-v*.cdx.json)
+    sbom_tag=${sbom_name#cpace-}
+    sbom_tag=${sbom_tag%.cdx.json}
+    ;;
+  *)
+    echo "SBOM filename must be cpace-vMAJOR.MINOR.PATCH[-PRERELEASE].cdx.json: $sbom_name" >&2
+    exit 1
+    ;;
+esac
+
+if ! printf '%s\n' "$sbom_tag" | grep -Eq "$semver_re"; then
+  echo "SBOM filename must use a supported release tag: $sbom_name" >&2
   exit 1
 fi
 
@@ -34,15 +52,21 @@ for module in \
   filippo.io/edwards25519
 do
   jq -e --arg module "$module" '
+    def exact_module:
+      . == $module or
+      . == ("pkg:golang/" + $module) or
+      startswith("pkg:golang/" + $module + "@");
+
     def candidate_strings:
       [
-        .metadata.component.name?,
-        .metadata.component.purl?,
-        .metadata.component["bom-ref"]?,
-        (.components[]? | .name?, .purl?, .["bom-ref"]?)
-      ] | map(select(type == "string"));
+        .metadata.component?,
+        .components[]?
+      ]
+      | map(select(type == "object"))
+      | map(.name?, .purl?, .["bom-ref"]?)
+      | map(select(type == "string"));
 
-    any(candidate_strings[]; . == $module or contains($module))
+    any(candidate_strings[]; exact_module)
   ' "$sbom" >/dev/null || {
     echo "SBOM is missing expected Go module entry: $module" >&2
     echo "If the release-relevant module graph changed intentionally, update scripts/validate-cyclonedx-sbom.sh and scripts/test-release-helpers.sh together." >&2
