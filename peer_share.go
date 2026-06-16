@@ -16,15 +16,28 @@ const (
 )
 
 func (r peerShareRole) validate(encoded []byte) error {
-	_, err := decodePublicShare(encoded)
+	_, err := r.decode(encoded)
+	return err
+}
+
+func (r peerShareRole) decode(encoded []byte) (*ristretto255.Element, error) {
+	p, err := decodePublicShare(encoded)
 	if err != nil {
-		return r.wrapError(err)
+		return nil, r.wrapError(err)
 	}
-	return nil
+	return p, nil
 }
 
 func (r peerShareRole) sharedSecret(s *ristretto255.Scalar, encoded []byte) ([]byte, error) {
 	k, err := scalarMultVFY(s, encoded)
+	if err != nil {
+		return nil, r.wrapError(err)
+	}
+	return k, nil
+}
+
+func (r peerShareRole) sharedSecretElement(s *ristretto255.Scalar, p *ristretto255.Element) ([]byte, error) {
+	k, err := scalarMultVFYElement(s, p)
 	if err != nil {
 		return nil, r.wrapError(err)
 	}
@@ -53,6 +66,10 @@ func scalarMultVFY(s *ristretto255.Scalar, encoded []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	return scalarMultVFYElement(s, p)
+}
+
+func scalarMultVFYElement(s *ristretto255.Scalar, p *ristretto255.Element) ([]byte, error) {
 	out := ristretto255.NewIdentityElement().ScalarMult(s, p).Bytes()
 	if hmac.Equal(out, identityEncoding) {
 		// Unreachable in production for prime-order Ristretto255: every
