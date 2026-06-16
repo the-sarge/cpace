@@ -1432,3 +1432,37 @@ Deepened the **Caller input** implementation in PR #127 without changing the pub
 
 - Resolve #128 before v1.0.0 documentation freeze if the living CPace core plan should keep matching current implementation names.
 - Include this security-relevant Caller input refactor in the next exact-candidate release evidence refresh before making stronger release-readiness claims.
+
+---
+
+## Responder peer-share decode reuse landed - 2026-06-16 15:21 EDT
+
+**Main:** `512ed19d450e`
+**Actor:** Codex
+
+**Summary**
+
+PR #138 landed issue #80 by reusing the responder's prevalidated initiator peer share for scalar multiplication, avoiding the second responder-side decode while preserving the draft-shaped encoded helper for vector and spec traceability.
+
+**Completed**
+
+- Merged PR #138 (`refactor: reuse responder peer share decode`) as `512ed19d450e29eb75f997b9785f324ce3d8d073`; issue #80 closed automatically at merge.
+- Added internal `scalarMultVFYElement` and role-aware peer-share decode/shared-secret helpers while keeping `scalarMultVFY(s, encoded)` for encoded-byte callers.
+- Updated `newResponderCore` to decode `Ya` once during validate-before-randomness prevalidation and reuse that element for the responder Diffie-Hellman computation.
+- Preserved public API, wire behavior, ADR-0003 peer-share sentinel/call-site mapping, role-context wrapping, and the post-multiply neutral-element defense.
+- Updated `CHANGELOG.md`, `docs/spec-matrix.md`, and `docs/security-spec-audit.md` to document the internal optimization and note that stronger release claims still require an exact-candidate evidence refresh.
+- Filed non-blocking RAS nit follow-up #139 for removing the now-vestigial internal `peerShareRole.validate` wrapper, and added OmniFocus task `hMxvjmcXGyU`.
+
+**Validation**
+
+- TDD red/green covered `scalarMultVFYElement` parity with the encoded helper and role-aware decode/shared-secret error context.
+- Focused local tests covered responder prevalidation before randomness, peer-share role wrapping, scalarMultVFY behavior, invalid Ristretto encodings, identity rejection, wire-length rejection, and draft 21 vectors.
+- Local gates passed before merge: `task docs:check`, `task check`, `git diff --check`, and `go run github.com/securego/gosec/v2/cmd/gosec@v2.26.1 -exclude-dir=.ras -tests ./...`.
+- `go test -run '^$' -bench '^BenchmarkRespond$' -count 10` improved from roughly 75.4-76.6 us/op, 3192 B/op, 45 allocs/op on baseline to roughly 70.1-71.8 us/op, 3032 B/op, 44 allocs/op on the PR branch.
+- RAS review-fix run `20260616T190349-319dbb7b2f94e63af17be556` completed with no merge-blocking findings; the only nit was moved to #139.
+- GitHub checks on PR #138 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Resolve #139 as internal cleanup before v1.0.0 if time permits.
+- Refresh pinned dependency-review, fuzz, Capslock, and security/spec-audit evidence against the exact candidate commit before making stronger release-readiness claims.
