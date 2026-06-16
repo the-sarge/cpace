@@ -1532,3 +1532,38 @@ PR #141 completed issue #139 by removing the vestigial internal `peerShareRole.v
 
 - No issue #139 follow-up remains.
 - Stronger release-readiness claims still require the already-planned exact-candidate evidence refresh after the recent security-relevant internal changes.
+
+---
+
+## Caller input follow-ups landed - 2026-06-16 18:11 EDT
+
+**Main:** `c00f66228e60`
+**Actor:** Codex
+
+**Summary**
+
+PR #144 landed the first remaining caller-input follow-up slice for issues #124, #125, and #128: validation-order coverage now pins the caller-input tail precedence, the threat-model review focus uses role-local identity wording, and the CPace core plan matches the current normalized-input seam and error-ownership split.
+
+**Completed**
+
+- Merged PR #144 (`test: pin caller input validation precedence`) as `c00f66228e60e2fe194a252c18d58cf467a26459`; issues #124, #125, and #128 closed automatically at merge.
+- Added `TestInputValidation` coverage for `Context` before local associated data and `SessionID` before local associated data, preserving behavior while making the existing private validation order executable.
+- Updated `docs/threat-model.md` and `docs/cpace-core-plan.md` for current caller-input terminology, normalized input naming, and the `input.go` / `api.go` seam around caller-input validation, framing/state checks, and password backstops.
+- RAS review-fix run `20260616T214143-eb23d12459547d874d1273f1` found the missing session-id precedence case and applied it as commit `f4aaa81578d7e8684cedce71b21e56d5d4ddb0a6`.
+- RAS review-fix run `20260616T215502-4f1a9895e0e9655e3bc85d8f` found a changed-file seam wording issue, fixed in commit `3d3b466571ec3cee48d16c5114794d8d76c852f7`.
+- Final RAS review-fix run `20260616T220425-d70f596785e1cc9d4bfbd101` reported no merge-blocking fixes; its one info-level reviewer-facing terminology consistency item became follow-up issue #145 and OmniFocus task `pE_6oM1HPky`.
+- Completed OmniFocus tasks `aNp2T318MJz`, `o-CyFwzIIEr`, and `jfBymILxljz` with merge, validation, and follow-up evidence.
+
+**Validation**
+
+- Focused validation passed with `go test -run TestInputValidation ./...`.
+- Mutation checks proved both new precedence cases fail when the corresponding private cap-check order is temporarily inverted, then pass again after restoring production order.
+- Documentation and whitespace gates passed with `task docs:check` and `git diff --check`.
+- Full local gate passed with `task check`; the release helper smoke test again reported the optional Syft validation skip because `syft` is not installed.
+- GitHub checks on PR #144 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Continue the phase-2 implementation sequence with #131, the private single-use terminal-state cleanup.
+- Keep #145 separate from the implementation sequence unless a maintainer intentionally broadens reviewer-facing documentation cleanup.
+- Stronger release-readiness claims still require the planned exact-candidate evidence refresh after these security-relevant changes.
