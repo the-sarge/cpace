@@ -15,11 +15,6 @@ const (
 	responderPeerShare peerShareRole = "responder"
 )
 
-func (r peerShareRole) validate(encoded []byte) error {
-	_, err := r.decode(encoded)
-	return err
-}
-
 func (r peerShareRole) decode(encoded []byte) (*ristretto255.Element, error) {
 	p, err := decodePublicShare(encoded)
 	if err != nil {

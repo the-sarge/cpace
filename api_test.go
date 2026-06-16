@@ -2007,15 +2007,15 @@ func TestPeerShareRoleSharedSecretAddsRoleContext(t *testing.T) {
 		t.Fatalf("sharedSecret err=%q want %q", err.Error(), want)
 	}
 
-	err = initiatorPeerShare.validate(invalid.InvalidY2)
+	_, err = initiatorPeerShare.sharedSecret(s, invalid.InvalidY2)
 	if err == nil {
 		t.Fatal("expected initiator share rejection")
 	}
 	if !errors.Is(err, ErrAbort) || !errors.Is(err, ErrPeerShareIdentity) {
-		t.Fatalf("validate err=%v want ErrAbort and ErrPeerShareIdentity", err)
+		t.Fatalf("sharedSecret err=%v want ErrAbort and ErrPeerShareIdentity", err)
 	}
 	if want := "cpace: protocol abort: invalid initiator share: cpace: peer share identity"; err.Error() != want {
-		t.Fatalf("validate err=%q want %q", err.Error(), want)
+		t.Fatalf("sharedSecret err=%q want %q", err.Error(), want)
 	}
 }
 
