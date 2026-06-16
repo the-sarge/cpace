@@ -8,10 +8,7 @@ This document tracks current work. Historical review triage remains in
 
 ## Current Phase
 
-The current phase is release readiness. Public API and package-profile policy
-decisions are closed unless a new review finding reopens one. Do not describe
-the package as production-ready until the release bar below is satisfied and
-independent cryptographic review is complete.
+The current phase is release readiness. Public API and package-profile policy decisions are closed unless a new review finding reopens one. ADR-0008 records the narrow public-lifecycle thaw for `Initiator.Close` and `Responder.Close`; ADR-0009 records a broad Caller input replacement whose authorization is narrowly limited to its follow-up `Input` implementation. Do not describe the package as production-ready until the release bar below is satisfied and independent cryptographic review is complete.
 
 ## Release-Readiness PR Shape
 
@@ -22,8 +19,7 @@ Each release-readiness PR should include:
 - any residual risk or follow-up that remains after the PR;
 - README, changelog, security, and spec documentation updates when release
   posture changes.
-- no public API or package-profile changes; reopen the policy phase first if a
-  new finding requires one.
+- no public API or package-profile changes except the ADR-0009 caller-input follow-up implementation already authorized by that accepted ADR; reopen the policy phase first if a new finding requires any other public API or package-profile change.
 
 ## Closed Policy Decisions
 

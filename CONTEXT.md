@@ -24,8 +24,12 @@ The internal module that classifies peer public share bytes, applies ADR-0003 ro
 _Avoid_: point validation helper, scalar multiplication wrapper, peer key parser.
 
 **Package-owned cap policy**:
-The internal policy that names and caps caller-provided `Config` fields and package-owned **Message framing** fields before they can drive allocation, parsing, or CPace computation. It is not a public profile knob: changing a cap is an observable behavior change and must be treated as release-policy work.
+The internal policy that names and caps caller-provided **Caller input** fields and package-owned **Message framing** fields before they can drive allocation, parsing, or CPace computation. It is not a public profile knob: changing a cap value is an observable behavior change and must be treated as release-policy work; caller-input diagnostic names may change only through an accepted public-input ADR.
 _Avoid_: limit constants, validation helpers, size settings.
+
+**Caller input**:
+The public-facing module for application facts supplied before `Start` or `Respond` can construct **single-use state**: password, role identities, context, SessionID, associated data, and compatibility flags after package policy accepts them. ADR-0009 names `Input` as the intended role-local adapter, with `SelfID`, `PeerID`, and `LocalAssociatedData` mapped by the package while `Password`, `Context`, and `SessionID` remain shared session values. **Caller input** is the seam where validation, role mapping, **Package-owned cap policy**, copy ownership, accepted/normalized input plumbing, and package-profile commitments meet.
+_Avoid_: config validation, options, input helper.
 
 **Release policy checker**:
 The tooling module that validates accepted release-pipeline policy, especially ADR-0007, against the Release Validation workflow and local release helper files. It is validation-only: it parses workflow YAML, checks tag-only execution, signed-tag verification, SBOM and attestation publication, action pinning, least permissions, release-note extraction, and no in-place release replacement, but it does not generate release workflow YAML and does not query live GitHub ruleset state.

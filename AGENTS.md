@@ -2,7 +2,7 @@
 
 ## Repo constraints every agent must know
 
-- **Release-readiness freeze**: the public API and package-profile policy are frozen. Do not propose API or observable-behavior changes unless a review finding forces one; such a change is a *policy reopen* and needs an explicit maintainer decision first.
+- **Release-readiness freeze**: the public API and package-profile policy are frozen except accepted ADR exceptions. Do not propose API or observable-behavior changes unless a review finding forces one or an accepted ADR explicitly authorizes it; outside accepted exceptions, such a change is a *policy reopen* and needs an explicit maintainer decision first. ADR-0009 currently authorizes only the follow-up caller-input `Input` implementation and leaves unrelated public API and package-profile choices frozen.
 - **Evidence discipline**: any security-relevant change invalidates the pinned dependency-review / fuzz / security-audit evidence (each pinned to a commit). Stronger release claims require refreshing that evidence against the exact candidate commit.
 - **ADR gating**: ADRs start `status: proposed` and flip to `accepted` only after an independent multi-agent review (`ras consider`) concurs. Decisions live in `docs/adr/`.
 - **Merges are the maintainer's**: never merge or close a PR, or push to `main`, without an explicit per-action instruction.

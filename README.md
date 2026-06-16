@@ -9,7 +9,7 @@ This repository implements `draft-irtf-cfrg-cpace-21` for the
 Status: auditable draft implementation. This code has not had independent
 cryptographic review and is not production-ready.
 
-Current work is release readiness, not new policy design. The public API and package-profile choices are frozen for review unless a new finding reopens a decision. ADR-0008 records a narrow public-lifecycle thaw for `Initiator.Close` and `Responder.Close`; other public-surface and package-profile choices remain frozen. Before any production-readiness claim, the release bar in `docs/security-assessment.md` must be satisfied.
+Current work is release readiness, not new policy design. The public API and package-profile choices are frozen for review unless a new finding reopens a decision. ADR-0008 records a narrow public-lifecycle thaw for `Initiator.Close` and `Responder.Close`; ADR-0009 records a broad Caller input replacement whose authorization is narrowly limited to its follow-up `Input` implementation. All unrelated public-surface and package-profile choices remain frozen. Before any production-readiness claim, the release bar in `docs/security-assessment.md` must be satisfied.
 
 The public API exposes only an initiator-responder flow with mandatory explicit
 key confirmation:
