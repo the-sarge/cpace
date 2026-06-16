@@ -27,9 +27,6 @@ func newSingleUseState[C singleUseCore](core C, uninitialized string) *singleUse
 
 func (s *singleUseState[C]) claimFinish() (C, error) {
 	var zero C
-	if s == nil {
-		return zero, fmt.Errorf("%w: uninitialized single-use state", ErrInvalidInput)
-	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.used {
@@ -44,9 +41,6 @@ func (s *singleUseState[C]) claimFinish() (C, error) {
 
 func (s *singleUseState[C]) claimClose() (C, error) {
 	var zero C
-	if s == nil {
-		return zero, fmt.Errorf("%w: uninitialized single-use state", ErrInvalidInput)
-	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.used {
@@ -60,9 +54,5 @@ func (s *singleUseState[C]) claimClose() (C, error) {
 }
 
 func (s *singleUseState[C]) uninitializedError() error {
-	msg := s.uninitialized
-	if msg == "" {
-		msg = "uninitialized single-use state"
-	}
-	return fmt.Errorf("%w: %s", ErrInvalidInput, msg)
+	return fmt.Errorf("%w: %s", ErrInvalidInput, s.uninitialized)
 }

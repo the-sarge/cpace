@@ -1034,6 +1034,15 @@ func TestSingleUseTerminalClaimsDoNotReturnCoreOnLosingPaths(t *testing.T) {
 	assertLosingTerminalClaimDoesNotReturnCore(t, &responderState{used: true, core: respCore}, respCore)
 }
 
+func TestSingleUseTerminalNilCoreReturnsUninitializedDiagnostic(t *testing.T) {
+	assertNilCoreTerminalClaimReturnsUninitialized(t, "initiator", "uninitialized initiator", func() *initiatorState {
+		return &initiatorState{uninitialized: "uninitialized initiator"}
+	})
+	assertNilCoreTerminalClaimReturnsUninitialized(t, "responder", "uninitialized responder", func() *responderState {
+		return &responderState{uninitialized: "uninitialized responder"}
+	})
+}
+
 func assertLosingTerminalClaimDoesNotReturnCore[C singleUseCore](t *testing.T, state *singleUseState[C], core C) {
 	t.Helper()
 	if got, err := state.claimClose(); err != nil || got != nil {
@@ -1048,6 +1057,36 @@ func assertLosingTerminalClaimDoesNotReturnCore[C singleUseCore](t *testing.T, s
 	if state.core != core {
 		t.Fatal("losing claims mutated the stored core pointer")
 	}
+}
+
+func assertNilCoreTerminalClaimReturnsUninitialized[C singleUseCore](t *testing.T, role, want string, newState func() *singleUseState[C]) {
+	t.Helper()
+	t.Run(role+" finish", func(t *testing.T) {
+		state := newState()
+		got, err := state.claimFinish()
+		if got != nil {
+			t.Fatalf("nil-core finish got core=%v want nil", got)
+		}
+		if !errors.Is(err, ErrInvalidInput) || !strings.Contains(err.Error(), want) {
+			t.Fatalf("nil-core finish err=%v want ErrInvalidInput containing %q", err, want)
+		}
+		if state.used {
+			t.Fatal("nil-core finish consumed terminal state")
+		}
+	})
+	t.Run(role+" close", func(t *testing.T) {
+		state := newState()
+		got, err := state.claimClose()
+		if got != nil {
+			t.Fatalf("nil-core close got core=%v want nil", got)
+		}
+		if !errors.Is(err, ErrInvalidInput) || !strings.Contains(err.Error(), want) {
+			t.Fatalf("nil-core close err=%v want ErrInvalidInput containing %q", err, want)
+		}
+		if state.used {
+			t.Fatal("nil-core close consumed terminal state")
+		}
+	})
 }
 
 func TestInputValidation(t *testing.T) {
