@@ -215,44 +215,29 @@ func (r *Responder) consume() error {
 }
 
 func normalizeConfig(cfg Config) (normalizedConfig, error) {
-	if len(cfg.Password) == 0 {
-		return normalizedConfig{}, fmt.Errorf("%w: empty password", ErrInvalidInput)
+	accepted, err := acceptConfig(cfg)
+	if err != nil {
+		return normalizedConfig{}, err
 	}
-	if len(cfg.InitiatorID) == 0 {
-		return normalizedConfig{}, fmt.Errorf("%w: empty initiator id", ErrInvalidInput)
+	keep := false
+	defer func() {
+		if !keep {
+			accepted.wipe()
+		}
+	}()
+	ci := buildCI(accepted.initiatorID, accepted.responderID, accepted.context)
+	clearBytes(accepted.context)
+	accepted.context = nil
+	nc := normalizedConfig{
+		password:    accepted.password,
+		initiatorID: accepted.initiatorID,
+		responderID: accepted.responderID,
+		ci:          ci,
+		sid:         accepted.sid,
+		ad:          accepted.ad,
 	}
-	if len(cfg.ResponderID) == 0 {
-		return normalizedConfig{}, fmt.Errorf("%w: empty responder id", ErrInvalidInput)
-	}
-	if len(cfg.SessionID) == 0 && !cfg.AllowEmptySessionID {
-		return normalizedConfig{}, fmt.Errorf("%w: %w", ErrInvalidInput, ErrEmptySessionID)
-	}
-	if len(cfg.Password) > passwordCap.length {
-		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, passwordCap.name)
-	}
-	if len(cfg.InitiatorID) > initiatorIDCap.length {
-		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, initiatorIDCap.name)
-	}
-	if len(cfg.ResponderID) > responderIDCap.length {
-		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, responderIDCap.name)
-	}
-	if len(cfg.Context) > contextCap.length {
-		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, contextCap.name)
-	}
-	if len(cfg.SessionID) > sessionIDCap.length {
-		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, sessionIDCap.name)
-	}
-	if len(cfg.AssociatedData) > associatedDataCap.length {
-		return normalizedConfig{}, fmt.Errorf("%w: %s too large", ErrInvalidInput, associatedDataCap.name)
-	}
-	return normalizedConfig{
-		password:    clone(cfg.Password),
-		initiatorID: clone(cfg.InitiatorID),
-		responderID: clone(cfg.ResponderID),
-		ci:          buildCI(cfg.InitiatorID, cfg.ResponderID, cfg.Context),
-		sid:         clone(cfg.SessionID),
-		ad:          clone(cfg.AssociatedData),
-	}, nil
+	keep = true
+	return nc, nil
 }
 
 func buildCI(initiatorID, responderID, context []byte) []byte {

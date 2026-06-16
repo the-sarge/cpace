@@ -184,18 +184,11 @@ func (r *messageReader) readField(spec messageFieldSpec) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if spec.exact {
-		if n != spec.length {
-			return nil, fmt.Errorf("%w: %s length", ErrMessage, spec.name)
-		}
-	} else if n > spec.length {
-		return nil, fmt.Errorf("%w: %s field too large", ErrMessage, spec.name)
+	out, next, err := spec.acceptMessageField(r.buf, r.off, n)
+	if err != nil {
+		return nil, err
 	}
-	if len(r.buf)-r.off < n {
-		return nil, fmt.Errorf("%w: truncated %s field", ErrMessage, spec.name)
-	}
-	out := clone(r.buf[r.off : r.off+n])
-	r.off += n
+	r.off = next
 	return out, nil
 }
 
