@@ -498,19 +498,19 @@ func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	initiatorScalar := initiator.core.scalar
+	initiatorScalar := initiator.state.core.scalar
 	responder, msgB, err := respondTestResponder(respCfg, msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
-	responderISK := responder.core.isk
-	responderTranscript := responder.core.transcript
+	responderISK := responder.state.core.isk
+	responderTranscript := responder.state.core.transcript
 
 	msgC, sI, err := initiator.Finish(msgB)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if initiator.core.scalar != nil {
+	if initiator.state.core.scalar != nil {
 		t.Fatal("initiator scalar reference retained after Finish")
 	}
 	if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
@@ -521,7 +521,7 @@ func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if responder.core.isk != nil || responder.core.transcript != nil {
+	if responder.state.core.isk != nil || responder.state.core.transcript != nil {
 		t.Fatal("responder retained cleared state references after Finish")
 	}
 	if !allZero(responderISK) {
@@ -552,11 +552,11 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		initiatorScalar := initiator.core.scalar
+		initiatorScalar := initiator.state.core.scalar
 		if _, _, err := initiator.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
 			t.Fatalf("initiator Finish garbage err=%v", err)
 		}
-		if initiator.core.scalar != nil {
+		if initiator.state.core.scalar != nil {
 			t.Fatal("initiator retained scalar reference after parse failure")
 		}
 		if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
@@ -577,11 +577,11 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		initiatorScalar := initiator.core.scalar
+		initiatorScalar := initiator.state.core.scalar
 		if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrConfirmationFailed) {
 			t.Fatalf("initiator Finish wrong-password err=%v", err)
 		}
-		if initiator.core.scalar != nil {
+		if initiator.state.core.scalar != nil {
 			t.Fatal("initiator retained scalar reference after confirmation failure")
 		}
 		if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
@@ -598,12 +598,12 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		responderISK := responder.core.isk
-		responderTranscript := responder.core.transcript
+		responderISK := responder.state.core.isk
+		responderTranscript := responder.state.core.transcript
 		if _, err := responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
 			t.Fatalf("responder Finish garbage err=%v", err)
 		}
-		if responder.core.isk != nil || responder.core.transcript != nil {
+		if responder.state.core.isk != nil || responder.state.core.transcript != nil {
 			t.Fatal("responder retained cleared state references after parse failure")
 		}
 		if !allZero(responderISK) {
@@ -628,12 +628,12 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 			t.Fatal(err)
 		}
 		msgC[len(msgC)-1] ^= 0xff
-		responderISK := responder.core.isk
-		responderTranscript := responder.core.transcript
+		responderISK := responder.state.core.isk
+		responderTranscript := responder.state.core.transcript
 		if _, err := responder.Finish(msgC); !errors.Is(err, ErrConfirmationFailed) {
 			t.Fatalf("responder Finish tampered tagA err=%v", err)
 		}
-		if responder.core.isk != nil || responder.core.transcript != nil {
+		if responder.state.core.isk != nil || responder.state.core.transcript != nil {
 			t.Fatal("responder retained cleared state references after confirmation failure")
 		}
 		if !allZero(responderISK) {
@@ -663,12 +663,12 @@ func TestSessionISKSurvivesCoreClear(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	responderISK := responder.core.isk
+	responderISK := responder.state.core.isk
 	sR, err := responder.Finish(msgC)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if responder.core.isk != nil {
+	if responder.state.core.isk != nil {
 		t.Fatal("responder retained ISK reference after Finish")
 	}
 	if !allZero(responderISK) {
@@ -696,7 +696,7 @@ func TestFinishZeroValueHardening(t *testing.T) {
 		!strings.Contains(err.Error(), "uninitialized initiator") {
 		t.Fatalf("zero-value Initiator.Finish malformed err=%v", err)
 	}
-	if initiator.used {
+	if initiator.state != nil {
 		t.Fatal("zero-value Initiator.Finish consumed state on malformed message")
 	}
 
@@ -709,7 +709,7 @@ func TestFinishZeroValueHardening(t *testing.T) {
 		!strings.Contains(err.Error(), "uninitialized initiator") {
 		t.Fatalf("zero-value Initiator.Finish shaped msgB err=%v", err)
 	}
-	if initiator.used {
+	if initiator.state != nil {
 		t.Fatal("zero-value Initiator.Finish consumed state on shaped message B")
 	}
 
@@ -718,7 +718,7 @@ func TestFinishZeroValueHardening(t *testing.T) {
 		!strings.Contains(err.Error(), "uninitialized responder") {
 		t.Fatalf("zero-value Responder.Finish malformed err=%v", err)
 	}
-	if responder.used {
+	if responder.state != nil {
 		t.Fatal("zero-value Responder.Finish consumed state on malformed message")
 	}
 
@@ -730,8 +730,214 @@ func TestFinishZeroValueHardening(t *testing.T) {
 	if !errors.Is(err, ErrInvalidInput) || !strings.Contains(err.Error(), "uninitialized responder") {
 		t.Fatalf("zero-value Responder.Finish forged msgC err=%v", err)
 	}
-	if responder.used {
+	if responder.state != nil {
 		t.Fatal("zero-value Responder.Finish consumed state on forged message C")
+	}
+}
+
+func TestSingleUseStateCloseNilAndZeroValue(t *testing.T) {
+	var nilInitiator *Initiator
+	if err := nilInitiator.Close(); err != nil {
+		t.Fatalf("nil Initiator.Close err=%v want nil", err)
+	}
+	var nilResponder *Responder
+	if err := nilResponder.Close(); err != nil {
+		t.Fatalf("nil Responder.Close err=%v want nil", err)
+	}
+
+	var initiator Initiator
+	if err := initiator.Close(); !errors.Is(err, ErrInvalidInput) ||
+		!strings.Contains(err.Error(), "uninitialized initiator") {
+		t.Fatalf("zero-value Initiator.Close err=%v want ErrInvalidInput", err)
+	}
+	if initiator.state != nil {
+		t.Fatal("zero-value Initiator.Close consumed state")
+	}
+
+	var responder Responder
+	if err := responder.Close(); !errors.Is(err, ErrInvalidInput) ||
+		!strings.Contains(err.Error(), "uninitialized responder") {
+		t.Fatalf("zero-value Responder.Close err=%v want ErrInvalidInput", err)
+	}
+	if responder.state != nil {
+		t.Fatal("zero-value Responder.Close consumed state")
+	}
+}
+
+func TestSingleUseStateCloseCleansAbandonedState(t *testing.T) {
+	initiator, msgA, err := startTestInitiator(testConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	initiatorScalar := initiator.state.core.scalar
+	if err := initiator.Close(); err != nil {
+		t.Fatalf("Initiator.Close err=%v", err)
+	}
+	if initiator.state.core.scalar != nil {
+		t.Fatal("initiator core retained scalar reference after Close")
+	}
+	if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
+		t.Fatal("initiator scalar was not cleared by Close")
+	}
+	if err := initiator.Close(); err != nil {
+		t.Fatalf("second Initiator.Close err=%v", err)
+	}
+	if _, _, err := initiator.Finish([]byte("garbage")); !errors.Is(err, ErrStateUsed) {
+		t.Fatalf("Initiator.Finish after Close err=%v want ErrStateUsed", err)
+	}
+
+	responder, _, err := respondTestResponder(testConfig(), msgA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	responderISK := responder.state.core.isk
+	responderTranscript := responder.state.core.transcript
+	if err := responder.Close(); err != nil {
+		t.Fatalf("Responder.Close err=%v", err)
+	}
+	if responder.state.core.isk != nil || responder.state.core.transcript != nil {
+		t.Fatal("responder core retained cleared state references after Close")
+	}
+	if !allZero(responderISK) {
+		t.Fatal("responder ISK was not cleared by Close")
+	}
+	if !allZero(responderTranscript) {
+		t.Fatal("responder transcript was not cleared by Close")
+	}
+	if err := responder.Close(); err != nil {
+		t.Fatalf("second Responder.Close err=%v", err)
+	}
+	if _, err := responder.Finish([]byte("garbage")); !errors.Is(err, ErrStateUsed) {
+		t.Fatalf("Responder.Finish after Close err=%v want ErrStateUsed", err)
+	}
+}
+
+func TestSingleUseStateCloseAfterFinish(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		initiator, msgA, err := startTestInitiator(testConfig())
+		if err != nil {
+			t.Fatal(err)
+		}
+		responder, msgB, err := respondTestResponder(testConfig(), msgA)
+		if err != nil {
+			t.Fatal(err)
+		}
+		msgC, initSession, err := initiator.Finish(msgB)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := initiator.Close(); err != nil {
+			t.Fatalf("Initiator.Close after successful Finish err=%v", err)
+		}
+		if _, err := initSession.Export([]byte("label"), []byte("ctx"), 32); err != nil {
+			t.Fatalf("initiator Session.Export after Close-on-state err=%v", err)
+		}
+		respSession, err := responder.Finish(msgC)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := responder.Close(); err != nil {
+			t.Fatalf("Responder.Close after successful Finish err=%v", err)
+		}
+		if _, err := respSession.Export([]byte("label"), []byte("ctx"), 32); err != nil {
+			t.Fatalf("responder Session.Export after Close-on-state err=%v", err)
+		}
+	})
+
+	t.Run("failed finish", func(t *testing.T) {
+		initiator, msgA, err := startTestInitiator(testConfig())
+		if err != nil {
+			t.Fatal(err)
+		}
+		responder, _, err := respondTestResponder(testConfig(), msgA)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, _, err := initiator.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
+			t.Fatalf("initiator Finish garbage err=%v", err)
+		}
+		if err := initiator.Close(); err != nil {
+			t.Fatalf("Initiator.Close after failed Finish err=%v", err)
+		}
+
+		if _, err := responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
+			t.Fatalf("responder Finish garbage err=%v", err)
+		}
+		if err := responder.Close(); err != nil {
+			t.Fatalf("Responder.Close after failed Finish err=%v", err)
+		}
+
+		initiator2, msgA2, err := startTestInitiator(testConfig())
+		if err != nil {
+			t.Fatal(err)
+		}
+		responder2, msgB2, err := respondTestResponder(testConfig(), msgA2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		msgC2, _, err := initiator2.Finish(msgB2)
+		if err != nil {
+			t.Fatal(err)
+		}
+		msgC2[len(msgC2)-1] ^= 0xff
+		if _, err := responder2.Finish(msgC2); !errors.Is(err, ErrConfirmationFailed) {
+			t.Fatalf("responder Finish tampered tagA err=%v", err)
+		}
+		if err := responder2.Close(); err != nil {
+			t.Fatalf("Responder.Close after confirmation failure err=%v", err)
+		}
+	})
+}
+
+func TestSingleUseStateCopiesShareTerminalState(t *testing.T) {
+	initiator, msgA, err := startTestInitiator(testConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	initiatorCopy := *initiator
+	if err := initiator.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := initiatorCopy.Finish([]byte("garbage")); !errors.Is(err, ErrStateUsed) {
+		t.Fatalf("copied Initiator.Finish after original Close err=%v want ErrStateUsed", err)
+	}
+	if err := initiatorCopy.Close(); err != nil {
+		t.Fatalf("copied Initiator.Close after original Close err=%v", err)
+	}
+
+	responder, _, err := respondTestResponder(testConfig(), msgA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	responderCopy := *responder
+	if err := responderCopy.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := responder.Finish([]byte("garbage")); !errors.Is(err, ErrStateUsed) {
+		t.Fatalf("original Responder.Finish after copied Close err=%v want ErrStateUsed", err)
+	}
+	if err := responder.Close(); err != nil {
+		t.Fatalf("original Responder.Close after copied Close err=%v", err)
+	}
+}
+
+func TestSingleUseTerminalClaimsDoNotReturnCoreOnLosingPaths(t *testing.T) {
+	initCore := &initiatorCore{}
+	initState := &initiatorState{used: true, core: initCore}
+	if got, err := initState.claimClose(); err != nil || got != nil {
+		t.Fatalf("losing initiator close got core=%v err=%v, want nil nil", got, err)
+	}
+	if got, err := initState.claimFinish(); !errors.Is(err, ErrStateUsed) || got != nil {
+		t.Fatalf("losing initiator finish got core=%v err=%v, want nil ErrStateUsed", got, err)
+	}
+
+	respCore := &responderCore{}
+	respState := &responderState{used: true, core: respCore}
+	if got, err := respState.claimClose(); err != nil || got != nil {
+		t.Fatalf("losing responder close got core=%v err=%v, want nil nil", got, err)
+	}
+	if got, err := respState.claimFinish(); !errors.Is(err, ErrStateUsed) || got != nil {
+		t.Fatalf("losing responder finish got core=%v err=%v, want nil ErrStateUsed", got, err)
 	}
 }
 
@@ -1175,6 +1381,112 @@ func TestStateReuseAndConcurrentFinish(t *testing.T) {
 	if _, err := responder.Finish(msgC); !errors.Is(err, ErrStateUsed) {
 		t.Fatalf("second responder finish err=%v", err)
 	}
+}
+
+func TestSingleUseStateConcurrentFinishClose(t *testing.T) {
+	t.Run("initiator original finish versus copied close", func(t *testing.T) {
+		initiator, msgA, err := startTestInitiator(testConfig())
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, msgB, err := respondTestResponder(testConfig(), msgA)
+		if err != nil {
+			t.Fatal(err)
+		}
+		initiatorCopy := *initiator
+
+		var wg sync.WaitGroup
+		finishErrs := make(chan error, 1)
+		closeErrs := make(chan error, 1)
+		sessions := make(chan *Session, 1)
+		wg.Go(func() {
+			_, sess, err := initiator.Finish(msgB)
+			finishErrs <- err
+			sessions <- sess
+		})
+		wg.Go(func() {
+			closeErrs <- initiatorCopy.Close()
+		})
+		wg.Wait()
+		close(finishErrs)
+		close(closeErrs)
+		close(sessions)
+
+		if err := <-closeErrs; err != nil {
+			t.Fatalf("copied Initiator.Close err=%v", err)
+		}
+		finishErr := <-finishErrs
+		sess := <-sessions
+		switch {
+		case finishErr == nil:
+			if sess == nil {
+				t.Fatal("successful Finish returned nil Session")
+			}
+			if err := sess.Close(); err != nil {
+				t.Fatal(err)
+			}
+		case errors.Is(finishErr, ErrStateUsed):
+			if sess != nil {
+				t.Fatal("ErrStateUsed Finish returned Session")
+			}
+		default:
+			t.Fatalf("Finish err=%v, want nil or ErrStateUsed", finishErr)
+		}
+	})
+
+	t.Run("responder copied finish versus original close", func(t *testing.T) {
+		initiator, msgA, err := startTestInitiator(testConfig())
+		if err != nil {
+			t.Fatal(err)
+		}
+		responder, msgB, err := respondTestResponder(testConfig(), msgA)
+		if err != nil {
+			t.Fatal(err)
+		}
+		msgC, _, err := initiator.Finish(msgB)
+		if err != nil {
+			t.Fatal(err)
+		}
+		responderCopy := *responder
+
+		var wg sync.WaitGroup
+		finishErrs := make(chan error, 1)
+		closeErrs := make(chan error, 1)
+		sessions := make(chan *Session, 1)
+		wg.Go(func() {
+			sess, err := responderCopy.Finish(msgC)
+			finishErrs <- err
+			sessions <- sess
+		})
+		wg.Go(func() {
+			closeErrs <- responder.Close()
+		})
+		wg.Wait()
+		close(finishErrs)
+		close(closeErrs)
+		close(sessions)
+
+		if err := <-closeErrs; err != nil {
+			t.Fatalf("Responder.Close err=%v", err)
+		}
+		finishErr := <-finishErrs
+		sess := <-sessions
+		switch {
+		case finishErr == nil:
+			if sess == nil {
+				t.Fatal("successful Finish returned nil Session")
+			}
+			if err := sess.Close(); err != nil {
+				t.Fatal(err)
+			}
+		case errors.Is(finishErr, ErrStateUsed):
+			if sess != nil {
+				t.Fatal("ErrStateUsed Finish returned Session")
+			}
+		default:
+			t.Fatalf("Finish err=%v, want nil or ErrStateUsed", finishErr)
+		}
+	})
 }
 
 func TestProtocolAbortsOnInvalidRistrettoEncoding(t *testing.T) {

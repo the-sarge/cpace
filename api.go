@@ -48,23 +48,31 @@ type Config struct {
 
 // Initiator is a single-use initiator state returned by Start.
 type Initiator struct {
+	state *initiatorState
+}
+
+type initiatorState struct {
 	mu   sync.Mutex
 	used bool
 
-	// core is never reassigned or nil'd after construction: clear() zeroes
-	// and nils the core's fields, not this pointer. The unsynchronized
-	// core == nil check in Finish and the ErrStateUsed-after-use semantics
-	// both rely on this.
+	// core is assigned once at construction and never reassigned or nil'd:
+	// clear() zeroes and nils the core's fields, not this pointer. The
+	// terminal-state helpers rely on pointer stability so value copies of
+	// Initiator share one terminal guard and one core pointer.
 	core *initiatorCore
 }
 
 // Responder is a single-use responder state returned by Respond.
 type Responder struct {
+	state *responderState
+}
+
+type responderState struct {
 	mu   sync.Mutex
 	used bool
 
-	// core is never reassigned or nil'd after construction — same invariant
-	// as Initiator.core.
+	// core is assigned once at construction and never reassigned or nil'd —
+	// same invariant as initiatorState.core.
 	core *responderCore
 }
 
@@ -123,7 +131,7 @@ func startWithRandom(cfg Config, random io.Reader) (*Initiator, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	return &Initiator{core: core}, encodeMessageA(nc.sid, ya, nc.ad), nil
+	return &Initiator{state: &initiatorState{core: core}}, encodeMessageA(nc.sid, ya, nc.ad), nil
 }
 
 // Respond consumes message A, creates responder state, and returns message B.
@@ -151,67 +159,153 @@ func respondWithRandom(cfg Config, messageA []byte, random io.Reader) (*Responde
 	if err != nil {
 		return nil, nil, err
 	}
-	return &Responder{core: core}, encodeMessageB(yb, nc.ad, tagB), nil
+	return &Responder{state: &responderState{core: core}}, encodeMessageB(yb, nc.ad, tagB), nil
 }
 
 // Finish consumes message B, verifies the responder confirmation tag, and
 // returns message C plus an authenticated session. The initiator state is
 // consumed even when message parsing or confirmation fails.
 func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
-	if i == nil || i.core == nil {
-		return nil, nil, fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
-	}
-	if err := i.consume(); err != nil {
+	core, err := i.finishCore()
+	if err != nil {
 		return nil, nil, err
 	}
-	defer i.core.clear()
+	defer core.clear()
 	b, err := decodeMessageB(messageB)
 	if err != nil {
 		return nil, nil, err
 	}
-	tagA, sess, err := i.core.finish(b.yb, b.adb, b.tag)
+	tagA, sess, err := core.finish(b.yb, b.adb, b.tag)
 	if err != nil {
 		return nil, nil, err
 	}
 	return encodeMessageC(tagA), sess, nil
 }
 
+// Close releases the persistent secret material held by the initiator state
+// when an exchange is abandoned before Finish. Close is idempotent and
+// nil-safe; calling Close on a nil *Initiator returns nil. Copies of an
+// Initiator share the same terminal state, so closing one copy closes them all.
+func (i *Initiator) Close() error {
+	if i == nil {
+		return nil
+	}
+	if i.state == nil {
+		return fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
+	}
+	core, err := i.state.claimClose()
+	if err != nil {
+		return err
+	}
+	if core == nil {
+		return nil
+	}
+	core.clear()
+	return nil
+}
+
 // Finish consumes message C, verifies the initiator confirmation tag, and
 // returns an authenticated session. The responder state is consumed even when
 // message parsing or confirmation fails.
 func (r *Responder) Finish(messageC []byte) (*Session, error) {
-	if r == nil || r.core == nil {
-		return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
-	}
-	if err := r.consume(); err != nil {
+	core, err := r.finishCore()
+	if err != nil {
 		return nil, err
 	}
-	defer r.core.clear()
+	defer core.clear()
 	c, err := decodeMessageC(messageC)
 	if err != nil {
 		return nil, err
 	}
-	return r.core.finish(c.tag)
+	return core.finish(c.tag)
 }
 
-func (i *Initiator) consume() error {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	if i.used {
-		return ErrStateUsed
+// Close releases the persistent secret material held by the responder state
+// when an exchange is abandoned before Finish. Close is idempotent and
+// nil-safe; calling Close on a nil *Responder returns nil. Copies of a
+// Responder share the same terminal state, so closing one copy closes them all.
+func (r *Responder) Close() error {
+	if r == nil {
+		return nil
 	}
-	i.used = true
+	if r.state == nil {
+		return fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
+	}
+	core, err := r.state.claimClose()
+	if err != nil {
+		return err
+	}
+	if core == nil {
+		return nil
+	}
+	core.clear()
 	return nil
 }
 
-func (r *Responder) consume() error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if r.used {
-		return ErrStateUsed
+func (i *Initiator) finishCore() (*initiatorCore, error) {
+	if i == nil || i.state == nil {
+		return nil, fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
 	}
-	r.used = true
-	return nil
+	return i.state.claimFinish()
+}
+
+func (r *Responder) finishCore() (*responderCore, error) {
+	if r == nil || r.state == nil {
+		return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
+	}
+	return r.state.claimFinish()
+}
+
+func (s *initiatorState) claimFinish() (*initiatorCore, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.used {
+		return nil, ErrStateUsed
+	}
+	if s.core == nil {
+		return nil, fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
+	}
+	s.used = true
+	return s.core, nil
+}
+
+func (s *initiatorState) claimClose() (*initiatorCore, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.used {
+		return nil, nil
+	}
+	if s.core == nil {
+		return nil, fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
+	}
+	s.used = true
+	return s.core, nil
+}
+
+func (s *responderState) claimFinish() (*responderCore, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.used {
+		return nil, ErrStateUsed
+	}
+	if s.core == nil {
+		return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
+	}
+	s.used = true
+	return s.core, nil
+}
+
+func (s *responderState) claimClose() (*responderCore, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.used {
+		return nil, nil
+	}
+	if s.core == nil {
+		return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
+	}
+	s.used = true
+	return s.core, nil
 }
 
 func normalizeConfig(cfg Config) (normalizedConfig, error) {

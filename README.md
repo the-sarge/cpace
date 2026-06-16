@@ -9,10 +9,7 @@ This repository implements `draft-irtf-cfrg-cpace-21` for the
 Status: auditable draft implementation. This code has not had independent
 cryptographic review and is not production-ready.
 
-Current work is release readiness, not new policy design. The public API and
-package-profile choices are frozen for review unless a new finding reopens a
-decision. Before any production-readiness claim, the release bar in
-`docs/security-assessment.md` must be satisfied.
+Current work is release readiness, not new policy design. The public API and package-profile choices are frozen for review unless a new finding reopens a decision. ADR-0008 records a narrow public-lifecycle thaw for `Initiator.Close` and `Responder.Close`; other public-surface and package-profile choices remain frozen. Before any production-readiness claim, the release bar in `docs/security-assessment.md` must be satisfied.
 
 The public API exposes only an initiator-responder flow with mandatory explicit
 key confirmation:
@@ -52,9 +49,7 @@ protection; this package does not authenticate negotiation it never sees. See
 `docs/integration-guidance.md` for outer negotiation and downgrade-protection
 guidance.
 
-`Initiator.Finish` and `Responder.Finish` are single-use calls. Passing a
-malformed message or a message that fails confirmation consumes the state and
-requires restarting the exchange.
+`Initiator.Finish` and `Responder.Finish` are single-use calls. Passing a malformed message or a message that fails confirmation consumes the state and requires restarting the exchange. If an exchange might be abandoned after successful `Start` or `Respond`, call `Initiator.Close` or `Responder.Close` to release local single-use state secrets; it is safe to `defer` that close immediately after construction. `Close` after `Finish` is a no-op, and constructed value copies share the same terminal state.
 
 `Session.TranscriptID` is the draft `CPaceSidOutput` for the confirmed CPace
 transcript, not a complete channel binding for outer protocol negotiation.
@@ -108,7 +103,9 @@ Current pinned evidence baselines and freshness caveats are indexed in `docs/evi
 
 ```go
 initiator, msgA, err := cpace.Start(initCfg)
+defer initiator.Close()
 responder, msgB, err := cpace.Respond(respCfg, msgA)
+defer responder.Close()
 msgC, initSession, err := initiator.Finish(msgB)
 defer initSession.Close()
 respSession, err := responder.Finish(msgC)

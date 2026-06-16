@@ -23,6 +23,7 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
+	defer closeExampleInitiator(initiator)
 
 	respCfg := common
 	respCfg.AssociatedData = []byte("server hello")
@@ -30,6 +31,7 @@ func Example() {
 	if err != nil {
 		panic(err)
 	}
+	defer closeExampleResponder(responder)
 
 	msgC, initSession, err := initiator.Finish(msgB)
 	if err != nil {
@@ -112,14 +114,16 @@ func ExampleInitiator_Finish_confirmationFailure() {
 	if err != nil {
 		panic(err)
 	}
+	defer closeExampleInitiator(initiator)
 
 	respCfg := common
 	respCfg.Context = []byte("different protocol context")
 	respCfg.AssociatedData = []byte("server hello")
-	_, msgB, err := cpace.Respond(respCfg, msgA)
+	responder, msgB, err := cpace.Respond(respCfg, msgA)
 	if err != nil {
 		panic(err)
 	}
+	defer closeExampleResponder(responder)
 
 	_, _, err = initiator.Finish(msgB)
 	fmt.Println(errors.Is(err, cpace.ErrConfirmationFailed))
@@ -165,6 +169,7 @@ func exampleConfirmedSessions(sessionID string) (*cpace.Session, *cpace.Session,
 	if err != nil {
 		return nil, nil, err
 	}
+	defer closeExampleInitiator(initiator)
 
 	respCfg := common
 	respCfg.AssociatedData = []byte("server hello")
@@ -172,6 +177,7 @@ func exampleConfirmedSessions(sessionID string) (*cpace.Session, *cpace.Session,
 	if err != nil {
 		return nil, nil, err
 	}
+	defer closeExampleResponder(responder)
 
 	msgC, initSession, err := initiator.Finish(msgB)
 	if err != nil {
@@ -187,6 +193,18 @@ func exampleConfirmedSessions(sessionID string) (*cpace.Session, *cpace.Session,
 
 func closeExampleSession(session *cpace.Session) {
 	if err := session.Close(); err != nil {
+		panic(err)
+	}
+}
+
+func closeExampleInitiator(initiator *cpace.Initiator) {
+	if err := initiator.Close(); err != nil {
+		panic(err)
+	}
+}
+
+func closeExampleResponder(responder *cpace.Responder) {
+	if err := responder.Close(); err != nil {
 		panic(err)
 	}
 }

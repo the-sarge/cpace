@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Pre-v1 public lifecycle addition: add `Initiator.Close` and `Responder.Close` for explicit cleanup of abandoned single-use state. Constructed value copies share terminal state; `Close` after `Finish` is a nil no-op, and `Finish` after `Close` returns `ErrStateUsed`. This closes the abandoned-state cleanup gap recorded by ADR-0001/ADR-0008 without changing wire format or package-profile policy.
 - Add ADR-0007 release supply-chain artifacts: Release Validation now verifies signed annotated tags first, generates and validates a CycloneDX 1.5 SBOM, attests the SBOM with GitHub/Sigstore, and publishes the SBOM plus Sigstore bundle on tag pushes. No Go API, protocol, or wire-format impact.
 - Pre-v1 contract/behavior change: `(*Session)(nil).Close()` now returns `nil` as a nil-safe no-op; zero-value `Session` values and nil/zero-value `Export` remain strict `ErrInvalidInput` cases. This is breaking for callers that used `errors.Is(err, ErrInvalidInput)` on `Close` to detect nil receivers.
 - Pin Export length contract: documented as `[0, 16320]`, zero-length returns length 0.
