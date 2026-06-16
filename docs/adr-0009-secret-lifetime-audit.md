@@ -6,9 +6,9 @@ Scope: manual audit for the ADR-0009 caller-input implementation. This is not a 
 
 ## Code Paths Reviewed
 
-- `acceptInput` in `input.go`: validates `Input`, enforces package-owned caps, and clones caller-owned byte slices into a short-lived `acceptedInput`.
+- `acceptInput`, `validateRequiredCallerInputFields`, and `validateCallerInputCapFields` in `input.go`: validate `Input`, enforce package-owned caps, and clone caller-owned byte slices into a short-lived `acceptedInput`; the validation helpers and `callerInputCappedField` values hold only transient read-only slice headers into caller input and do not clone, persist, wipe, or extend password byte residency.
 - `acceptedInput.wipe` in `input.go`: clears accepted password, role-local identities, context, SessionID, and local associated data if normalization does not transfer ownership.
-- `normalizeInput`, `normalizeStartInput`, and `normalizeRespondInput` in `input.go`: map role-local `SelfID`/`PeerID` into transcript-role `initiatorID`/`responderID`, build CI, clear accepted context immediately after CI construction, and transfer accepted byte slices into `normalizedInput`.
+- `normalizeInput`, `normalizeStartInput`, `normalizeRespondInput`, and `callerInputRole.mapTranscriptIDs` in `input.go`: map role-local `SelfID`/`PeerID` into transcript-role `initiatorID`/`responderID`, build CI, clear accepted context immediately after CI construction, and transfer accepted byte slices into `normalizedInput`.
 - `normalizedInput.wipe` in `input.go`: deferred by both `startWithRandom` and `respondWithRandom` to clear normalized password, mapped identities, CI, SessionID, and local associated data on every return path.
 - `newInitiatorCore` and `newResponderCore` in `core.go`: derive the generator from the normalized password, then immediately clear the normalized password backing array before scalar sampling and transcript work continue.
 

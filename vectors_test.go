@@ -355,7 +355,7 @@ func TestCoreDraft21Vectors(t *testing.T) {
 		}
 	}
 
-	initNC := draftVectorConfig(v, v["ADa"])
+	initNC := draftVectorInput(v, v["ADa"])
 	defer initNC.wipe()
 	initCore, gotYa, err := newInitiatorCore(initNC, &repeatingReader{buf: v["ya"]})
 	if err != nil {
@@ -376,7 +376,7 @@ func TestCoreDraft21Vectors(t *testing.T) {
 		t.Fatalf("initiator core session ISK got %x want %x", initSession.state.isk, v["ISK_IR"])
 	}
 
-	respNC := draftVectorConfig(v, v["ADb"])
+	respNC := draftVectorInput(v, v["ADb"])
 	defer respNC.wipe()
 	respCore, gotYb, gotTagB, err := newResponderCore(respNC, v["Ya"], v["ADa"], &repeatingReader{buf: v["yb"]})
 	if err != nil {
@@ -402,7 +402,7 @@ func TestCoreDraft21Vectors(t *testing.T) {
 	}
 }
 
-func draftVectorConfig(v draftVector, ad []byte) normalizedInput {
+func draftVectorInput(v draftVector, ad []byte) normalizedInput {
 	return normalizedInput{
 		password:    clone(v["PRS"]),
 		initiatorID: []byte("A_initiator"),
