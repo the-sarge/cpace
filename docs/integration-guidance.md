@@ -43,6 +43,12 @@ party identities. `Session.PeerID` returns the caller-configured peer identity
 that the confirmed exchange proved both sides agreed on; it is not parsed from
 wire data.
 
+## Single-Use State Lifecycle
+
+`Start` and `Respond` return single-use state that holds local persistent secret material until a terminal operation consumes it. Call `Initiator.Close` or `Responder.Close` if the exchange can be abandoned before `Finish`, and prefer `defer state.Close()` immediately after successful construction. `Close` after `Finish` returns nil, including after a `Finish` call that consumed the state and failed, so the deferred cleanup pattern is safe for success, failure, and cancellation paths.
+
+Copies of constructed `Initiator` and `Responder` values share terminal state. A terminal operation on one copy spends the state for all copies: `Finish` after `Close` returns `ErrStateUsed`, while `Close` after `Finish` returns nil. Returned `Session` values own independent key material and still need their own `Close` when done.
+
 ## Session Outputs
 
 `Respond` success is not authentication. Treat message B as unauthenticated

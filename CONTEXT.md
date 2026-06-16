@@ -8,12 +8,11 @@ the implementation.
 ## Language
 
 **CPace core**:
-The deep, unexported module that owns one role's CPace computation — generator derivation, scalar sampling, Diffie-Hellman, transcript assembly, ISK derivation, confirmation tags — and the lifetime of its *persistent* secrets; scratch secrets are cleared in place inside its methods, never stored on it. Implemented per ADR-0001 as `initiatorCore` and `responderCore`, with public `Initiator` and `Responder` as thin single-use shells that hold a named `core` field and delegate cryptographic work to it.
+The deep, unexported module that owns one role's CPace computation — generator derivation, scalar sampling, Diffie-Hellman, transcript assembly, ISK derivation, confirmation tags — and the lifetime of its *persistent* secrets; scratch secrets are cleared in place inside its methods, never stored on it. Implemented per ADR-0001 as `initiatorCore` and `responderCore`, with public `Initiator` and `Responder` as thin single-use shells that hold shared terminal state and delegate cryptographic work to the core.
 _Avoid_: crypto layer, engine, helper.
 
 **Single-use state**:
-An `Initiator` or `Responder` value, which the protocol permits to be consumed
-exactly once. Reuse is rejected, and the state is spent even when a step fails.
+An `Initiator` or `Responder` value, which the protocol permits to be consumed exactly once. `Finish` and `Close` are terminal operations: reuse is rejected, the state is spent even when `Finish` fails, `Close` releases local persistent secrets when an exchange is abandoned, and constructed value copies share the same terminal state.
 _Avoid_: handle, context (Go's `context.Context` is unrelated).
 
 **Message framing**:

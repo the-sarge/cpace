@@ -19,6 +19,11 @@
 // only for draft-21 compatibility tests or deliberately compatible profiles
 // that accept weaker replay and transcript separation.
 //
+// Initiator and Responder are single-use state. Finish consumes them on
+// success and failure; Close releases their local persistent secret material
+// when an exchange is abandoned before Finish. Close is nil-safe and
+// idempotent, and value copies share terminal state.
+//
 // Session.Close performs best-effort cleanup of session key material and makes
 // future Export calls fail. PeerAssociatedData and PeerID expose copied,
 // non-secret metadata bound into the confirmed exchange.
