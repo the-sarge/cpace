@@ -1294,3 +1294,32 @@ PR #114 deepened the Package-owned cap policy module without changing public API
 **Next**
 
 - Treat this as security-relevant internal validation movement for evidence discipline: stronger release claims still require refreshing pinned dependency-review, fuzz, Capslock, and security/spec-audit evidence against the exact candidate commit.
+
+---
+
+## ADR-0008 lifecycle thaw accepted - 2026-06-16 00:35 EDT
+
+**Main:** `c266a540d27a`
+**Actor:** Codex
+
+**Summary**
+
+Accepted and merged ADR-0008, recording a narrow public-lifecycle thaw for explicit cleanup of abandoned `Initiator` and `Responder` single-use state. The accepted design adds role-state `Close` methods in a follow-up implementation PR and specifies shared terminal state so constructed value copies preserve exactly-one-terminal-operation semantics.
+
+**Completed**
+
+- Added `docs/adr/0008-single-use-state-close.md` and merged PR #116: https://github.com/the-sarge/cpace/pull/116
+- Ran ADR gating with `ras consider` run `20260616T040116-7edbef4428d20850e0094ce1`, then revised the ADR for copied single-use values and failed-Finish cleanup semantics.
+- Ran fresh `ras consider` run `20260616T041535-4f06c05a3b6dc7d3f4d7b388` and `ras verify` verification `20260616T041535-4f06c05a3b6dc7d3f4d7b388-verification-1781583998570028000`, which reported `unresolved: []`.
+- Ran PR review loop `ras review-fix 116`; final status was `done` with no merge-blocking findings.
+- Merged PR #116 at merge commit `c266a540d27a89fbd3fd2d8d0374ddd48e71897a`.
+
+**Validation**
+
+- `task docs:check` passed locally before PR creation and after ADR revisions.
+- GitHub checks on PR #116 passed: Check, DCO, Dependency Gate, and SAST Gate; the gosec advisory check was neutral/skipped.
+
+**Next**
+
+- Implement ADR-0008 in a separate code PR.
+- Do not claim refreshed release evidence from ADR-0008 until exact-candidate evidence refresh covers the implementation commit.
