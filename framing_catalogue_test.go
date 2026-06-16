@@ -125,7 +125,7 @@ func messageFramingFieldLimitCases() []messageFramingCase {
 	bPoint := bytes.Repeat([]byte{0x42}, messageBPointCap.length)
 	bTag := bytes.Repeat([]byte{0x99}, messageBTagCap.length)
 	overDeclaredBAd := append(messageHeader(roleB), prependLen(bPoint)...)
-	overDeclaredBAd = append(overDeclaredBAd, encodeLEB128(maxAssociatedDataLength+1)...)
+	overDeclaredBAd = append(overDeclaredBAd, appendLEB128(nil, maxAssociatedDataLength+1)...)
 	return []messageFramingCase{
 		{"A session id oversized", encodeMessageA(bytes.Repeat([]byte{0x11}, messageASessionIDCap.length+1), aPoint, nil), "message A session id field too large"},
 		{"A point short", encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length-1), nil), "message A point length"},

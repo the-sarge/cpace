@@ -106,9 +106,14 @@ func encodeMessage(spec messageSpec, fields ...[]byte) []byte {
 	if len(fields) != len(spec.fields) {
 		panic("cpace: internal message framing field count mismatch")
 	}
-	out := []byte{wireFormatV1, wireSuite, spec.role}
+	capacity := messageHeaderSize
 	for _, field := range fields {
-		out = append(out, prependLen(field)...)
+		capacity += lengthValueLen(len(field))
+	}
+	out := make([]byte, 0, capacity)
+	out = append(out, wireFormatV1, wireSuite, spec.role)
+	for _, field := range fields {
+		out = appendLengthValue(out, field)
 	}
 	return out
 }

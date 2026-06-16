@@ -26,7 +26,7 @@ func generatorString(dsi, prs, ci, sid []byte, sInBytes int) []byte {
 	// The trailing subtraction accounts for the length byte of the zero-padding
 	// field. For this draft-21 suite, ZPAD is shorter than 128 bytes, so its
 	// LEB128 length prefix is exactly one byte.
-	rawZPADLen := sInBytes - len(prependLen(prs)) - len(prependLen(dsi)) - 1
+	rawZPADLen := sInBytes - lengthValueLen(len(prs)) - lengthValueLen(len(dsi)) - 1
 	zpadLen := max(rawZPADLen, 0)
 	return lvCat(dsi, prs, make([]byte, zpadLen), ci, sid)
 }
