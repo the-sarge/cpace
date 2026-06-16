@@ -30,6 +30,14 @@ case "$sbom_name" in
     ;;
 esac
 
+case "$sbom_tag" in
+  *'
+'*)
+    echo "SBOM filename must use a supported release tag: $sbom_name" >&2
+    exit 1
+    ;;
+esac
+
 if ! printf '%s\n' "$sbom_tag" | grep -Eq "$semver_re"; then
   echo "SBOM filename must use a supported release tag: $sbom_name" >&2
   exit 1

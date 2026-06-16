@@ -42,6 +42,13 @@ if "$repo_root/scripts/extract-release-notes.sh" "$changelog" v1.2 >"$tmpdir/sho
   exit 1
 fi
 
+multiline_tag=$(printf 'v1.2.3\nv9.9.9')
+if "$repo_root/scripts/extract-release-notes.sh" "$changelog" "$multiline_tag" >"$tmpdir/multiline-tag-notes.txt" 2>"$tmpdir/multiline-tag-notes.err"; then
+  echo "multiline release tag notes unexpectedly succeeded" >&2
+  exit 1
+fi
+grep -q 'unsupported release tag' "$tmpdir/multiline-tag-notes.err"
+
 invalid_tag_changelog="$tmpdir/INVALID_TAG_CHANGELOG.md"
 cat >"$invalid_tag_changelog" <<'EOF'
 # Changelog
@@ -128,6 +135,13 @@ if "$repo_root/scripts/release-tag-metadata.sh" 'v1/foo' >"$tmpdir/tag-slash.out
   exit 1
 fi
 
+multiline_metadata_tag=$(printf 'v1.0.0\nlatest=true')
+if "$repo_root/scripts/release-tag-metadata.sh" "$multiline_metadata_tag" >"$tmpdir/tag-multiline.out" 2>"$tmpdir/tag-multiline.err"; then
+  echo "multiline metadata tag unexpectedly succeeded" >&2
+  exit 1
+fi
+grep -q 'unsupported release tag' "$tmpdir/tag-multiline.err"
+
 sbom="$tmpdir/cpace-v1.2.3.cdx.json"
 cat >"$sbom" <<'EOF'
 {
@@ -161,6 +175,14 @@ if "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$wrong_name_sbom" >"$tmpdir/
   echo "wrongly named SBOM unexpectedly succeeded" >&2
   exit 1
 fi
+
+newline_name_sbom="$tmpdir/$(printf 'cpace-v1.2.3\nignored.cdx.json')"
+cp "$sbom" "$newline_name_sbom"
+if "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$newline_name_sbom" >"$tmpdir/newline-name-sbom.out" 2>"$tmpdir/newline-name-sbom.err"; then
+  echo "newline-bearing SBOM filename unexpectedly succeeded" >&2
+  exit 1
+fi
+grep -q 'SBOM filename must use a supported release tag' "$tmpdir/newline-name-sbom.err"
 
 substring_sbom="$tmpdir/cpace-v1.2.4.cdx.json"
 cat >"$substring_sbom" <<'EOF'

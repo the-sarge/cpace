@@ -19,6 +19,15 @@ if [ ! -f "$changelog" ]; then
   exit 1
 fi
 
+case "$tag" in
+  *'
+'*)
+    echo "unsupported release tag: $tag" >&2
+    echo "expected vMAJOR.MINOR.PATCH with an optional SemVer prerelease suffix" >&2
+    exit 1
+    ;;
+esac
+
 if ! printf '%s\n' "$tag" | grep -Eq "$semver_re"; then
   echo "unsupported release tag: $tag" >&2
   echo "expected vMAJOR.MINOR.PATCH with an optional SemVer prerelease suffix" >&2
