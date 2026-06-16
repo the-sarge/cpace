@@ -1398,3 +1398,37 @@ PR #123 implemented accepted ADR-0009 by replacing the public `Config` caller-in
 
 - Non-blocking follow-ups remain open as #124 and #125.
 - Stronger release claims still require refreshing pinned dependency-review, fuzz, Capslock, and security/spec-audit evidence against the exact candidate commit.
+
+---
+
+## Caller input acceptance deepened - 2026-06-16 11:14 EDT
+
+**Main:** `19e9aacbc6b2`
+**Actor:** Codex
+
+### Summary
+
+Deepened the **Caller input** implementation in PR #127 without changing the public `Input`, `Start`, or `Respond` surface. The refactor moved public `Input`, accepted input, normalized input, validation/cap association, role mapping, and wipe ownership into `input.go`, leaving package-owned cap primitives in `caps.go` and CPace computation in the **CPace core**.
+
+### Completed
+
+- Merged PR #127 (`refactor: deepen caller input acceptance`) at `19e9aacbc6b20ffbe488aa6120852f9bf0a32a88`.
+- Added characterization coverage for caller-owned `Input` slices across all accepted fields and error paths.
+- Updated ADR-0009 secret-lifetime audit references after moving Caller input acceptance and normalization to `input.go`.
+- Ran RAS review/fix loops on PR #127: `20260616T145633-e5bd3e28d6a9516775112b68` on head `3b03c3c`, then `20260616T150525-4806d0c15d4a8cabbd207f5d` on head `fb5dc0a`.
+- Created follow-up issue #128 for the non-blocking low-severity docs drift in `docs/cpace-core-plan.md`.
+
+### Validation
+
+- `go test ./...`
+- `go test -race ./...`
+- `go vet ./...`
+- `git diff --check`
+- `task check`
+
+`task check` completed successfully; the release helper smoke test reported `syft not found; skipping optional real Syft SBOM validation`, matching existing helper behavior.
+
+### Next
+
+- Resolve #128 before v1.0.0 documentation freeze if the living CPace core plan should keep matching current implementation names.
+- Include this security-relevant Caller input refactor in the next exact-candidate release evidence refresh before making stronger release-readiness claims.
