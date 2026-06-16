@@ -1515,14 +1515,14 @@ PR #141 completed issue #139 by removing the vestigial internal `peerShareRole.v
 - Removed `peerShareRole.validate` from `peer_share.go`.
 - Updated `TestPeerShareRoleSharedSecretAddsRoleContext` so the former `validate` assertion now exercises `initiatorPeerShare.sharedSecret(s, invalid.InvalidY2)`, preserving initiator identity-sentinel and exact role-context error coverage.
 - Kept separate direct `decode` coverage in `TestPeerShareRoleDecodeSharedSecretAddsRoleContext`.
-- Confirmed no `.validate(` call sites remain.
+- Confirmed no validate-wrapper call sites remain.
 - Completed OmniFocus task `hMxvjmcXGyU`; no follow-up issues or OmniFocus tasks were needed.
 
 **Validation**
 
 - Baseline focused peer-share tests passed before the cleanup.
-- The RED acceptance check `git grep -n '\.validate('` found the remaining test call before removal.
-- After cleanup, `git grep -n '\.validate(' || true` produced no matches.
+- The RED acceptance grep found the remaining validate-wrapper test call before removal.
+- After cleanup, the same grep produced no matches.
 - Local gates passed before merge: focused peer-share tests, `go test ./...`, `git diff --check`, and `task check`.
 - RAS review-fix run `20260616T201826-ef5980e31fc0ec00230494f6` on head `17856c1426b815618e40b7b26c98cea45f52c68e` found a non-blocking test-duplication nit, which was fixed in follow-up commit `d67ef86303b385e91af2ce049988b78471b36453`.
 - RAS review-fix run `20260616T202330-c39ed657dd21626806deca74` on head `d67ef86303b385e91af2ce049988b78471b36453` found only a PR-body wording nit, which was fixed without changing code.
