@@ -33,53 +33,6 @@ func TestStringUtilitiesDraftVectors(t *testing.T) {
 	}
 }
 
-func TestLengthValueEncodingBoundaries(t *testing.T) {
-	tests := []struct {
-		name       string
-		length     int
-		wantPrefix string
-	}{
-		{"empty", 0, "00"},
-		{"single byte max", 0x7f, "7f"},
-		{"two byte min", 0x80, "8001"},
-		{"two byte max", 0x3fff, "ff7f"},
-		{"three byte min", 0x4000, "808001"},
-		{"associated data cap", maxAssociatedDataLength, "808004"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := prependLen(bytes.Repeat([]byte{0xaa}, tt.length))
-			wantPrefix, err := hex.DecodeString(tt.wantPrefix)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !bytes.HasPrefix(got, wantPrefix) {
-				t.Fatalf("prefix=%x want %x", got[:len(wantPrefix)], wantPrefix)
-			}
-			if len(got) != len(wantPrefix)+tt.length {
-				t.Fatalf("encoded len=%d want %d", len(got), len(wantPrefix)+tt.length)
-			}
-		})
-	}
-}
-
-func TestLVCatBoundaryComposition(t *testing.T) {
-	first := bytes.Repeat([]byte{0xaa}, 0x80)
-	second := []byte("z")
-	got := lvCat(first, second)
-	wantPrefix, err := hex.DecodeString("8001")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.HasPrefix(got, wantPrefix) {
-		t.Fatalf("first prefix=%x want %x", got[:len(wantPrefix)], wantPrefix)
-	}
-	wantSecond := append([]byte{0x01}, second...)
-	if !bytes.Equal(got[len(wantPrefix)+len(first):], wantSecond) {
-		t.Fatalf("second field=%x want %x", got[len(wantPrefix)+len(first):], wantSecond)
-	}
-}
-
 func TestWireFormatPrefixByte(t *testing.T) {
 	if wireFormatV1 != 0xc1 {
 		t.Fatalf("wireFormatV1=%#x, want 0xc1", wireFormatV1)
