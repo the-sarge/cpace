@@ -107,6 +107,8 @@ ADR-0002 (suite API cleanup) landed on this feature branch after the audit's imp
 
 ADR-0009 (caller input) landed after the audit's implementation baseline. It replaces the public `Config` caller-input shape with role-local `Input`, maps `SelfID` and `PeerID` per role before building CI, renames caller local associated data to `LocalAssociatedData`, and preserves the wire format. This is a security-relevant package-code change; the pinned dependency, Capslock, security/spec audit, and paired long-fuzz evidence remain historical until refreshed at the exact release candidate. The named manual secret-lifetime audit for this implementation is `docs/adr-0009-secret-lifetime-audit.md`.
 
+Issue #80 (responder peer-share decoded-element reuse) landed after the audit's implementation baseline. It keeps the encoded-byte `scalarMultVFY` helper for draft/vector traceability, adds an internal element-accepting path for the responder after `Ya` has already passed role-aware peer-share prevalidation, and preserves validate-before-randomness, ADR-0003 peer-share sentinels, post-multiply neutral-element defense, public API, and wire behavior. This is a security-relevant peer-share rejection and CPace core change; the consolidated exact-candidate evidence refresh must re-audit it before stronger release-readiness claims.
+
 ## Residual Risk
 
 External review of package-owned CI/framing/profile choices remains open.

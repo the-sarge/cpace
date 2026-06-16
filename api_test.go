@@ -2019,6 +2019,71 @@ func TestPeerShareRoleSharedSecretAddsRoleContext(t *testing.T) {
 	}
 }
 
+func TestScalarMultVFYElementMatchesEncodedPeerShare(t *testing.T) {
+	invalid := mustLoadDraftInvalidVector(t)
+	s, err := scalarFromCanonical(invalid.Valid["s"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := decodePublicShare(invalid.Valid["X"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := scalarMultVFYElement(s, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := scalarMultVFY(s, invalid.Valid["X"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Fatalf("scalarMultVFYElement got %x want %x", got, want)
+	}
+}
+
+func TestPeerShareRoleDecodeSharedSecretAddsRoleContext(t *testing.T) {
+	invalid := mustLoadDraftInvalidVector(t)
+	s, err := scalarFromCanonical(invalid.Valid["s"])
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	p, err := responderPeerShare.decode(invalid.Valid["X"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := responderPeerShare.sharedSecretElement(s, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := invalid.Valid["G.scalar_mult_vfy(s,X)"]; !bytes.Equal(got, want) {
+		t.Fatalf("sharedSecretElement got %x want %x", got, want)
+	}
+
+	_, err = responderPeerShare.decode(invalid.InvalidY1)
+	if err == nil {
+		t.Fatal("expected responder share rejection")
+	}
+	if !errors.Is(err, ErrAbort) || !errors.Is(err, ErrPeerShareEncoding) {
+		t.Fatalf("decode err=%v want ErrAbort and ErrPeerShareEncoding", err)
+	}
+	if want := "cpace: protocol abort: invalid responder share: cpace: peer share encoding"; err.Error() != want {
+		t.Fatalf("decode err=%q want %q", err.Error(), want)
+	}
+
+	_, err = initiatorPeerShare.decode(invalid.InvalidY2)
+	if err == nil {
+		t.Fatal("expected initiator share rejection")
+	}
+	if !errors.Is(err, ErrAbort) || !errors.Is(err, ErrPeerShareIdentity) {
+		t.Fatalf("decode err=%v want ErrAbort and ErrPeerShareIdentity", err)
+	}
+	if want := "cpace: protocol abort: invalid initiator share: cpace: peer share identity"; err.Error() != want {
+		t.Fatalf("decode err=%q want %q", err.Error(), want)
+	}
+}
+
 func TestWireLengthRejectionIsMessageNotPeerShare(t *testing.T) {
 	// Pins the layering claim made by ADR-0003 and docs/integration-guidance.md:
 	// malformed wire lengths surface as ErrMessage from framing and never as
@@ -2055,6 +2120,24 @@ func TestScalarMultVFYPostMultiplyIdentityDefense(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "neutral-element shared secret") {
 		t.Fatalf("err=%q missing neutral-element diagnostic", err)
+	}
+
+	p, err := decodePublicShare(invalid.Valid["X"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err = scalarMultVFYElement(ristretto255.NewScalar().Zero(), p)
+	if out != nil {
+		t.Fatalf("element out=%x want nil", out)
+	}
+	if !errors.Is(err, ErrAbort) {
+		t.Fatalf("element err=%v does not wrap ErrAbort", err)
+	}
+	if errors.Is(err, ErrPeerShareEncoding) || errors.Is(err, ErrPeerShareIdentity) {
+		t.Fatalf("element err=%v wraps a peer-share sentinel", err)
+	}
+	if !strings.Contains(err.Error(), "neutral-element shared secret") {
+		t.Fatalf("element err=%q missing neutral-element diagnostic", err)
 	}
 }
 
