@@ -1028,21 +1028,25 @@ func TestSingleUseStateCopiesShareTerminalState(t *testing.T) {
 
 func TestSingleUseTerminalClaimsDoNotReturnCoreOnLosingPaths(t *testing.T) {
 	initCore := &initiatorCore{}
-	initState := &initiatorState{used: true, core: initCore}
-	if got, err := initState.claimClose(); err != nil || got != nil {
-		t.Fatalf("losing initiator close got core=%v err=%v, want nil nil", got, err)
-	}
-	if got, err := initState.claimFinish(); !errors.Is(err, ErrStateUsed) || got != nil {
-		t.Fatalf("losing initiator finish got core=%v err=%v, want nil ErrStateUsed", got, err)
-	}
+	assertLosingTerminalClaimDoesNotReturnCore(t, &initiatorState{used: true, core: initCore}, initCore)
 
 	respCore := &responderCore{}
-	respState := &responderState{used: true, core: respCore}
-	if got, err := respState.claimClose(); err != nil || got != nil {
-		t.Fatalf("losing responder close got core=%v err=%v, want nil nil", got, err)
+	assertLosingTerminalClaimDoesNotReturnCore(t, &responderState{used: true, core: respCore}, respCore)
+}
+
+func assertLosingTerminalClaimDoesNotReturnCore[C singleUseCore](t *testing.T, state *singleUseState[C], core C) {
+	t.Helper()
+	if got, err := state.claimClose(); err != nil || got != nil {
+		t.Fatalf("losing close got core=%v err=%v, want nil nil", got, err)
 	}
-	if got, err := respState.claimFinish(); !errors.Is(err, ErrStateUsed) || got != nil {
-		t.Fatalf("losing responder finish got core=%v err=%v, want nil ErrStateUsed", got, err)
+	if got, err := state.claimFinish(); !errors.Is(err, ErrStateUsed) || got != nil {
+		t.Fatalf("losing finish got core=%v err=%v, want nil ErrStateUsed", got, err)
+	}
+	if core == nil {
+		t.Fatal("test must provide a non-nil core")
+	}
+	if state.core != core {
+		t.Fatal("losing claims mutated the stored core pointer")
 	}
 }
 

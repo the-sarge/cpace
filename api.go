@@ -26,30 +26,14 @@ type Initiator struct {
 	state *initiatorState
 }
 
-type initiatorState struct {
-	mu   sync.Mutex
-	used bool
-
-	// core is assigned once at construction and never reassigned or nil'd:
-	// clear() zeroes and nils the core's fields, not this pointer. The
-	// terminal-state helpers rely on pointer stability so value copies of
-	// Initiator share one terminal guard and one core pointer.
-	core *initiatorCore
-}
+type initiatorState = singleUseState[*initiatorCore]
 
 // Responder is a single-use responder state returned by Respond.
 type Responder struct {
 	state *responderState
 }
 
-type responderState struct {
-	mu   sync.Mutex
-	used bool
-
-	// core is assigned once at construction and never reassigned or nil'd —
-	// same invariant as initiatorState.core.
-	core *responderCore
-}
+type responderState = singleUseState[*responderCore]
 
 // Session is an explicitly confirmed CPace session. Copies of a Session share
 // the same close state and secret key material.
@@ -82,7 +66,7 @@ func startWithRandom(input Input, random io.Reader) (*Initiator, []byte, error) 
 	if err != nil {
 		return nil, nil, err
 	}
-	return &Initiator{state: &initiatorState{core: core}}, encodeMessageA(nc.sid, ya, nc.ad), nil
+	return &Initiator{state: newSingleUseState(core, "uninitialized initiator")}, encodeMessageA(nc.sid, ya, nc.ad), nil
 }
 
 // Respond consumes message A, creates responder state, and returns message B.
@@ -110,7 +94,7 @@ func respondWithRandom(input Input, messageA []byte, random io.Reader) (*Respond
 	if err != nil {
 		return nil, nil, err
 	}
-	return &Responder{state: &responderState{core: core}}, encodeMessageB(yb, nc.ad, tagB), nil
+	return &Responder{state: newSingleUseState(core, "uninitialized responder")}, encodeMessageB(yb, nc.ad, tagB), nil
 }
 
 // Finish consumes message B, verifies the responder confirmation tag, and
@@ -205,58 +189,6 @@ func (r *Responder) finishCore() (*responderCore, error) {
 		return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
 	}
 	return r.state.claimFinish()
-}
-
-func (s *initiatorState) claimFinish() (*initiatorCore, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.used {
-		return nil, ErrStateUsed
-	}
-	if s.core == nil {
-		return nil, fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
-	}
-	s.used = true
-	return s.core, nil
-}
-
-func (s *initiatorState) claimClose() (*initiatorCore, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.used {
-		return nil, nil
-	}
-	if s.core == nil {
-		return nil, fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
-	}
-	s.used = true
-	return s.core, nil
-}
-
-func (s *responderState) claimFinish() (*responderCore, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.used {
-		return nil, ErrStateUsed
-	}
-	if s.core == nil {
-		return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
-	}
-	s.used = true
-	return s.core, nil
-}
-
-func (s *responderState) claimClose() (*responderCore, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.used {
-		return nil, nil
-	}
-	if s.core == nil {
-		return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
-	}
-	s.used = true
-	return s.core, nil
 }
 
 func newSession(isk, transcript, peerAD, peerID []byte) *Session {
