@@ -59,6 +59,7 @@ type messageC struct {
 }
 
 type messageSpec struct {
+	name   string
 	role   byte
 	fields []messageFieldSpec
 }
@@ -67,6 +68,7 @@ type messageFieldSpec = packageCapField
 
 var (
 	messageASpec = messageSpec{
+		name: "A",
 		role: roleA,
 		fields: []messageFieldSpec{
 			messageASessionIDCap,
@@ -75,6 +77,7 @@ var (
 		},
 	}
 	messageBSpec = messageSpec{
+		name: "B",
 		role: roleB,
 		fields: []messageFieldSpec{
 			messageBPointCap,
@@ -83,6 +86,7 @@ var (
 		},
 	}
 	messageCSpec = messageSpec{
+		name: "C",
 		role: roleC,
 		fields: []messageFieldSpec{
 			messageCTagCap,
@@ -90,19 +94,23 @@ var (
 	}
 )
 
+func messageFramingCatalogue() []messageSpec {
+	return []messageSpec{messageASpec, messageBSpec, messageCSpec}
+}
+
 func encodeMessageA(sid, ya, ada []byte) []byte {
-	return encodeMessage(messageASpec, sid, ya, ada)
+	return messageASpec.encode(sid, ya, ada)
 }
 
 func encodeMessageB(yb, adb, tag []byte) []byte {
-	return encodeMessage(messageBSpec, yb, adb, tag)
+	return messageBSpec.encode(yb, adb, tag)
 }
 
 func encodeMessageC(tag []byte) []byte {
-	return encodeMessage(messageCSpec, tag)
+	return messageCSpec.encode(tag)
 }
 
-func encodeMessage(spec messageSpec, fields ...[]byte) []byte {
+func (spec messageSpec) encode(fields ...[]byte) []byte {
 	if len(fields) != len(spec.fields) {
 		panic("cpace: internal message framing field count mismatch")
 	}
@@ -119,7 +127,7 @@ func encodeMessage(spec messageSpec, fields ...[]byte) []byte {
 }
 
 func decodeMessageA(in []byte) (messageA, error) {
-	fields, err := decodeMessage(messageASpec, in)
+	fields, err := messageASpec.decode(in)
 	if err != nil {
 		return messageA{}, err
 	}
@@ -127,7 +135,7 @@ func decodeMessageA(in []byte) (messageA, error) {
 }
 
 func decodeMessageB(in []byte) (messageB, error) {
-	fields, err := decodeMessage(messageBSpec, in)
+	fields, err := messageBSpec.decode(in)
 	if err != nil {
 		return messageB{}, err
 	}
@@ -135,14 +143,14 @@ func decodeMessageB(in []byte) (messageB, error) {
 }
 
 func decodeMessageC(in []byte) (messageC, error) {
-	fields, err := decodeMessage(messageCSpec, in)
+	fields, err := messageCSpec.decode(in)
 	if err != nil {
 		return messageC{}, err
 	}
 	return messageC{tag: fields[0]}, nil
 }
 
-func decodeMessage(spec messageSpec, in []byte) ([][]byte, error) {
+func (spec messageSpec) decode(in []byte) ([][]byte, error) {
 	r, err := newMessageReader(in, spec)
 	if err != nil {
 		return nil, err

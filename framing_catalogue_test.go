@@ -19,47 +19,44 @@ type messageFramingCase struct {
 }
 
 func messageFramingTargets() []messageFramingTarget {
-	return []messageFramingTarget{
-		{
-			name:  "A",
-			role:  roleA,
-			valid: validMessageAForCatalogue,
+	targets := make([]messageFramingTarget, 0, len(messageFramingCatalogue()))
+	for _, spec := range messageFramingCatalogue() {
+		spec := spec
+		targets = append(targets, messageFramingTarget{
+			name:  spec.name,
+			role:  spec.role,
+			valid: func() []byte { return validMessageForCatalogue(spec) },
 			decode: func(msg []byte) error {
-				_, err := decodeMessageA(msg)
+				_, err := spec.decode(msg)
 				return err
 			},
-		},
-		{
-			name:  "B",
-			role:  roleB,
-			valid: validMessageBForCatalogue,
-			decode: func(msg []byte) error {
-				_, err := decodeMessageB(msg)
-				return err
-			},
-		},
-		{
-			name:  "C",
-			role:  roleC,
-			valid: validMessageCForCatalogue,
-			decode: func(msg []byte) error {
-				_, err := decodeMessageC(msg)
-				return err
-			},
-		},
+		})
 	}
+	return targets
 }
 
-func validMessageAForCatalogue() []byte {
-	return encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length), []byte("ADa"))
+func validMessageForCatalogue(spec messageSpec) []byte {
+	return spec.encode(validMessageFieldsForCatalogue(spec)...)
 }
 
-func validMessageBForCatalogue() []byte {
-	return encodeMessageB(bytes.Repeat([]byte{0x42}, messageBPointCap.length), []byte("ADb"), bytes.Repeat([]byte{0x99}, messageBTagCap.length))
+func validMessageFieldsForCatalogue(spec messageSpec) [][]byte {
+	fields := make([][]byte, len(spec.fields))
+	for i, field := range spec.fields {
+		if field.exact {
+			fields[i] = bytes.Repeat([]byte{byte(0x40 + i)}, field.length)
+			continue
+		}
+		fields[i] = []byte(fmt.Sprintf("field-%d", i))
+	}
+	return fields
 }
 
-func validMessageCForCatalogue() []byte {
-	return encodeMessageC(bytes.Repeat([]byte{0x99}, messageCTagCap.length))
+func maxMessageFieldsForCatalogue(spec messageSpec) [][]byte {
+	fields := make([][]byte, len(spec.fields))
+	for i, field := range spec.fields {
+		fields[i] = bytes.Repeat([]byte{byte(0x30 + i)}, field.length)
+	}
+	return fields
 }
 
 func messageFramingMalformedCases(target messageFramingTarget) []messageFramingCase {
@@ -81,22 +78,19 @@ func messageFramingLEB128Cases(role byte) []messageFramingCase {
 		{"missing length prefix", messageHeader(role), "truncated LEB128"},
 		{"truncated LEB128 continuation", append(messageHeader(role), 0x80), "truncated LEB128"},
 		{"non-canonical zero LEB128", append(messageHeader(role), 0x80, 0x00), "non-canonical LEB128"},
-		{"non-canonical value LEB128", append(append(messageHeader(role), 0xc0, 0x00), bytes.Repeat([]byte{0x99}, messageCTagCap.length)...), "non-canonical LEB128"},
+		{"non-canonical value LEB128", append(append(messageHeader(role), 0xc0, 0x00), exactMessageFieldBytes(messageCSpec, tagSize, 0x99, 0)...), "non-canonical LEB128"},
 		{"malformed LEB128", append(messageHeader(role), 0x80, 0x80, 0x80, 0x80, 0x00), "malformed LEB128"},
 	}
 }
 
 func messageFramingFinalFieldTruncation(role byte) string {
-	switch role {
-	case roleA:
-		return "truncated message A associated data field"
-	case roleB:
-		return "truncated message B tag field"
-	case roleC:
-		return "truncated message C tag field"
-	default:
-		return "truncated"
+	for _, spec := range messageFramingCatalogue() {
+		if spec.role != role || len(spec.fields) == 0 {
+			continue
+		}
+		return "truncated " + spec.fields[len(spec.fields)-1].name + " field"
 	}
+	return "truncated"
 }
 
 func messageFramingAggregateCases(target messageFramingTarget) []messageFramingCase {
@@ -109,80 +103,159 @@ func messageFramingAggregateCases(target messageFramingTarget) []messageFramingC
 }
 
 func messageFramingMaxFieldCases() []messageFramingCase {
-	aPoint := bytes.Repeat([]byte{0x42}, messageAPointCap.length)
-	bPoint := bytes.Repeat([]byte{0x42}, messageBPointCap.length)
-	bTag := bytes.Repeat([]byte{0x99}, messageBTagCap.length)
-	cTag := bytes.Repeat([]byte{0x99}, messageCTagCap.length)
-	return []messageFramingCase{
-		{"A max fields", encodeMessageA(bytes.Repeat([]byte{0x11}, messageASessionIDCap.length), aPoint, bytes.Repeat([]byte{0x22}, messageAAssociatedDataCap.length)), ""},
-		{"B max fields", encodeMessageB(bPoint, bytes.Repeat([]byte{0x33}, messageBAssociatedDataCap.length), bTag), ""},
-		{"C exact tag", encodeMessageC(cTag), ""},
+	cases := make([]messageFramingCase, 0, len(messageFramingCatalogue()))
+	for _, spec := range messageFramingCatalogue() {
+		cases = append(cases, messageFramingCase{
+			name: spec.name + " max fields",
+			msg:  spec.encode(maxMessageFieldsForCatalogue(spec)...),
+		})
 	}
+	return cases
 }
 
 func messageFramingFieldLimitCases() []messageFramingCase {
-	aPoint := bytes.Repeat([]byte{0x42}, messageAPointCap.length)
-	bPoint := bytes.Repeat([]byte{0x42}, messageBPointCap.length)
-	bTag := bytes.Repeat([]byte{0x99}, messageBTagCap.length)
-	overDeclaredBAd := append(messageHeader(roleB), prependLen(bPoint)...)
-	overDeclaredBAd = append(overDeclaredBAd, appendLEB128(nil, maxAssociatedDataLength+1)...)
-	return []messageFramingCase{
-		{"A session id oversized", encodeMessageA(bytes.Repeat([]byte{0x11}, messageASessionIDCap.length+1), aPoint, nil), "message A session id field too large"},
-		{"A point short", encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length-1), nil), "message A point length"},
-		{"A point long", encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length+1), nil), "message A point length"},
-		{"A associated data oversized", encodeMessageA([]byte("sid"), aPoint, bytes.Repeat([]byte{0x22}, messageAAssociatedDataCap.length+1)), "message A associated data field too large"},
-		{"B point short", encodeMessageB(bytes.Repeat([]byte{0x42}, messageBPointCap.length-1), nil, bTag), "message B point length"},
-		{"B point long", encodeMessageB(bytes.Repeat([]byte{0x42}, messageBPointCap.length+1), nil, bTag), "message B point length"},
-		{"B associated data oversized", encodeMessageB(bPoint, bytes.Repeat([]byte{0x33}, messageBAssociatedDataCap.length+1), bTag), "message B associated data field too large"},
-		{"B associated data over-declared absent bytes", overDeclaredBAd, "message B associated data field too large"},
-		{"B tag short", encodeMessageB(bPoint, nil, bytes.Repeat([]byte{0x99}, messageBTagCap.length-1)), "message B tag length"},
-		{"B tag long", encodeMessageB(bPoint, nil, bytes.Repeat([]byte{0x99}, messageBTagCap.length+1)), "message B tag length"},
-		{"C tag short", encodeMessageC(bytes.Repeat([]byte{0x99}, messageCTagCap.length-1)), "message C tag length"},
-		{"C tag long", encodeMessageC(bytes.Repeat([]byte{0x99}, messageCTagCap.length+1)), "message C tag length"},
+	var cases []messageFramingCase
+	for _, spec := range messageFramingCatalogue() {
+		for i, field := range spec.fields {
+			if field.exact {
+				shortFields := validMessageFieldsForCatalogue(spec)
+				shortFields[i] = bytes.Repeat([]byte{byte(0x50 + i)}, field.length-1)
+				cases = append(cases, messageFramingCase{
+					name:            fmt.Sprintf("%s %s short", spec.name, field.name),
+					msg:             spec.encode(shortFields...),
+					wantErrContains: field.name + " length",
+				})
+
+				longFields := validMessageFieldsForCatalogue(spec)
+				longFields[i] = bytes.Repeat([]byte{byte(0x60 + i)}, field.length+1)
+				cases = append(cases, messageFramingCase{
+					name:            fmt.Sprintf("%s %s long", spec.name, field.name),
+					msg:             spec.encode(longFields...),
+					wantErrContains: field.name + " length",
+				})
+				continue
+			}
+
+			oversizedFields := validMessageFieldsForCatalogue(spec)
+			oversizedFields[i] = bytes.Repeat([]byte{byte(0x70 + i)}, field.length+1)
+			cases = append(cases, messageFramingCase{
+				name:            fmt.Sprintf("%s %s oversized", spec.name, field.name),
+				msg:             spec.encode(oversizedFields...),
+				wantErrContains: field.name + " field too large",
+			})
+			cases = append(cases, messageFramingCase{
+				name:            fmt.Sprintf("%s %s over-declared absent bytes", spec.name, field.name),
+				msg:             overDeclaredMessageField(spec, i),
+				wantErrContains: field.name + " field too large",
+			})
+		}
 	}
+	return cases
+}
+
+func overDeclaredMessageField(spec messageSpec, fieldIndex int) []byte {
+	msg := messageHeader(spec.role)
+	fields := validMessageFieldsForCatalogue(spec)
+	for i := range fieldIndex {
+		msg = appendLengthValue(msg, fields[i])
+	}
+	fieldLength := spec.fields[fieldIndex].length
+	if fieldLength < 0 {
+		panic("cpace test: message field length must be non-negative")
+	}
+	declaredLength := uint64(fieldLength)
+	return appendLEB128(msg, declaredLength+1)
 }
 
 func messageAFuzzSeeds(validA, crossRoleB, invalidY []byte) [][]byte {
-	return [][]byte{
-		clone(validA),
-		truncatedMessage(validA),
-		withMessageRole(validA, roleB),
-		append(messageHeader(roleA), 0x80, 0x00),
-		encodeMessageA([]byte("sid"), identityEncoding, nil),
-		encodeMessageA([]byte("sid"), invalidY, nil),
-		clone(crossRoleB),
-	}
+	return messageFuzzSeeds(messageASpec, validA, crossRoleB, invalidY)
 }
 
 func messageAProtocolFuzzSeeds(validA, crossRoleB, invalidY []byte) [][]byte {
 	seeds := messageAFuzzSeeds(validA, crossRoleB, invalidY)
-	seeds = append(seeds, encodeMessageA([]byte("other sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length), nil))
+	seeds = append(seeds, messageWithCatalogueField(messageASpec, 0, []byte("other sid")))
 	return seeds
 }
 
 func messageBFuzzSeeds(validB, crossRoleC, invalidY []byte) [][]byte {
-	return [][]byte{
-		clone(validB),
-		truncatedMessage(validB),
-		withMessageRole(validB, roleA),
-		append(messageHeader(roleB), 0x80, 0x00),
-		encodeMessageB(identityEncoding, nil, bytes.Repeat([]byte{0x99}, messageBTagCap.length)),
-		encodeMessageB(invalidY, nil, bytes.Repeat([]byte{0x99}, messageBTagCap.length)),
-		withMessageTamperedLastByte(validB),
-		clone(crossRoleC),
-	}
+	return messageFuzzSeeds(messageBSpec, validB, crossRoleC, invalidY)
 }
 
 func messageCFuzzSeeds(validC, crossRoleA []byte) [][]byte {
-	return [][]byte{
-		clone(validC),
-		truncatedMessage(validC),
-		withMessageRole(validC, roleA),
-		append(messageHeader(roleC), 0x80, 0x00),
-		encodeMessageC(bytes.Repeat([]byte{0x99}, messageCTagCap.length-1)),
-		withMessageTamperedLastByte(validC),
-		clone(crossRoleA),
+	return messageFuzzSeeds(messageCSpec, validC, crossRoleA, nil)
+}
+
+func messageFuzzSeeds(spec messageSpec, valid, crossRole, invalidY []byte) [][]byte {
+	seeds := [][]byte{
+		clone(valid),
+		truncatedMessage(valid),
+		withMessageRole(valid, otherMessageRole(spec.role)),
+		append(messageHeader(spec.role), 0x80, 0x00),
 	}
+	if pointIndex, ok := exactMessageFieldIndex(spec, pointSize); ok {
+		seeds = append(seeds, messageWithCatalogueField(spec, pointIndex, identityEncoding))
+		if invalidY != nil {
+			seeds = append(seeds, messageWithCatalogueField(spec, pointIndex, invalidY))
+		}
+	}
+	if tagIndex, ok := exactMessageFieldIndex(spec, tagSize); ok {
+		seeds = append(seeds, messageWithCatalogueField(spec, tagIndex, bytes.Repeat([]byte{0x99}, tagSize-1)))
+		seeds = append(seeds, withMessageTamperedLastByte(valid))
+	}
+	seeds = append(seeds, clone(crossRole))
+	return seeds
+}
+
+func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
+	for i, field := range spec.fields {
+		if field.exact && field.length == length {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+func exactMessageFieldBytes(spec messageSpec, length int, fill byte, delta int) []byte {
+	i, ok := exactMessageFieldIndex(spec, length)
+	if !ok {
+		panic("cpace test: exact message field missing from catalogue")
+	}
+	n := spec.fields[i].length + delta
+	if n < 0 {
+		n = 0
+	}
+	return bytes.Repeat([]byte{fill}, n)
+}
+
+func messageWithCatalogueField(spec messageSpec, fieldIndex int, value []byte) []byte {
+	fields := validMessageFieldsForCatalogue(spec)
+	fields[fieldIndex] = value
+	return spec.encode(fields...)
+}
+
+func messageFieldsAcceptedBySpec(spec messageSpec, fields ...[]byte) bool {
+	if len(fields) != len(spec.fields) {
+		return false
+	}
+	remainingSpecs := spec.fields
+	for _, got := range fields {
+		if len(remainingSpecs) == 0 {
+			return false
+		}
+		field := remainingSpecs[0]
+		remainingSpecs = remainingSpecs[1:]
+		gotLength := len(got)
+		if field.exact {
+			if gotLength != field.length {
+				return false
+			}
+			continue
+		}
+		if gotLength > field.length {
+			return false
+		}
+	}
+	return true
 }
 
 func messageHeader(role byte) []byte {
@@ -193,19 +266,14 @@ func decodeMessageFromCatalogue(msg []byte) error {
 	if len(msg) < messageHeaderSize {
 		return fmt.Errorf("cpace test: message framing catalogue case has short header")
 	}
-	switch msg[2] {
-	case roleA:
-		_, err := decodeMessageA(msg)
+	for _, spec := range messageFramingCatalogue() {
+		if msg[2] != spec.role {
+			continue
+		}
+		_, err := spec.decode(msg)
 		return err
-	case roleB:
-		_, err := decodeMessageB(msg)
-		return err
-	case roleC:
-		_, err := decodeMessageC(msg)
-		return err
-	default:
-		return fmt.Errorf("cpace test: message framing catalogue case has unexpected role %#x", msg[2])
 	}
+	return fmt.Errorf("cpace test: message framing catalogue case has unexpected role %#x", msg[2])
 }
 
 func withMessageHeader(msg []byte, format, suite, role byte) []byte {
@@ -246,8 +314,10 @@ func truncatedMessage(msg []byte) []byte {
 }
 
 func otherMessageRole(role byte) byte {
-	if role == roleA {
-		return roleB
+	for _, spec := range messageFramingCatalogue() {
+		if spec.role != role {
+			return spec.role
+		}
 	}
-	return roleA
+	return 0xff
 }

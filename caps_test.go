@@ -2,6 +2,7 @@ package cpace
 
 import (
 	"bytes"
+	"slices"
 	"testing"
 )
 
@@ -47,23 +48,39 @@ func TestPackageOwnedCapPolicyPinsShippedValues(t *testing.T) {
 }
 
 func TestPackageOwnedCapPolicyFeedsMessageFramingSpecs(t *testing.T) {
-	cases := []struct {
-		name string
-		got  packageCapField
-		want packageCapField
-	}{
-		{"message A session id", messageASpec.fields[0], messageASessionIDCap},
-		{"message A point", messageASpec.fields[1], messageAPointCap},
-		{"message A local associated data", messageASpec.fields[2], messageAAssociatedDataCap},
-		{"message B point", messageBSpec.fields[0], messageBPointCap},
-		{"message B local associated data", messageBSpec.fields[1], messageBAssociatedDataCap},
-		{"message B tag", messageBSpec.fields[2], messageBTagCap},
-		{"message C tag", messageCSpec.fields[0], messageCTagCap},
+	capPolicy := map[string]packageCapField{}
+	for _, field := range shippedPackageCapPolicy() {
+		capPolicy[field.name] = field
 	}
-	for _, tc := range cases {
+	want := []struct {
+		name   string
+		fields []messageFieldSpec
+	}{
+		{"A", []messageFieldSpec{messageASessionIDCap, messageAPointCap, messageAAssociatedDataCap}},
+		{"B", []messageFieldSpec{messageBPointCap, messageBAssociatedDataCap, messageBTagCap}},
+		{"C", []messageFieldSpec{messageCTagCap}},
+	}
+	got := messageFramingCatalogue()
+	if len(got) != len(want) {
+		t.Fatalf("message framing catalogue length=%d want %d", len(got), len(want))
+	}
+	for i, tc := range want {
+		spec := got[i]
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.got != tc.want {
-				t.Fatalf("message field=%#v want cap policy field %#v", tc.got, tc.want)
+			if spec.name != tc.name {
+				t.Fatalf("name=%q want %q", spec.name, tc.name)
+			}
+			if !slices.Equal(spec.fields, tc.fields) {
+				t.Fatalf("fields=%#v want %#v", spec.fields, tc.fields)
+			}
+			for _, field := range spec.fields {
+				policyField, ok := capPolicy[field.name]
+				if !ok {
+					t.Fatalf("message field %q is missing from shipped cap policy", field.name)
+				}
+				if field != policyField {
+					t.Fatalf("message field=%#v want cap policy field %#v", field, policyField)
+				}
 			}
 		})
 	}

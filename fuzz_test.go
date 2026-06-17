@@ -376,16 +376,16 @@ func FuzzScalarMultVFY(f *testing.F) {
 }
 
 func FuzzMessageARoundTrip(f *testing.F) {
-	f.Add([]byte("sid"), bytes.Repeat([]byte{0x42}, messageAPointCap.length), []byte("ADa"))
+	f.Add([]byte("sid"), exactMessageFieldBytes(messageASpec, pointSize, 0x42, 0), []byte("ADa"))
 	f.Add([]byte{}, identityEncoding, []byte{})
-	f.Add(bytes.Repeat([]byte{0x01}, 8), bytes.Repeat([]byte{0x02}, messageAPointCap.length-1), bytes.Repeat([]byte{0x03}, 8))
+	f.Add(bytes.Repeat([]byte{0x01}, 8), exactMessageFieldBytes(messageASpec, pointSize, 0x02, -1), bytes.Repeat([]byte{0x03}, 8))
 	f.Fuzz(func(t *testing.T, sid, ya, ada []byte) {
 		if len(sid) > fuzzProtocolInputCap || len(ya) > fuzzProtocolInputCap || len(ada) > fuzzProtocolInputCap {
 			t.Skip()
 		}
 		msg := encodeMessageA(sid, ya, ada)
 		got, err := decodeMessageA(msg)
-		if len(sid) > messageASessionIDCap.length || len(ya) != messageAPointCap.length || len(ada) > messageAAssociatedDataCap.length {
+		if !messageFieldsAcceptedBySpec(messageASpec, sid, ya, ada) {
 			if err == nil {
 				t.Fatalf("decodeMessageA accepted lengths sid=%d ya=%d ada=%d", len(sid), len(ya), len(ada))
 			}
@@ -401,16 +401,16 @@ func FuzzMessageARoundTrip(f *testing.F) {
 }
 
 func FuzzMessageBRoundTrip(f *testing.F) {
-	f.Add(bytes.Repeat([]byte{0x42}, messageBPointCap.length), []byte("ADb"), bytes.Repeat([]byte{0x99}, messageBTagCap.length))
-	f.Add(identityEncoding, []byte{}, bytes.Repeat([]byte{0x00}, messageBTagCap.length))
-	f.Add(bytes.Repeat([]byte{0x02}, messageBPointCap.length-1), bytes.Repeat([]byte{0x03}, 8), bytes.Repeat([]byte{0x04}, messageBTagCap.length-1))
+	f.Add(exactMessageFieldBytes(messageBSpec, pointSize, 0x42, 0), []byte("ADb"), exactMessageFieldBytes(messageBSpec, tagSize, 0x99, 0))
+	f.Add(identityEncoding, []byte{}, exactMessageFieldBytes(messageBSpec, tagSize, 0x00, 0))
+	f.Add(exactMessageFieldBytes(messageBSpec, pointSize, 0x02, -1), bytes.Repeat([]byte{0x03}, 8), exactMessageFieldBytes(messageBSpec, tagSize, 0x04, -1))
 	f.Fuzz(func(t *testing.T, yb, adb, tag []byte) {
 		if len(yb) > fuzzProtocolInputCap || len(adb) > fuzzProtocolInputCap || len(tag) > fuzzProtocolInputCap {
 			t.Skip()
 		}
 		msg := encodeMessageB(yb, adb, tag)
 		got, err := decodeMessageB(msg)
-		if len(yb) != messageBPointCap.length || len(adb) > messageBAssociatedDataCap.length || len(tag) != messageBTagCap.length {
+		if !messageFieldsAcceptedBySpec(messageBSpec, yb, adb, tag) {
 			if err == nil {
 				t.Fatalf("decodeMessageB accepted lengths yb=%d adb=%d tag=%d", len(yb), len(adb), len(tag))
 			}
@@ -426,16 +426,16 @@ func FuzzMessageBRoundTrip(f *testing.F) {
 }
 
 func FuzzMessageCRoundTrip(f *testing.F) {
-	f.Add(bytes.Repeat([]byte{0x99}, messageCTagCap.length))
-	f.Add(bytes.Repeat([]byte{0x00}, messageCTagCap.length))
-	f.Add(bytes.Repeat([]byte{0x04}, messageCTagCap.length-1))
+	f.Add(exactMessageFieldBytes(messageCSpec, tagSize, 0x99, 0))
+	f.Add(exactMessageFieldBytes(messageCSpec, tagSize, 0x00, 0))
+	f.Add(exactMessageFieldBytes(messageCSpec, tagSize, 0x04, -1))
 	f.Fuzz(func(t *testing.T, tag []byte) {
 		if len(tag) > fuzzProtocolInputCap {
 			t.Skip()
 		}
 		msg := encodeMessageC(tag)
 		got, err := decodeMessageC(msg)
-		if len(tag) != messageCTagCap.length {
+		if !messageFieldsAcceptedBySpec(messageCSpec, tag) {
 			if err == nil {
 				t.Fatalf("decodeMessageC accepted tag length %d", len(tag))
 			}
