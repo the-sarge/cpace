@@ -10,27 +10,18 @@ if [ "$#" -ne 2 ]; then
   exit 2
 fi
 
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$script_dir/release-tag-policy.sh"
+
 changelog=$1
 tag=$2
-semver_re='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?$'
 
 if [ ! -f "$changelog" ]; then
   echo "changelog not found: $changelog" >&2
   exit 1
 fi
 
-case "$tag" in
-  *'
-'*)
-    echo "unsupported release tag: $tag" >&2
-    echo "expected vMAJOR.MINOR.PATCH with an optional SemVer prerelease suffix" >&2
-    exit 1
-    ;;
-esac
-
-if ! printf '%s\n' "$tag" | grep -Eq "$semver_re"; then
-  echo "unsupported release tag: $tag" >&2
-  echo "expected vMAJOR.MINOR.PATCH with an optional SemVer prerelease suffix" >&2
+if ! release_tag_require_supported "$tag"; then
   exit 1
 fi
 

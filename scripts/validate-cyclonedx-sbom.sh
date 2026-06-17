@@ -10,9 +10,11 @@ if [ "$#" -ne 1 ]; then
   exit 2
 fi
 
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$script_dir/release-tag-policy.sh"
+
 sbom=$1
 sbom_name=${sbom##*/}
-semver_re='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?$'
 
 if [ ! -s "$sbom" ]; then
   echo "SBOM not found or empty: $sbom" >&2
@@ -30,15 +32,7 @@ case "$sbom_name" in
     ;;
 esac
 
-case "$sbom_tag" in
-  *'
-'*)
-    echo "SBOM filename must use a supported release tag: $sbom_name" >&2
-    exit 1
-    ;;
-esac
-
-if ! printf '%s\n' "$sbom_tag" | grep -Eq "$semver_re"; then
+if ! release_tag_is_supported "$sbom_tag"; then
   echo "SBOM filename must use a supported release tag: $sbom_name" >&2
   exit 1
 fi

@@ -29,6 +29,28 @@ cat >"$changelog" <<'EOF'
 - Older release.
 EOF
 
+assert_release_tag_supported() {
+  tag=$1
+  sh -c '. "$1"; release_tag_is_supported "$2"' sh "$repo_root/scripts/release-tag-policy.sh" "$tag"
+}
+
+assert_release_tag_rejected() {
+  tag=$1
+  if sh -c '. "$1"; release_tag_is_supported "$2"' sh "$repo_root/scripts/release-tag-policy.sh" "$tag"; then
+    echo "release tag policy unexpectedly accepted: $tag" >&2
+    exit 1
+  fi
+}
+
+assert_release_tag_supported v1.2.3
+assert_release_tag_supported v1.2.3-rc.1
+assert_release_tag_supported v0.1.3
+assert_release_tag_rejected 1.2.3
+assert_release_tag_rejected v01.0.0
+assert_release_tag_rejected v1.0.0-rc..1
+assert_release_tag_rejected v1/foo
+assert_release_tag_rejected "$(printf 'v1.0.0\nlatest=true')"
+
 "$repo_root/scripts/extract-release-notes.sh" "$changelog" v1.2.3 >"$tmpdir/notes.txt"
 grep -q 'Release note one' "$tmpdir/notes.txt"
 
