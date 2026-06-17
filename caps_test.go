@@ -2,6 +2,7 @@ package cpace
 
 import (
 	"bytes"
+	"slices"
 	"testing"
 )
 
@@ -51,8 +52,27 @@ func TestPackageOwnedCapPolicyFeedsMessageFramingSpecs(t *testing.T) {
 	for _, field := range shippedPackageCapPolicy() {
 		capPolicy[field.name] = field
 	}
-	for _, spec := range messageFramingCatalogue() {
-		t.Run(spec.name, func(t *testing.T) {
+	want := []struct {
+		name   string
+		fields []messageFieldSpec
+	}{
+		{"A", []messageFieldSpec{messageASessionIDCap, messageAPointCap, messageAAssociatedDataCap}},
+		{"B", []messageFieldSpec{messageBPointCap, messageBAssociatedDataCap, messageBTagCap}},
+		{"C", []messageFieldSpec{messageCTagCap}},
+	}
+	got := messageFramingCatalogue()
+	if len(got) != len(want) {
+		t.Fatalf("message framing catalogue length=%d want %d", len(got), len(want))
+	}
+	for i, tc := range want {
+		spec := got[i]
+		t.Run(tc.name, func(t *testing.T) {
+			if spec.name != tc.name {
+				t.Fatalf("name=%q want %q", spec.name, tc.name)
+			}
+			if !slices.Equal(spec.fields, tc.fields) {
+				t.Fatalf("fields=%#v want %#v", spec.fields, tc.fields)
+			}
 			for _, field := range spec.fields {
 				want, ok := capPolicy[field.name]
 				if !ok {
