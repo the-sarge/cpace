@@ -193,35 +193,19 @@ func newMessageReader(in []byte, spec messageSpec) (*messageReader, error) {
 }
 
 func (r *messageReader) readField(spec messageFieldSpec) ([]byte, error) {
-	n, err := r.readLEB128()
+	n, next, err := readLEB128(r.buf, r.off, maxLEB128BytesForField)
 	if err != nil {
 		return nil, err
 	}
-	out, next, err := spec.acceptMessageField(r.buf, r.off, n)
-	if err != nil {
+	if err := spec.validateMessageLength(n); err != nil {
 		return nil, err
 	}
-	r.off = next
+	if len(r.buf)-next < n {
+		return nil, fmt.Errorf("%w: truncated %s field", ErrMessage, spec.name)
+	}
+	out := clone(r.buf[next : next+n])
+	r.off = next + n
 	return out, nil
-}
-
-func (r *messageReader) readLEB128() (int, error) {
-	var n int
-	for i := range int(maxLEB128BytesForField) {
-		if r.off >= len(r.buf) {
-			return 0, fmt.Errorf("%w: truncated LEB128", ErrMessage)
-		}
-		b := r.buf[r.off]
-		r.off++
-		n |= int(b&0x7f) << (7 * i)
-		if b&0x80 == 0 {
-			if i > 0 && n < 1<<(7*i) {
-				return 0, fmt.Errorf("%w: non-canonical LEB128", ErrMessage)
-			}
-			return n, nil
-		}
-	}
-	return 0, fmt.Errorf("%w: malformed LEB128", ErrMessage)
 }
 
 func (r *messageReader) done() error {

@@ -3,6 +3,7 @@ package cpace
 import (
 	"bytes"
 	"fmt"
+	"testing"
 )
 
 type messageFramingTarget struct {
@@ -33,6 +34,23 @@ func messageFramingTargets() []messageFramingTarget {
 		})
 	}
 	return targets
+}
+
+func TestMessageFramingDecodeReturnsOwnedFields(t *testing.T) {
+	msg := encodeMessageA([]byte("sid"), bytes.Repeat([]byte{0x42}, pointSize), []byte("ADa"))
+	got, err := decodeMessageA(msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg[len(msg)-1] ^= 0xff
+	if !bytes.Equal(got.ada, []byte("ADa")) {
+		t.Fatalf("decoded associated data aliases message buffer: %q", got.ada)
+	}
+	msg[messageHeaderSize+1] ^= 0xff
+	if !bytes.Equal(got.sid, []byte("sid")) {
+		t.Fatalf("decoded session id aliases message buffer: %q", got.sid)
+	}
 }
 
 func validMessageForCatalogue(spec messageSpec) []byte {

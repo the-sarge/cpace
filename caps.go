@@ -31,17 +31,6 @@ func (f packageCapField) validateInputLength(n int) error {
 	return nil
 }
 
-func (f packageCapField) acceptMessageField(buf []byte, off, n int) ([]byte, int, error) {
-	if err := f.validateMessageLength(n); err != nil {
-		return nil, off, err
-	}
-	if len(buf)-off < n {
-		return nil, off, fmt.Errorf("%w: truncated %s field", ErrMessage, f.name)
-	}
-	out := clone(buf[off : off+n])
-	return out, off + n, nil
-}
-
 func (f packageCapField) validateMessageLength(n int) error {
 	if f.exact {
 		if n != f.length {
