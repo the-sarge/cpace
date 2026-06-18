@@ -2005,3 +2005,37 @@ PR #180 completed the fourth architecture-plan slice by extracting release tag m
 
 - No follow-up issues were created from PR #180; all RAS findings were fixed or confirmed stale before merge.
 - Stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit if maintainers treat the release-helper hardening as security-relevant evidence scope.
+
+---
+
+## Message fuzz seed coverage follow-up landed - 2026-06-18 11:26 EDT
+
+**Main:** `3ac1d23978cd`
+**Actor:** Codex
+
+**Summary**
+
+PR #182 closed issue #169 by tightening message-framing fuzz-seed regression coverage around field-preservation helpers and exact-length field selection.
+
+**Completed**
+
+- Merged PR #182 (`Tighten message fuzz seed coverage`) as `3ac1d23978cd4bda17ac0005dd55c5c7cad74c1f`.
+- Made `TestMessageAProtocolFuzzSeedsPreserveValidFields` classify every successful decode as valid, identity-point, invalid-point, or other-session-ID so unclassified successful decodes fail instead of passing silently.
+- Added explicit red-path coverage proving Message A preservation tests reject helpers that decode successfully after losing the intended seed mutation.
+- Added Message B preservation coverage for `messageWithDecodedField` and `messageFuzzSeeds`, including valid, identity-point, invalid-point, and tampered-tag categories derived from the actual generated seed path.
+- Split exact-length field helper behavior so absent exact-length fields are skipped while ambiguous exact-length fields panic with a diagnostic, and covered both paths.
+- RAS review-fix run `20260618T145515-2ce7aa49c140156e3f4790a9` strengthened the absent exact-field regression test; follow-up run `20260618T151605-f8ed23198601ab03aae3d6a3` reran against the final head and reported no actionable required fixes.
+- No follow-up issues were created from PR #182; remaining RAS notes were low/nit or out of scope for the accepted issue.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- Initial red TDD checks failed as expected while Message A classification, ambiguous exact-field rejection, and Message B preservation coverage were absent.
+- Mutation checks failed as expected when `messageWithDecodedField` was temporarily changed to drop its mutation and when Message B fuzz seed construction was temporarily regressed to drop associated data.
+- Focused local checks passed for the new framing catalogue tests.
+- Full local gates passed before merge with `go test ./...`, `go test -race ./...`, `go vet ./...`, `task check`, and `git diff --check`; `task check` reported the expected optional Syft skip because `syft` is not installed.
+- GitHub checks on PR #182 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Continue with issue #172 in a separate implementation branch.
