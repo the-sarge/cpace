@@ -167,32 +167,25 @@ func TestWorkflowCheckUsesSuppliedPolicy(t *testing.T) {
 func TestCloneReleasePolicyIsDeep(t *testing.T) {
 	clone := cloneReleasePolicy(acceptedReleasePolicy)
 	verifyTag := indexOfJob(t, acceptedReleasePolicy, "verify-tag")
+	gosec := indexOfJob(t, acceptedReleasePolicy, "gosec")
 	sbom := indexOfJob(t, acceptedReleasePolicy, "sbom")
+	release := indexOfJob(t, acceptedReleasePolicy, "release")
+	prepareRelease := indexOfStep(t, acceptedReleasePolicy.jobs[release], "Prepare release notes and assets")
 
-	clone.rootKeys[0] = "changed"
-	if acceptedReleasePolicy.rootKeys[0] == "changed" {
-		t.Fatal("root keys aliased")
-	}
-	clone.topPermission["contents"] = "write"
-	if acceptedReleasePolicy.topPermission["contents"] == "write" {
-		t.Fatal("top permissions aliased")
-	}
-	clone.jobs[verifyTag].outputs["release-tag"] = "changed"
-	if acceptedReleasePolicy.jobs[verifyTag].outputs["release-tag"] == "changed" {
-		t.Fatal("job outputs aliased")
-	}
-	clone.jobs[sbom].needs[0] = "changed"
-	if acceptedReleasePolicy.jobs[sbom].needs[0] == "changed" {
-		t.Fatal("job needs aliased")
-	}
-	clone.jobs[verifyTag].steps[0].with["persist-credentials"] = "true"
-	if acceptedReleasePolicy.jobs[verifyTag].steps[0].with["persist-credentials"] == "true" {
-		t.Fatal("step with map aliased")
-	}
-	clone.jobs[verifyTag].steps[1].runLines[0] = "changed"
-	if acceptedReleasePolicy.jobs[verifyTag].steps[1].runLines[0] == "changed" {
-		t.Fatal("step run lines aliased")
-	}
+	requireStringSliceNotAliased(t, "root keys", acceptedReleasePolicy.rootKeys, clone.rootKeys, 0, "changed")
+	requireStringMapNotAliased(t, "env map", acceptedReleasePolicy.env, clone.env, "GOTOOLCHAIN", "changed")
+	requireStringMapNotAliased(t, "concurrency map", acceptedReleasePolicy.concurrency, clone.concurrency, "group", "changed")
+	requireStringSliceNotAliased(t, "trigger keys", acceptedReleasePolicy.triggerKeys, clone.triggerKeys, 0, "changed")
+	requireStringSliceNotAliased(t, "push keys", acceptedReleasePolicy.pushKeys, clone.pushKeys, 0, "changed")
+	requireStringSliceNotAliased(t, "push tags", acceptedReleasePolicy.pushTags, clone.pushTags, 0, "changed")
+	requireStringMapNotAliased(t, "top permissions", acceptedReleasePolicy.topPermission, clone.topPermission, "contents", "write")
+	requireStringSliceNotAliased(t, "required scripts", acceptedReleasePolicy.requiredScripts, clone.requiredScripts, 0, "changed")
+	requireStringMapNotAliased(t, "job permissions", acceptedReleasePolicy.jobs[gosec].permissions, clone.jobs[gosec].permissions, "contents", "write")
+	requireStringMapNotAliased(t, "job outputs", acceptedReleasePolicy.jobs[verifyTag].outputs, clone.jobs[verifyTag].outputs, "release-tag", "changed")
+	requireStringSliceNotAliased(t, "job needs", acceptedReleasePolicy.jobs[sbom].needs, clone.jobs[sbom].needs, 0, "changed")
+	requireStringMapNotAliased(t, "step with map", acceptedReleasePolicy.jobs[verifyTag].steps[0].with, clone.jobs[verifyTag].steps[0].with, "persist-credentials", "true")
+	requireStringSliceNotAliased(t, "step run lines", acceptedReleasePolicy.jobs[verifyTag].steps[1].runLines, clone.jobs[verifyTag].steps[1].runLines, 0, "changed")
+	requireStringMapNotAliased(t, "step env map", acceptedReleasePolicy.jobs[release].steps[prepareRelease].env, clone.jobs[release].steps[prepareRelease].env, "RELEASE_TAG", "changed")
 }
 
 func cloneReleasePolicy(policy releasePolicy) releasePolicy {
@@ -240,6 +233,50 @@ func cloneStringMap(in map[string]string) map[string]string {
 	return out
 }
 
+func requireStringSliceNotAliased(t *testing.T, name string, original []string, cloned []string, index int, changed string) {
+	t.Helper()
+	if len(original) <= index {
+		t.Fatalf("%s original has length %d, want index %d", name, len(original), index)
+	}
+	if len(cloned) <= index {
+		t.Fatalf("%s clone has length %d, want index %d", name, len(cloned), index)
+	}
+	originalValue := original[index]
+	clonedValue := cloned[index]
+	if originalValue == changed {
+		t.Fatalf("%s alias sentinel matches original value", name)
+	}
+
+	cloned[index] = changed
+	if original[index] == changed {
+		original[index] = originalValue
+		t.Fatalf("%s aliased", name)
+	}
+	cloned[index] = clonedValue
+}
+
+func requireStringMapNotAliased(t *testing.T, name string, original map[string]string, cloned map[string]string, key string, changed string) {
+	t.Helper()
+	originalValue, ok := original[key]
+	if !ok {
+		t.Fatalf("%s original is missing key %q", name, key)
+	}
+	clonedValue, ok := cloned[key]
+	if !ok {
+		t.Fatalf("%s clone is missing key %q", name, key)
+	}
+	if originalValue == changed {
+		t.Fatalf("%s alias sentinel matches original value", name)
+	}
+
+	cloned[key] = changed
+	if original[key] == changed {
+		original[key] = originalValue
+		t.Fatalf("%s aliased", name)
+	}
+	cloned[key] = clonedValue
+}
+
 func indexOfJob(t *testing.T, policy releasePolicy, name string) int {
 	t.Helper()
 	for i, job := range policy.jobs {
@@ -248,6 +285,17 @@ func indexOfJob(t *testing.T, policy releasePolicy, name string) int {
 		}
 	}
 	t.Fatalf("accepted release policy is missing job %q", name)
+	return -1
+}
+
+func indexOfStep(t *testing.T, job releaseJobPolicy, identity string) int {
+	t.Helper()
+	for i, step := range job.steps {
+		if step.identity == identity {
+			return i
+		}
+	}
+	t.Fatalf("accepted release policy job %q is missing step %q", job.name, identity)
 	return -1
 }
 

@@ -51,8 +51,41 @@ assert_release_tag_rejected v1.0.0-rc..1
 assert_release_tag_rejected v1/foo
 assert_release_tag_rejected "$(printf 'v1.0.0\nlatest=true')"
 
-sh -c '. "$1"; release_tag=before; release_tag_is_supported v1.2.3 >/dev/null; test "$release_tag" = before' sh "$repo_root/scripts/release-tag-policy.sh"
-sh -c '. "$1"; release_tag=before; release_tag_require_supported v1.2.3 >/dev/null; test "$release_tag" = before' sh "$repo_root/scripts/release-tag-policy.sh"
+assert_helper_reuses_release_tag_policy() {
+  helper=$1
+  helper_path="$repo_root/$helper"
+
+  if ! grep -Fq '. "$script_dir/release-tag-policy.sh"' "$helper_path"; then
+    echo "$helper does not source scripts/release-tag-policy.sh" >&2
+    exit 1
+  fi
+  if grep -Fq 'release_tag_semver_re=' "$helper_path" || grep -Fq '^v(0|' "$helper_path"; then
+    echo "$helper redefines the release tag SemVer policy" >&2
+    exit 1
+  fi
+}
+
+assert_release_tag_policy_preserves_caller_names() {
+  function_name=$1
+  sh -c '
+    . "$1"
+    release_tag=before
+    tag=before
+    version=before
+    major=before
+    prerelease=before
+    latest=before
+    "$2" v1.2.3 >/dev/null
+    test "$release_tag:$tag:$version:$major:$prerelease:$latest" = before:before:before:before:before:before
+  ' sh "$repo_root/scripts/release-tag-policy.sh" "$function_name"
+}
+
+assert_helper_reuses_release_tag_policy scripts/extract-release-notes.sh
+assert_helper_reuses_release_tag_policy scripts/release-tag-metadata.sh
+assert_helper_reuses_release_tag_policy scripts/validate-cyclonedx-sbom.sh
+
+assert_release_tag_policy_preserves_caller_names release_tag_is_supported
+assert_release_tag_policy_preserves_caller_names release_tag_require_supported
 
 "$repo_root/scripts/extract-release-notes.sh" "$changelog" v1.2.3 >"$tmpdir/notes.txt"
 grep -q 'Release note one' "$tmpdir/notes.txt"
@@ -193,6 +226,21 @@ cat >"$sbom" <<'EOF'
 EOF
 
 "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$sbom"
+
+assert_sbom_filename_rejects_unsupported_release_tag() {
+  sbom_name=$1
+  rejected_sbom="$tmpdir/$sbom_name"
+
+  cp "$sbom" "$rejected_sbom"
+  if "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$rejected_sbom" >"$tmpdir/$sbom_name.out" 2>"$tmpdir/$sbom_name.err"; then
+    echo "unsupported-release-tag SBOM filename unexpectedly succeeded: $sbom_name" >&2
+    exit 1
+  fi
+  grep -q 'SBOM filename must use a supported release tag' "$tmpdir/$sbom_name.err"
+}
+
+assert_sbom_filename_rejects_unsupported_release_tag cpace-v01.0.0.cdx.json
+assert_sbom_filename_rejects_unsupported_release_tag cpace-v1.2.cdx.json
 
 wrong_name_sbom="$tmpdir/other-v1.2.3.cdx.json"
 cp "$sbom" "$wrong_name_sbom"
