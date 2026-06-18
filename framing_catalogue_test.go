@@ -99,10 +99,14 @@ func TestMessageFramingCatalogueAcceptsMaxFields(t *testing.T) {
 func TestMessageFramingCatalogueOwnsFieldLengthAcceptance(t *testing.T) {
 	for _, spec := range messageFramingCatalogue() {
 		t.Run(spec.name, func(t *testing.T) {
-			if !spec.acceptsFieldLengths(maxMessageFieldsForCatalogue(spec)...) {
+			maxFields := maxMessageFieldsForCatalogue(spec)
+			if !spec.acceptsFieldLengths(maxFields...) {
 				t.Fatal("rejected max-size fields")
 			}
-			if spec.acceptsFieldLengths(append(maxMessageFieldsForCatalogue(spec), nil)...) {
+			if spec.acceptsFieldLengths(maxFields[:len(maxFields)-1]...) {
+				t.Fatal("accepted too few fields")
+			}
+			if spec.acceptsFieldLengths(append(maxFields, nil)...) {
 				t.Fatal("accepted wrong field count")
 			}
 			for i, field := range spec.fields {
@@ -638,6 +642,7 @@ func messageFieldsMatchFramingShape(spec messageSpec, fields ...[]byte) bool {
 	if len(fields) != len(spec.fields) {
 		return false
 	}
+	// Keep this independent from acceptsFieldLengths and validateMessageLength so round-trip fuzzers can detect decoder acceptance drift.
 	remainingSpecs := spec.fields
 	for _, got := range fields {
 		field := remainingSpecs[0]
