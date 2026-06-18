@@ -2077,3 +2077,37 @@ PR #184 closed issue #172 by tightening release-helper anti-drift coverage so he
 **Next**
 
 - Track follow-up issues #185 and #186 in OmniFocus with their RAS provenance.
+
+---
+
+## Release tag shadow prefix guard follow-up landed - 2026-06-18 13:31 EDT
+
+**Main:** `0c5cb8c2c2fb`
+**Actor:** Codex
+
+**Summary**
+
+PR #188 closed issue #185 by tightening the release-tag helper anti-drift guard for operator-prefixed local policy function definitions and by making the generated shadow-fixture injector robust to reformatted policy-source lines.
+
+**Completed**
+
+- Merged PR #188 (`test: catch prefixed release tag shadows`) as `0c5cb8c2c2fbfe395875bbc981d40d8bb389a88f`.
+- Broadened the `release_tag_*` direct-definition scan so it catches parse-visible definitions after shell separators and operators, covering the `true && release_tag_is_supported() { return 0; }` form from issue #185.
+- Split the generated shadow-fixture injector into a path-level helper so test fixtures can run against generated helper copies as well as repository files.
+- Updated shadow-fixture injection to use the same substring policy-source matcher as the reuse check, so leading whitespace or trailing comments on `. "$script_dir/release-tag-policy.sh"` do not prevent injection.
+- Added regression coverage for operator-prefixed release-tag policy shadows and reformatted policy-source lines.
+- RAS review-fix run `20260618T172107-071f4b709001d1615230d3eb` completed with no merge-blocking findings under the configured gate policy.
+- Created follow-up issue #189 for the non-blocking low-severity RAS findings around subshell-prefixed shadows, operator-prefixed `function` keyword coverage, and comment-only false positives.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- Baseline `scripts/test-release-helpers.sh` passed before the first red edit.
+- The operator-prefixed red fixture failed as expected with `scripts/release-tag-metadata.sh unexpectedly allowed local release_tag_is_supported definition: true && release_tag_is_supported() { return 0; }`.
+- The reformatted source-line red fixture failed as expected with `injection anchor not found in scripts/release-tag-metadata.sh with reformatted policy source`.
+- Final local gates passed with `scripts/test-release-helpers.sh`, `scripts/check-release-policy.sh`, `(cd tools/releasepolicy && go test ./...)`, `go test ./...`, `go test -race ./...`, `go vet ./...`, `task check`, and `git diff --check`; helper tests reported the expected optional Syft skip because `syft` is not installed.
+- GitHub checks on PR #188 passed before merge: Check, DCO, Dependency Gate, and SAST Gate; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Track follow-up issue #189 in OmniFocus as a non-blocking continuation of the release-tag shadow guard hardening.
