@@ -379,6 +379,10 @@ func TestMessageBFuzzSeedsPreserveValidFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	tamperedB, err := decodeMessageB(withMessageTamperedLastByte(msgB))
+	if err != nil {
+		t.Fatal(err)
+	}
 	invalid := fuzzDraftInvalidVector(t)
 	var decoded messageBFuzzSeedCounts
 	for _, seed := range messageBFuzzSeeds(msgB, msgC, invalid.InvalidY1) {
@@ -386,7 +390,7 @@ func TestMessageBFuzzSeedsPreserveValidFields(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		category := classifyMessageBFuzzSeed(got, baseB, invalid.InvalidY1)
+		category := classifyMessageBFuzzSeed(got, baseB, invalid.InvalidY1, tamperedB.tag)
 		decoded.add(category)
 		if category == messageBFuzzSeedUnclassified {
 			t.Fatalf("unclassified Message B fuzz seed decoded as yb=%x adb=%x tag=%x", got.yb, got.adb, got.tag)
@@ -403,12 +407,16 @@ func TestMessageBFuzzSeedPreservationRejectsUnclassifiedDecode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	tamperedB, err := decodeMessageB(withMessageTamperedLastByte(msgB))
+	if err != nil {
+		t.Fatal(err)
+	}
 	unclassified := encodeMessageB(baseB.yb, []byte("unexpected ADb"), baseB.tag)
 	got, err := decodeMessageB(unclassified)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if classifyMessageBFuzzSeed(got, baseB, fuzzDraftInvalidVector(t).InvalidY1) != messageBFuzzSeedUnclassified {
+	if classifyMessageBFuzzSeed(got, baseB, fuzzDraftInvalidVector(t).InvalidY1, tamperedB.tag) != messageBFuzzSeedUnclassified {
 		t.Fatal("unclassified successful Message B decode passed preservation assertion")
 	}
 }
@@ -443,12 +451,7 @@ func (c *messageBFuzzSeedCounts) add(category messageBFuzzSeedCategory) {
 	}
 }
 
-func classifyMessageBFuzzSeed(got, base messageB, invalidY []byte) messageBFuzzSeedCategory {
-	tamperedTag := clone(base.tag)
-	if len(tamperedTag) > 0 {
-		tamperedTag[len(tamperedTag)-1] ^= 0x01
-	}
-
+func classifyMessageBFuzzSeed(got, base messageB, invalidY, tamperedTag []byte) messageBFuzzSeedCategory {
 	switch {
 	case bytes.Equal(got.yb, base.yb) && bytes.Equal(got.adb, base.adb) && bytes.Equal(got.tag, base.tag):
 		return messageBFuzzSeedValid
