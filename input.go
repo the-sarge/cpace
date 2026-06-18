@@ -29,7 +29,7 @@ type Input struct {
 	AllowEmptySessionID bool
 }
 
-type acceptedInput struct {
+type callerInput struct {
 	password []byte
 	selfID   []byte
 	peerID   []byte
@@ -48,18 +48,18 @@ type callerInputCappedField struct {
 	value []byte
 }
 
-func acceptInput(input Input) (acceptedInput, error) {
+func acceptInput(input Input) (callerInput, error) {
 	if err := validateRequiredCallerInputFields(input); err != nil {
-		return acceptedInput{}, err
+		return callerInput{}, err
 	}
 	if len(input.SessionID) == 0 && !input.AllowEmptySessionID {
-		return acceptedInput{}, fmt.Errorf("%w: %w", ErrInvalidInput, ErrEmptySessionID)
+		return callerInput{}, fmt.Errorf("%w: %w", ErrInvalidInput, ErrEmptySessionID)
 	}
 	if err := validateCallerInputCapFields(input); err != nil {
-		return acceptedInput{}, err
+		return callerInput{}, err
 	}
 
-	return acceptedInput{
+	return callerInput{
 		password: clone(input.Password),
 		selfID:   clone(input.SelfID),
 		peerID:   clone(input.PeerID),
@@ -98,7 +98,7 @@ func validateCallerInputCapFields(input Input) error {
 	return nil
 }
 
-func (c *acceptedInput) wipe() {
+func (c *callerInput) wipe() {
 	if c == nil {
 		return
 	}
@@ -108,6 +108,31 @@ func (c *acceptedInput) wipe() {
 	clearBytes(c.context)
 	clearBytes(c.sid)
 	clearBytes(c.localAD)
+}
+
+// handoff transfers package-owned caller input slices into normalizedInput.
+// The callerInput keeps no references to transferred backing arrays, leaving
+// normalizedInput.wipe as the next lifetime boundary.
+func (c *callerInput) handoff(role callerInputRole) normalizedInput {
+	initiatorID, responderID := role.mapTranscriptIDs(*c)
+	ci := buildCI(initiatorID, responderID, c.context)
+	clearBytes(c.context)
+	c.context = nil
+
+	ni := normalizedInput{
+		password:    c.password,
+		initiatorID: initiatorID,
+		responderID: responderID,
+		ci:          ci,
+		sid:         c.sid,
+		ad:          c.localAD,
+	}
+	c.password = nil
+	c.selfID = nil
+	c.peerID = nil
+	c.sid = nil
+	c.localAD = nil
+	return ni
 }
 
 type normalizedInput struct {
@@ -150,33 +175,15 @@ func normalizeRespondInput(input Input) (normalizedInput, error) {
 }
 
 func normalizeInput(input Input, role callerInputRole) (normalizedInput, error) {
-	accepted, err := acceptInput(input)
+	caller, err := acceptInput(input)
 	if err != nil {
 		return normalizedInput{}, err
 	}
-	keep := false
-	defer func() {
-		if !keep {
-			accepted.wipe()
-		}
-	}()
-	initiatorID, responderID := role.mapTranscriptIDs(accepted)
-	ci := buildCI(initiatorID, responderID, accepted.context)
-	clearBytes(accepted.context)
-	accepted.context = nil
-	ni := normalizedInput{
-		password:    accepted.password,
-		initiatorID: initiatorID,
-		responderID: responderID,
-		ci:          ci,
-		sid:         accepted.sid,
-		ad:          accepted.localAD,
-	}
-	keep = true
-	return ni, nil
+	defer caller.wipe()
+	return caller.handoff(role), nil
 }
 
-func (r callerInputRole) mapTranscriptIDs(input acceptedInput) (initiatorID, responderID []byte) {
+func (r callerInputRole) mapTranscriptIDs(input callerInput) (initiatorID, responderID []byte) {
 	switch r {
 	case initiatorInputRole:
 		return input.selfID, input.peerID
