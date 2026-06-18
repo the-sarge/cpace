@@ -1728,3 +1728,39 @@ PR #156 completed issue #150 by moving accepted release-tag validation into a sh
 
 - Keep #157 as a non-blocking follow-up for release-helper anti-drift and SBOM invalid-tag coverage.
 - Stronger release-readiness claims still require refreshing pinned release evidence against the exact candidate commit after these release-tooling changes.
+
+---
+
+## Architecture depth pass landed - 2026-06-17 21:54 EDT
+
+**Main:** `31e01e1cb08b`
+**Actor:** Codex
+
+**Summary**
+
+PRs #159, #161, and #163 completed the no-freeze architecture depth pass by deepening Message framing, accepted release policy checking, and the transcript/confirmation flow internals while preserving the public API and wire-visible protocol behavior.
+
+**Completed**
+
+- Merged PR #159 (`Refactor message framing codec locality`) as `9a38be43fcd66d6d6632122ce1d79d279bde4195`.
+- Moved Message A/B/C field decoding locality into the framing layer, added canonical LEB128 decode coverage, and pinned decoded-field ownership behavior.
+- RAS review-fix implementation `20260618T004106-4d2ce28ff55bb26087832c69` / review run `20260618T004108-5a92e6e4e391e6c215d448f9` reported no merge-blocking findings; non-blocking framing nits became follow-up issue #160.
+- Merged PR #161 (`Refactor release policy checker locality`) as `5acd4d9f270176f8b16745c6d5e9b621b7d398e6`.
+- Added release-policy concept metadata, injected the accepted policy catalogue into the checker, split the accepted-job checks into smaller modules, and expanded catalogue integrity coverage.
+- Final RAS review-fix implementation `20260618T012212-98ecb1721bf08874089ffafb` / review run `20260618T012213-e85a6de504e74b6c61d66f96` reported no merge-blocking findings under the low/nit gate; the remaining clone-helper coverage expansion became follow-up issue #162.
+- Merged PR #163 (`Refactor transcript confirmation flow`) as `31e01e1cb08b968d02becfbc59ec9202fb28560e`.
+- Added an unexported IR transcript object that owns transcript construction, ISK derivation, role-specific confirmation-tag selection, and transcript buffer ownership; moved OC transcript helpers to vector/test code only.
+- RAS review-fix implementation `20260618T013829-36ec06c34f277897809ef63b` / review run `20260618T013830-8be66693014269ac68ac3c40` reported no merge-blocking findings; the low-severity spec-matrix traceability update became follow-up issue #164.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- PR #159 local gates passed before merge: `go test ./...`, `go test -race ./...`, `go vet ./...`, and `git diff --check`.
+- PR #161 local gates passed before merge: `scripts/check-release-policy.sh`, `scripts/test-release-helpers.sh` with the optional Syft validation skip expected because `syft` is not installed, `(cd tools/releasepolicy && go test ./...)`, `(cd tools/releasepolicy && go vet ./...)`, `go test ./...`, and `git diff --check`.
+- PR #163 local gates passed before merge: `go test ./...`, `go test -race ./...`, `go vet ./...`, and `git diff --check`.
+- GitHub checks passed before each merge; PR #163 was `CLEAN` with CI Check, CodeQL Analyze/CodeQL, cross-platform smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck successful, and the standalone gosec child check neutral/skipping as expected.
+
+**Next**
+
+- Keep #160, #162, and #164 as non-blocking follow-up issues from the architecture review loops.
+- Stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit after these parser-, policy-, and transcript-adjacent changes.
