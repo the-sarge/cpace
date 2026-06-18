@@ -1901,3 +1901,36 @@ PR #174 completed the first architecture-plan slice by concentrating Message fra
 **Next**
 
 - Continue the architecture plan with the Transcript module PR.
+
+---
+
+## Transcript module owns TranscriptID derivation landed - 2026-06-18 01:27 EDT
+
+**Main:** `b217a3aea6fd`
+**Actor:** Codex
+
+**Summary**
+
+PR #176 completed the second architecture-plan slice by moving draft `CPaceSidOutput` derivation into the Transcript module and making `Session` store an already-derived transcript ID.
+
+**Completed**
+
+- Merged PR #176 (`Refactor transcript ID derivation into transcript module`) as `b217a3aea6fde2d94928dcbdc0cc705186a6c8b3`.
+- Added `irTranscript.transcriptID()` and the shared `transcriptID` helper in `transcript.go`, so initiator and responder session construction use the same Transcript-owned derivation path.
+- Updated `newSession` to receive and defensively clone a derived transcript ID instead of deriving `CPaceSidOutput` from transcript bytes.
+- Kept the responder core's existing transcript-byte storage model intact; this PR changes the derivation boundary without widening ADR-0001 lifecycle behavior.
+- Extended draft-vector coverage to assert helper-level and core-to-session `TranscriptID()` values against `sid_output_ir`, including initiator/responder session equality.
+- Strengthened transcript copy-semantics coverage so mutating a returned transcript ID cannot affect later transcript ID derivations.
+- Addressed the first RAS review-fix run `20260618T051006-25016dbff5efe8cae541d4dd` by adding core-to-session TranscriptID golden assertions and replacing the append-based SHA-512 input with streaming writes.
+- RAS review-fix implementation `20260618T051736-44cec4f2740ee5bf2fae74a0` reran against head `5c45909cbf7166668c1732d668e42567059f471e` and reported no actionable findings and no low/nit follow-ups.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- Focused local checks passed with `go test -run 'TestIRTranscript(DraftVectorFlow|OwnsInputsAndOutput)|TestRistrettoDraft21Vectors|TestCoreDraft21Vectors|TestConfirmedExchangeAndExport|TestSessionPeerMetadata' ./...`.
+- Full local gates passed before merge with `go test ./...`, `go test -race ./...`, `go vet ./...`, `task check`, and `git diff --check`; `task check` reported the expected optional Syft skip because `syft` is not installed.
+- GitHub checks on PR #176 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Continue the architecture plan with the caller-input lifetime handoff PR.
