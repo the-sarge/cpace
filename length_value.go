@@ -41,6 +41,9 @@ func appendLEB128(dst []byte, n uint64) []byte {
 	}
 }
 
+// readLEB128 accumulates into int, so callers must keep 7*(maxBytes-1) within
+// the int shift range and choose maxBytes large enough for the relevant field
+// cap.
 func readLEB128(buf []byte, off, maxBytes int) (int, int, error) {
 	var n int
 	for i := range maxBytes {

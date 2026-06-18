@@ -191,7 +191,7 @@ func messageAFuzzSeeds(validA, crossRoleB, invalidY []byte) [][]byte {
 
 func messageAProtocolFuzzSeeds(validA, crossRoleB, invalidY []byte) [][]byte {
 	seeds := messageAFuzzSeeds(validA, crossRoleB, invalidY)
-	seeds = append(seeds, messageWithCatalogueField(messageASpec, 0, []byte("other sid")))
+	seeds = append(seeds, messageWithDecodedField(messageASpec, validA, 0, []byte("other sid")))
 	return seeds
 }
 
@@ -211,26 +211,78 @@ func messageFuzzSeeds(spec messageSpec, valid, crossRole, invalidY []byte) [][]b
 		append(messageHeader(spec.role), 0x80, 0x00),
 	}
 	if pointIndex, ok := exactMessageFieldIndex(spec, pointSize); ok {
-		seeds = append(seeds, messageWithCatalogueField(spec, pointIndex, identityEncoding))
+		seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, identityEncoding))
 		if invalidY != nil {
-			seeds = append(seeds, messageWithCatalogueField(spec, pointIndex, invalidY))
+			seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, invalidY))
 		}
 	}
 	if tagIndex, ok := exactMessageFieldIndex(spec, tagSize); ok {
-		seeds = append(seeds, messageWithCatalogueField(spec, tagIndex, bytes.Repeat([]byte{0x99}, tagSize-1)))
+		seeds = append(seeds, messageWithDecodedField(spec, valid, tagIndex, bytes.Repeat([]byte{0x99}, tagSize-1)))
 		seeds = append(seeds, withMessageTamperedLastByte(valid))
 	}
 	seeds = append(seeds, clone(crossRole))
 	return seeds
 }
 
-func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
-	for i, field := range spec.fields {
-		if field.exact && field.length == length {
-			return i, true
+func TestMessageAProtocolFuzzSeedsPreserveValidFields(t *testing.T) {
+	_, _, _, msgA, msgB, _ := makeFuzzExchange(t)
+	baseA, err := decodeMessageA(msgA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	invalid := fuzzDraftInvalidVector(t)
+	for _, seed := range messageAProtocolFuzzSeeds(msgA, msgB, invalid.InvalidY1) {
+		got, err := decodeMessageA(seed)
+		if err != nil {
+			continue
+		}
+		switch {
+		case bytes.Equal(got.ya, identityEncoding), bytes.Equal(got.ya, invalid.InvalidY1):
+			if !bytes.Equal(got.sid, baseA.sid) {
+				t.Fatalf("point mutation changed sid: got %x want %x", got.sid, baseA.sid)
+			}
+			if !bytes.Equal(got.ada, baseA.ada) {
+				t.Fatalf("point mutation changed ADa: got %x want %x", got.ada, baseA.ada)
+			}
+		case bytes.Equal(got.sid, []byte("other sid")):
+			if !bytes.Equal(got.ya, baseA.ya) {
+				t.Fatalf("sid mutation changed Ya: got %x want %x", got.ya, baseA.ya)
+			}
+			if !bytes.Equal(got.ada, baseA.ada) {
+				t.Fatalf("sid mutation changed ADa: got %x want %x", got.ada, baseA.ada)
+			}
 		}
 	}
-	return 0, false
+}
+
+func TestExactMessageFieldIndexRejectsAmbiguousLengths(t *testing.T) {
+	spec := messageSpec{
+		name: "ambiguous",
+		role: roleA,
+		fields: []messageFieldSpec{
+			{name: "first exact", length: pointSize, exact: true},
+			{name: "second exact", length: pointSize, exact: true},
+		},
+	}
+	if got, ok := exactMessageFieldIndex(spec, pointSize); ok {
+		t.Fatalf("exactMessageFieldIndex=%d, true; want ambiguity rejected", got)
+	}
+}
+
+func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
+	found := -1
+	for i, field := range spec.fields {
+		if field.exact && field.length == length {
+			if found >= 0 {
+				return 0, false
+			}
+			found = i
+		}
+	}
+	if found < 0 {
+		return 0, false
+	}
+	return found, true
 }
 
 func exactMessageFieldBytes(spec messageSpec, length int, fill byte, delta int) []byte {
@@ -245,8 +297,11 @@ func exactMessageFieldBytes(spec messageSpec, length int, fill byte, delta int) 
 	return bytes.Repeat([]byte{fill}, n)
 }
 
-func messageWithCatalogueField(spec messageSpec, fieldIndex int, value []byte) []byte {
-	fields := validMessageFieldsForCatalogue(spec)
+func messageWithDecodedField(spec messageSpec, msg []byte, fieldIndex int, value []byte) []byte {
+	fields, err := spec.decode(msg)
+	if err != nil {
+		panic(fmt.Sprintf("cpace test: valid %s message failed to decode: %v", spec.name, err))
+	}
 	fields[fieldIndex] = value
 	return spec.encode(fields...)
 }
