@@ -2171,3 +2171,37 @@ Deepened the Message framing acceptance oracle by moving field-length catalogue 
 - `git diff --check`
 - GitHub checks for PR #194 passed on head `abaa6ee4df9d1491a19390e50308a5bfcfc64ec3`.
 - `ras review-fix 194` found and fixed the initial SAST/test-oracle issues, then completed on the final head with no merge-blocking code findings; the only final note was an out-of-scope reviewer timeout.
+
+---
+
+## Transcript deepened across responder construct/finish - 2026-06-18 18:58 EDT
+
+**Main:** `133ba2c619ff`
+**Actor:** Claude Code
+
+### Summary
+
+Deepened the Transcript so the responder stores and reuses the `irTranscript` value built at construction through `Finish`, closing the leak where the responder kept decomposed `ya`/`ada`/raw-transcript fields and re-derived the initiator confirmation tag via a free function. Behaviour-preserving: wire bytes, ISK, and confirmation tags are byte-for-byte identical, proven by the draft-21 vectors.
+
+### Completed
+
+- Merged PR #196, `refactor: deepen transcript to span responder construct→finish`, as `133ba2c619ffb32166931ca82253513a42cc083c` (squash).
+- Reshaped `responderCore` to `{ isk, transcript irTranscript, sid, peerID }`, dropping the decomposed `ya`/`ada` fields and the raw `transcript []byte`.
+- Routed `responderCore.finish` through the stored transcript for the initiator confirmation tag, transcript id, and peer associated data.
+- Added `irTranscript.initiatorAD()` (peer-AD accessor) and `irTranscript.clear()` (pointer-receiver hygiene wipe, idempotent and nil-safe).
+- Folded `initiatorRoleConfirmationTag` / `responderRoleConfirmationTag` into the transcript methods and deleted the free functions; each had no independent test and a single caller after the responder bypass was removed.
+- Sharpened the `CONTEXT.md` Transcript glossary entry to record the module's ownership and the construct→finish carry.
+- RAS review-fix run `20260618T224620-3b50c9ad29c8e742899999e2` completed `done` with no merge-blocking findings under the configured gate policy.
+- Created follow-up issue #197 for the two non-blocking low/nit test-coverage gaps on `irTranscript.clear()` (component-field wipe assertions and nil-receiver coverage).
+- No RAS run was performed for this journal-only update, per instruction.
+
+### Validation
+
+- TDD red checks failed as expected with build failures: `tr.initiatorAD undefined` and `tr.clear undefined`.
+- Targeted gates passed: `go test -run '^(TestClearIdempotent|TestCoreDraft21Vectors|TestNilReceiverFinishAndExport|TestFinishCleanupDoesNotAliasReturnedSessions|TestSingleUseTerminalClaimsDoNotReturnCoreOnLosingPaths)$' .`; the `TestCoreDraft21Vectors` pass is the byte-for-byte identity proof.
+- Final local gates passed: `go test ./...` and `go vet ./...`.
+- GitHub checks on PR #196 passed before merge: CodeQL, Analyze, Check, DCO, Dependency Gate, SAST Gate, Staticcheck, macos-latest, windows-latest; the standalone gosec child check was neutral/skipping as expected.
+
+### Next
+
+- Track follow-up issue #197 in OmniFocus as a non-blocking `irTranscript.clear()` test-hardening continuation.
