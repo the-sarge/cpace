@@ -518,7 +518,23 @@ func TestMessageFuzzSeedsSkipsAbsentExactFieldLengths(t *testing.T) {
 		},
 	}
 	valid := spec.encode([]byte("AD"))
-	_ = messageFuzzSeeds(spec, valid, withMessageRole(valid, otherMessageRole(spec.role)), nil)
+	crossRole := append(messageHeader(otherMessageRole(spec.role)), 0x01, 0x02)
+	seeds := messageFuzzSeeds(spec, valid, crossRole, nil)
+	want := [][]byte{
+		clone(valid),
+		truncatedMessage(valid),
+		withMessageRole(valid, otherMessageRole(spec.role)),
+		append(messageHeader(spec.role), 0x80, 0x00),
+		clone(crossRole),
+	}
+	if len(seeds) != len(want) {
+		t.Fatalf("messageFuzzSeeds returned %d seeds, want %d", len(seeds), len(want))
+	}
+	for i := range want {
+		if !bytes.Equal(seeds[i], want[i]) {
+			t.Fatalf("messageFuzzSeeds seed %d=%x want %x", i, seeds[i], want[i])
+		}
+	}
 }
 
 func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
