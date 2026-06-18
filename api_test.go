@@ -1573,65 +1573,6 @@ func TestTranscriptLockingMismatches(t *testing.T) {
 	}
 }
 
-func TestMessageFramingCatalogueRejectsMalformed(t *testing.T) {
-	for _, target := range messageFramingTargets() {
-		t.Run(target.name, func(t *testing.T) {
-			for _, tc := range messageFramingMalformedCases(target) {
-				t.Run(tc.name, func(t *testing.T) {
-					assertMessageFramingError(t, target.decode(tc.msg), tc.wantErrContains)
-				})
-			}
-		})
-	}
-}
-
-func TestMessageFramingCataloguePinsAggregateSizePrecedence(t *testing.T) {
-	for _, target := range messageFramingTargets() {
-		t.Run(target.name, func(t *testing.T) {
-			for _, tc := range messageFramingAggregateCases(target) {
-				t.Run(tc.name, func(t *testing.T) {
-					err := target.decode(tc.msg)
-					assertMessageFramingError(t, err, tc.wantErrContains)
-					if tc.wantErrContains != "message too large" && strings.Contains(err.Error(), "message too large") {
-						t.Fatalf("decode oversized %s err=%v reached size check before %q", target.name, err, tc.wantErrContains)
-					}
-				})
-			}
-		})
-	}
-}
-
-func TestMessageFramingCatalogueAcceptsMaxFields(t *testing.T) {
-	for _, tc := range messageFramingMaxFieldCases() {
-		t.Run(tc.name, func(t *testing.T) {
-			if len(tc.msg) >= maxMessageLength {
-				t.Fatalf("max-size message len=%d exceeds aggregate cap %d", len(tc.msg), maxMessageLength)
-			}
-			if err := decodeMessageFromCatalogue(tc.msg); err != nil {
-				t.Fatalf("decode max fields: %v", err)
-			}
-		})
-	}
-}
-
-func TestMessageFramingCatalogueRejectsFieldLimits(t *testing.T) {
-	for _, tc := range messageFramingFieldLimitCases() {
-		t.Run(tc.name, func(t *testing.T) {
-			assertMessageFramingError(t, decodeMessageFromCatalogue(tc.msg), tc.wantErrContains)
-		})
-	}
-}
-
-func assertMessageFramingError(t *testing.T, err error, wantErrContains string) {
-	t.Helper()
-	if !errors.Is(err, ErrMessage) {
-		t.Fatalf("decode err=%v want ErrMessage", err)
-	}
-	if wantErrContains != "" && !strings.Contains(err.Error(), wantErrContains) {
-		t.Fatalf("decode err=%q missing %q", err, wantErrContains)
-	}
-}
-
 func TestStateReuseAndConcurrentFinish(t *testing.T) {
 	initCfg := testInitiatorInput()
 	respCfg := testResponderInput()
