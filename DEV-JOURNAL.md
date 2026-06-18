@@ -2039,3 +2039,41 @@ PR #182 closed issue #169 by tightening message-framing fuzz-seed regression cov
 **Next**
 
 - Continue with issue #172 in a separate implementation branch.
+
+---
+
+## Release helper shadow guard follow-up landed - 2026-06-18 12:44 EDT
+
+**Main:** `f6639a1efdb1`
+**Actor:** Codex
+
+**Summary**
+
+PR #184 closed issue #172 by tightening release-helper anti-drift coverage so helpers cannot pass the policy reuse test while defining local `release_tag_*` policy-shadow functions.
+
+**Completed**
+
+- Merged PR #184 (`test: reject release helper policy shadowing`) as `f6639a1efdb125a1960ce7a267828706108312fa`.
+- Split the release-tag policy reuse assertion into path-level helpers so generated shadow fixtures and real helper files share the same static guard.
+- Added generated shadow fixtures for `release_tag_is_supported`, `release_tag_require_supported`, `release_tag_policy_is_supported`, and `release_tag_policy_require_supported_for_metadata`.
+- Broadened direct release-tag policy function shadow detection to cover whitespace inside empty parentheses, commented/split-line function headers, and `function release_tag_*` declarations.
+- Applied the reusable `release_tag_*` direct-definition scan to `scripts/release-metadata.sh` as well as top-level release helpers, because the adapter sources release metadata after the shared policy module.
+- Improved shadow-fixture failure diagnostics so unexpected rejection output is printed instead of failing through a bare `grep`.
+- RAS review-fix run `20260618T153154-81e1ce55ce259f8bfcf6825c` found the first namespace breadth issue; run `20260618T154206-02d438c35d8b4c493a69a58d` drove the broader guard hardening through additional RAS builder iterations.
+- Final RAS review run `20260618T161625-49d0bda9b5e9bf6db9a92d5d` left only non-blocking low/nit follow-ups under the configured gate policy.
+- Created follow-up issue #185 for operator-prefixed `release_tag_*` definitions and source-line matcher drift, and follow-up issue #186 for the adjacent `release_metadata_*` namespace-shadow symmetry question.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- Baseline `scripts/test-release-helpers.sh` passed before the initial red edit.
+- The initial red TDD check failed as expected with `scripts/release-tag-metadata.sh unexpectedly allowed local release_tag_is_supported definition`.
+- The internal-policy red check failed as expected with `scripts/release-tag-metadata.sh unexpectedly allowed local release_tag_policy_is_supported definition` before the namespace guard was broadened.
+- Mutation checks failed as expected when local `release_tag_is_supported()` and `release_tag_policy_is_supported()` definitions were temporarily injected into `scripts/release-tag-metadata.sh`.
+- RAS builder mutation checks covered `scripts/release-metadata.sh` policy-shadow injection and source-line anchor diagnostics before its commits were accepted.
+- Final local gates passed with `scripts/test-release-helpers.sh`, `scripts/check-release-policy.sh`, `(cd tools/releasepolicy && go test ./...)`, `go test ./...`, `go test -race ./...`, `go vet ./...`, `task check`, and `git diff --check`; helper tests reported the expected optional Syft skip because `syft` is not installed.
+- GitHub checks on PR #184 passed before merge: Check, DCO, Dependency Gate, and SAST Gate; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Track follow-up issues #185 and #186 in OmniFocus with their RAS provenance.
