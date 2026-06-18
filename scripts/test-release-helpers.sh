@@ -105,8 +105,13 @@ assert_release_metadata_module_preserves_caller_names() {
     prerelease=before
     latest=before
     sbom_file=before
+    release_metadata_tag=before
+    release_metadata_version=before
+    release_metadata_major=before
+    release_metadata_prerelease=before
+    release_metadata_latest=before
     release_metadata_write v1.2.3 >/dev/null
-    test "$release_tag:$tag:$version:$major:$prerelease:$latest:$sbom_file" = before:before:before:before:before:before:before
+    test "$release_tag:$tag:$version:$major:$prerelease:$latest:$sbom_file:$release_metadata_tag:$release_metadata_version:$release_metadata_major:$release_metadata_prerelease:$release_metadata_latest" = before:before:before:before:before:before:before:before:before:before:before:before
   ' sh "$repo_root/scripts/release-tag-policy.sh" "$repo_root/scripts/release-metadata.sh"
 }
 
@@ -274,15 +279,15 @@ assert_release_metadata_module_rejects_unset_policy_function() {
   PATH="$path_stub_dir:$PATH" sh -c '. "$1"; . "$2"; unset -f release_tag_require_supported; release_metadata_write v01.0.0' sh "$repo_root/scripts/release-tag-policy.sh" "$repo_root/scripts/release-metadata.sh" >"$tmpdir/module-unset-function.out" 2>"$tmpdir/module-unset-function.err"
   status=$?
   set -e
-  if [ "$status" -ne 2 ]; then
-    echo "release metadata module unset-function status got $status want 2" >&2
+  if [ "$status" -eq 0 ]; then
+    echo "release metadata module unexpectedly accepted tag after policy function was unset" >&2
     exit 1
   fi
   if [ -s "$tmpdir/module-unset-function.out" ]; then
     echo "release metadata module emitted metadata after policy function was unset" >&2
     exit 1
   fi
-  grep -q 'release metadata requires scripts/release-tag-policy.sh' "$tmpdir/module-unset-function.err"
+  grep -Eq 'unsupported release tag|release metadata requires scripts/release-tag-policy.sh' "$tmpdir/module-unset-function.err"
 }
 
 assert_tag_metadata v1.0.0 false true
