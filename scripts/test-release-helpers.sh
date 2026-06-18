@@ -59,7 +59,7 @@ assert_helper_path_reuses_release_tag_policy() {
     echo "$helper does not source scripts/release-tag-policy.sh" >&2
     exit 1
   fi
-  if grep -Eq '^[[:space:]]*release_tag_[A-Za-z0-9_]+[[:space:]]*\([[:space:]]*\)[[:space:]]*([{]|$)' "$helper_path" ||
+  if grep -Eq '^[[:space:]]*release_tag_[A-Za-z0-9_]+[[:space:]]*\([[:space:]]*\)' "$helper_path" ||
     grep -Eq '^[[:space:]]*function[[:space:]]+release_tag_[A-Za-z0-9_]+' "$helper_path"; then
     echo "$helper defines a local release tag policy function" >&2
     exit 1
@@ -81,14 +81,12 @@ assert_helper_rejects_release_tag_policy_function_shadow() {
   function_definition=$3
   shadow_helper="$tmpdir/$(basename -- "$helper")-$function_name-shadow.sh"
 
-  awk -v function_definition="$function_definition" '
-    {
-      print
-    }
-    $0 == ". \"$script_dir/release-tag-policy.sh\"" {
-      print function_definition
-    }
-  ' "$repo_root/$helper" >"$shadow_helper"
+  while IFS= read -r line || [ -n "$line" ]; do
+    printf '%s\n' "$line"
+    if [ "$line" = '. "$script_dir/release-tag-policy.sh"' ]; then
+      printf '%s\n' "$function_definition"
+    fi
+  done <"$repo_root/$helper" >"$shadow_helper"
 
   if ( assert_helper_path_reuses_release_tag_policy "$helper with local $function_name" "$shadow_helper" ) >"$shadow_helper.out" 2>"$shadow_helper.err"; then
     echo "$helper unexpectedly allowed local $function_name definition: $function_definition" >&2
@@ -107,6 +105,10 @@ assert_helper_rejects_release_tag_policy_function_shadow_forms() {
 
   assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "$function_name() { return 0; }"
   assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "$function_name( ) { return 0; }"
+  assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "$function_name() # local override
+{ return 0; }"
+  assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "$function_name( ) # local override
+{ return 0; }"
   assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "function $function_name() { return 0; }"
   assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "function $function_name { return 0; }"
 }
