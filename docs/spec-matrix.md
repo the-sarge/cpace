@@ -6,7 +6,7 @@ Audit: the original matrix was reviewed against implementation commit `2e09774f1
 
 | Draft requirement | Implementation | Tests |
 | --- | --- | --- |
-| Use `transcript_ir(Ya,ADa,Yb,ADb)` in initiator-responder mode | `transcriptIR` in `strings.go`; symmetric transcript kept internal for vectors | `TestStringUtilitiesDraftVectors`, `TestRistrettoDraft21Vectors` |
+| Use `transcript_ir(Ya,ADa,Yb,ADb)` in initiator-responder mode | `newIRTranscript` / `irTranscript` in `transcript.go`; symmetric/OC transcript helpers are test-vector-only via `testTranscriptOC` in `strings_test.go` | `TestStringUtilitiesDraftVectors`, `TestIRTranscriptDraftVectorFlow`, `TestRistrettoDraft21Vectors` |
 | Use LEB128 length-value encoding for `prepend_len` and `lv_cat` | `length_value.go`, `framing.go` | `TestStringUtilitiesDraftVectors`, `TestLengthValueEncodingBoundaries`, malformed parser tests |
 | `generator_string(DSI,PRS,CI,sid,s_in_bytes)` with SHA-512 block size 128 | `generatorString` | `TestRistrettoDraft21Vectors` |
 | `G_Ristretto255.DSI = "CPaceRistretto255"` | `dsiRistretto255` | `TestRistrettoDraft21Vectors` |

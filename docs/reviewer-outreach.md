@@ -26,7 +26,7 @@ The threat model is here:
 
 The most useful review focus would be:
 
-- package-owned context-info construction and role/identity orientation;
+- package-owned context-info construction and role-local identity input;
 - binary wire framing and field-size limits;
 - empty-session-ID policy and integration guidance;
 - scalar sampling, invalid-point handling, confirmation, exporter, and session
