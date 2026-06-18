@@ -66,19 +66,11 @@ func (t *irTranscript) clear() {
 }
 
 func (t irTranscript) initiatorConfirmationTag(isk, sid []byte) []byte {
-	return initiatorRoleConfirmationTag(isk, sid, t.ya, t.ada)
+	return confirmationTag(isk, sid, t.ya, t.ada)
 }
 
 func (t irTranscript) responderConfirmationTag(isk, sid []byte) []byte {
-	return responderRoleConfirmationTag(isk, sid, t.yb, t.adb)
-}
-
-func initiatorRoleConfirmationTag(isk, sid, ya, ada []byte) []byte {
-	return confirmationTag(isk, sid, ya, ada)
-}
-
-func responderRoleConfirmationTag(isk, sid, yb, adb []byte) []byte {
-	return confirmationTag(isk, sid, yb, adb)
+	return confirmationTag(isk, sid, t.yb, t.adb)
 }
 
 func transcriptID(transcript []byte) []byte {
