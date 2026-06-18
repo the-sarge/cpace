@@ -96,6 +96,33 @@ func TestMessageFramingCatalogueAcceptsMaxFields(t *testing.T) {
 	}
 }
 
+func TestMessageFramingCatalogueOwnsFieldLengthAcceptance(t *testing.T) {
+	for _, spec := range messageFramingCatalogue() {
+		t.Run(spec.name, func(t *testing.T) {
+			if !spec.acceptsFieldLengths(maxMessageFieldsForCatalogue(spec)...) {
+				t.Fatal("rejected max-size fields")
+			}
+			if spec.acceptsFieldLengths(append(maxMessageFieldsForCatalogue(spec), nil)...) {
+				t.Fatal("accepted wrong field count")
+			}
+			for i, field := range spec.fields {
+				fields := maxMessageFieldsForCatalogue(spec)
+				switch {
+				case field.exact && field.length > 0:
+					fields[i] = fields[i][:field.length-1]
+				case field.exact:
+					fields[i] = []byte{0}
+				default:
+					fields[i] = append(fields[i], 0)
+				}
+				if spec.acceptsFieldLengths(fields...) {
+					t.Fatalf("accepted invalid %s length %d", field.name, len(fields[i]))
+				}
+			}
+		})
+	}
+}
+
 func TestMessageFramingCatalogueRejectsFieldLimits(t *testing.T) {
 	for _, tc := range messageFramingFieldLimitCases() {
 		t.Run(tc.name, func(t *testing.T) {
@@ -271,13 +298,13 @@ func messageFuzzSeeds(spec messageSpec, valid, crossRole, invalidY []byte) [][]b
 		withMessageRole(valid, otherMessageRole(spec.role)),
 		append(messageHeader(spec.role), 0x80, 0x00),
 	}
-	if pointIndex, ok := exactMessageFieldIndex(spec, pointSize); ok {
+	if pointIndex, ok := spec.exactFieldIndex(pointSize); ok {
 		seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, identityEncoding))
 		if invalidY != nil {
 			seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, invalidY))
 		}
 	}
-	if tagIndex, ok := exactMessageFieldIndex(spec, tagSize); ok {
+	if tagIndex, ok := spec.exactFieldIndex(tagSize); ok {
 		seeds = append(seeds, messageWithDecodedField(spec, valid, tagIndex, bytes.Repeat([]byte{0x99}, tagSize-1)))
 		seeds = append(seeds, withMessageTamperedLastByte(valid))
 	}
@@ -481,13 +508,13 @@ func TestExactMessageFieldIndexRejectsAmbiguousLengths(t *testing.T) {
 	defer func() {
 		got := recover()
 		if got == nil {
-			t.Fatal("exactMessageFieldIndex accepted ambiguous exact field lengths")
+			t.Fatal("messageSpec.exactFieldIndex accepted ambiguous exact field lengths")
 		}
 		if !strings.Contains(fmt.Sprint(got), "ambiguous exact 32-byte field") {
 			t.Fatalf("panic=%v want ambiguous exact field diagnostic", got)
 		}
 	}()
-	_, _ = exactMessageFieldIndex(spec, pointSize)
+	_, _ = spec.exactFieldIndex(pointSize)
 }
 
 func TestMessageFuzzSeedsRejectsAmbiguousExactFieldLengths(t *testing.T) {
@@ -540,24 +567,8 @@ func TestMessageFuzzSeedsSkipsAbsentExactFieldLengths(t *testing.T) {
 	}
 }
 
-func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
-	found := -1
-	for i, field := range spec.fields {
-		if field.exact && field.length == length {
-			if found >= 0 {
-				panic(fmt.Sprintf("cpace test: %s has ambiguous exact %d-byte field: %s and %s", spec.name, length, spec.fields[found].name, field.name))
-			}
-			found = i
-		}
-	}
-	if found < 0 {
-		return 0, false
-	}
-	return found, true
-}
-
 func exactMessageFieldBytes(spec messageSpec, length int, fill byte, delta int) []byte {
-	i, ok := exactMessageFieldIndex(spec, length)
+	i, ok := spec.exactFieldIndex(length)
 	if !ok {
 		panic("cpace test: exact message field missing from catalogue")
 	}
@@ -575,31 +586,6 @@ func messageWithDecodedField(spec messageSpec, msg []byte, fieldIndex int, value
 	}
 	fields[fieldIndex] = value
 	return spec.encode(fields...)
-}
-
-func messageFieldsAcceptedBySpec(spec messageSpec, fields ...[]byte) bool {
-	if len(fields) != len(spec.fields) {
-		return false
-	}
-	remainingSpecs := spec.fields
-	for _, got := range fields {
-		if len(remainingSpecs) == 0 {
-			return false
-		}
-		field := remainingSpecs[0]
-		remainingSpecs = remainingSpecs[1:]
-		gotLength := len(got)
-		if field.exact {
-			if gotLength != field.length {
-				return false
-			}
-			continue
-		}
-		if gotLength > field.length {
-			return false
-		}
-	}
-	return true
 }
 
 func messageHeader(role byte) []byte {

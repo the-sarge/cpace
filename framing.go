@@ -126,6 +126,34 @@ func (spec messageSpec) encode(fields ...[]byte) []byte {
 	return out
 }
 
+func (spec messageSpec) acceptsFieldLengths(fields ...[]byte) bool {
+	if len(fields) != len(spec.fields) {
+		return false
+	}
+	for i, field := range spec.fields {
+		if err := field.validateMessageLength(len(fields[i])); err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (spec messageSpec) exactFieldIndex(length int) (int, bool) {
+	found := -1
+	for i, field := range spec.fields {
+		if field.exact && field.length == length {
+			if found >= 0 {
+				panic(fmt.Sprintf("cpace: %s has ambiguous exact %d-byte field: %s and %s", spec.name, length, spec.fields[found].name, field.name))
+			}
+			found = i
+		}
+	}
+	if found < 0 {
+		return 0, false
+	}
+	return found, true
+}
+
 func decodeMessageA(in []byte) (messageA, error) {
 	fields, err := messageASpec.decode(in)
 	if err != nil {
