@@ -7,7 +7,7 @@ release_metadata_write() (
     echo "usage: release_metadata_write vMAJOR.MINOR.PATCH[-PRERELEASE]" >&2
     exit 2
   fi
-  if ! command -v release_tag_require_supported >/dev/null 2>&1; then
+  if [ "${release_tag_policy_loaded:-}" != 1 ]; then
     echo "release metadata requires scripts/release-tag-policy.sh" >&2
     exit 2
   fi

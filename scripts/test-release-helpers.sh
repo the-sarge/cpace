@@ -214,12 +214,43 @@ assert_release_metadata_module() {
   grep -Fxq "latest=$expected_latest" "$metadata"
 }
 
+assert_release_metadata_module_rejects_unsupported_tag() {
+  if sh -c '. "$1"; . "$2"; release_metadata_write "$3"' sh "$repo_root/scripts/release-tag-policy.sh" "$repo_root/scripts/release-metadata.sh" v01.0.0 >"$tmpdir/module-invalid-tag.out" 2>"$tmpdir/module-invalid-tag.err"; then
+    echo "release metadata module unexpectedly accepted unsupported tag" >&2
+    exit 1
+  fi
+  grep -q 'unsupported release tag' "$tmpdir/module-invalid-tag.err"
+}
+
+assert_release_metadata_module_requires_sourced_policy() {
+  path_stub_dir="$tmpdir/release-metadata-path-stub"
+  mkdir "$path_stub_dir"
+  printf '#!/bin/sh\nexit 0\n' >"$path_stub_dir/release_tag_require_supported"
+  chmod +x "$path_stub_dir/release_tag_require_supported"
+
+  set +e
+  PATH="$path_stub_dir:$PATH" sh -c '. "$1"; release_metadata_write v01.0.0' sh "$repo_root/scripts/release-metadata.sh" >"$tmpdir/module-missing-policy.out" 2>"$tmpdir/module-missing-policy.err"
+  status=$?
+  set -e
+  if [ "$status" -ne 2 ]; then
+    echo "release metadata module missing-policy status got $status want 2" >&2
+    exit 1
+  fi
+  if [ -s "$tmpdir/module-missing-policy.out" ]; then
+    echo "release metadata module emitted metadata without sourced policy" >&2
+    exit 1
+  fi
+  grep -q 'release metadata requires scripts/release-tag-policy.sh' "$tmpdir/module-missing-policy.err"
+}
+
 assert_tag_metadata v1.0.0 false true
 assert_tag_metadata v1.0.0-rc.1 true false
 assert_tag_metadata v0.1.3 true false
 assert_release_metadata_module v1.0.0 false true
 assert_release_metadata_module v1.0.0-rc.1 true false
 assert_release_metadata_module v0.1.3 true false
+assert_release_metadata_module_rejects_unsupported_tag
+assert_release_metadata_module_requires_sourced_policy
 
 if "$repo_root/scripts/release-tag-metadata.sh" 'v01.0.0' >"$tmpdir/tag-leading-zero.out" 2>"$tmpdir/tag-leading-zero.err"; then
   echo "leading-zero tag unexpectedly succeeded" >&2
