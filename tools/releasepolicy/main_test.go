@@ -36,7 +36,15 @@ func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
 		t.Fatal("expected signers are empty")
 	}
 	seenJobs := map[string]bool{}
+	seenConcepts := map[string]bool{}
 	for _, job := range acceptedReleasePolicy.jobs {
+		if job.concept == "" {
+			t.Fatalf("job %q has empty policy concept", job.name)
+		}
+		if seenConcepts[job.concept] {
+			t.Fatalf("duplicate policy concept %q", job.concept)
+		}
+		seenConcepts[job.concept] = true
 		if job.name == "" {
 			t.Fatal("job name is empty")
 		}
@@ -89,6 +97,158 @@ func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
 	if !seenScripts["scripts/release-tag-policy.sh"] {
 		t.Fatal("accepted release policy must require scripts/release-tag-policy.sh")
 	}
+}
+
+func TestAcceptedReleasePolicyCatalogueRejectsConceptDefects(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*testing.T, releasePolicy) (releasePolicy, string)
+	}{
+		{
+			name: "empty concept",
+			mutate: func(t *testing.T, policy releasePolicy) (releasePolicy, string) {
+				policy.jobs[indexOfJob(t, policy, "verify-tag")].concept = ""
+				return policy, "accepted release policy job must declare a policy concept"
+			},
+		},
+		{
+			name: "duplicate concept",
+			mutate: func(t *testing.T, policy releasePolicy) (releasePolicy, string) {
+				source := indexOfJob(t, policy, "unsupported-ref")
+				target := indexOfJob(t, policy, "verify-tag")
+				policy.jobs[target].concept = policy.jobs[source].concept
+				return policy, "policy concept duplicates job"
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			policy, want := tt.mutate(t, cloneReleasePolicy(acceptedReleasePolicy))
+			findings := checkAcceptedReleasePolicyCatalogue(policy)
+			requireFinding(t, findings, "tools/releasepolicy/policy.go:accepted-release-policy.jobs.verify-tag")
+			requireFinding(t, findings, want)
+			for _, finding := range findings {
+				if strings.Contains(finding.path, ".github/workflows/release.yml") {
+					t.Fatalf("catalogue finding path points at workflow YAML: %#v", findings)
+				}
+			}
+		})
+	}
+}
+
+func TestWorkflowCheckStopsOnCatalogueIntegrityFailure(t *testing.T) {
+	policy := cloneReleasePolicy(acceptedReleasePolicy)
+	policy.jobs[indexOfJob(t, policy, "verify-tag")].concept = ""
+
+	var doc yaml.Node
+	if err := yaml.Unmarshal([]byte("name: one\nname: two\n"), &doc); err != nil {
+		t.Fatal(err)
+	}
+	findings := checkWorkflowAgainstPolicy(".github/workflows/release.yml", doc.Content[0], policy)
+	if len(findings) != 1 {
+		t.Fatalf("findings=%#v want exactly one catalogue finding", findings)
+	}
+	requireFinding(t, findings, "tools/releasepolicy/policy.go:accepted-release-policy.jobs.verify-tag")
+	requireFinding(t, findings, "accepted release policy job must declare a policy concept")
+}
+
+func TestWorkflowCheckUsesSuppliedPolicy(t *testing.T) {
+	base := currentWorkflow(t)
+	policy := cloneReleasePolicy(acceptedReleasePolicy)
+	removedJob := "release"
+	removed := indexOfJob(t, policy, removedJob)
+	policy.jobs = append(policy.jobs[:removed], policy.jobs[removed+1:]...)
+
+	findings := findingsForWorkflowAgainstPolicy(t, base, policy)
+	requireFinding(t, findings, "jobs."+removedJob)
+	requireFinding(t, findings, "unexpected job in release workflow")
+}
+
+func TestCloneReleasePolicyIsDeep(t *testing.T) {
+	clone := cloneReleasePolicy(acceptedReleasePolicy)
+	verifyTag := indexOfJob(t, acceptedReleasePolicy, "verify-tag")
+	sbom := indexOfJob(t, acceptedReleasePolicy, "sbom")
+
+	clone.rootKeys[0] = "changed"
+	if acceptedReleasePolicy.rootKeys[0] == "changed" {
+		t.Fatal("root keys aliased")
+	}
+	clone.topPermission["contents"] = "write"
+	if acceptedReleasePolicy.topPermission["contents"] == "write" {
+		t.Fatal("top permissions aliased")
+	}
+	clone.jobs[verifyTag].outputs["release-tag"] = "changed"
+	if acceptedReleasePolicy.jobs[verifyTag].outputs["release-tag"] == "changed" {
+		t.Fatal("job outputs aliased")
+	}
+	clone.jobs[sbom].needs[0] = "changed"
+	if acceptedReleasePolicy.jobs[sbom].needs[0] == "changed" {
+		t.Fatal("job needs aliased")
+	}
+	clone.jobs[verifyTag].steps[0].with["persist-credentials"] = "true"
+	if acceptedReleasePolicy.jobs[verifyTag].steps[0].with["persist-credentials"] == "true" {
+		t.Fatal("step with map aliased")
+	}
+	clone.jobs[verifyTag].steps[1].runLines[0] = "changed"
+	if acceptedReleasePolicy.jobs[verifyTag].steps[1].runLines[0] == "changed" {
+		t.Fatal("step run lines aliased")
+	}
+}
+
+func cloneReleasePolicy(policy releasePolicy) releasePolicy {
+	policy.rootKeys = append([]string(nil), policy.rootKeys...)
+	policy.env = cloneStringMap(policy.env)
+	policy.concurrency = cloneStringMap(policy.concurrency)
+	policy.triggerKeys = append([]string(nil), policy.triggerKeys...)
+	policy.pushKeys = append([]string(nil), policy.pushKeys...)
+	policy.pushTags = append([]string(nil), policy.pushTags...)
+	policy.topPermission = cloneStringMap(policy.topPermission)
+	policy.jobs = append([]releaseJobPolicy(nil), policy.jobs...)
+	for i := range policy.jobs {
+		policy.jobs[i] = cloneReleaseJobPolicy(policy.jobs[i])
+	}
+	policy.requiredScripts = append([]string(nil), policy.requiredScripts...)
+	return policy
+}
+
+func cloneReleaseJobPolicy(job releaseJobPolicy) releaseJobPolicy {
+	job.needs = append([]string(nil), job.needs...)
+	job.permissions = cloneStringMap(job.permissions)
+	job.outputs = cloneStringMap(job.outputs)
+	job.steps = append([]releaseStepPolicy(nil), job.steps...)
+	for i := range job.steps {
+		job.steps[i] = cloneReleaseStepPolicy(job.steps[i])
+	}
+	return job
+}
+
+func cloneReleaseStepPolicy(step releaseStepPolicy) releaseStepPolicy {
+	step.runLines = append([]string(nil), step.runLines...)
+	step.with = cloneStringMap(step.with)
+	step.env = cloneStringMap(step.env)
+	return step
+}
+
+func cloneStringMap(in map[string]string) map[string]string {
+	if in == nil {
+		return nil
+	}
+	out := make(map[string]string, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
+}
+
+func indexOfJob(t *testing.T, policy releasePolicy, name string) int {
+	t.Helper()
+	for i, job := range policy.jobs {
+		if job.name == name {
+			return i
+		}
+	}
+	t.Fatalf("accepted release policy is missing job %q", name)
+	return -1
 }
 
 func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
@@ -521,6 +681,11 @@ func currentWorkflow(t *testing.T) string {
 
 func findingsForWorkflow(t *testing.T, in string) []finding {
 	t.Helper()
+	return findingsForWorkflowAgainstPolicy(t, in, acceptedReleasePolicy)
+}
+
+func findingsForWorkflowAgainstPolicy(t *testing.T, in string, policy releasePolicy) []finding {
+	t.Helper()
 	var doc yaml.Node
 	if err := yaml.Unmarshal([]byte(in), &doc); err != nil {
 		t.Fatal(err)
@@ -528,7 +693,7 @@ func findingsForWorkflow(t *testing.T, in string) []finding {
 	if len(doc.Content) != 1 {
 		t.Fatalf("expected one YAML document, got %d", len(doc.Content))
 	}
-	return checkWorkflow("release.yml", doc.Content[0])
+	return checkWorkflowAgainstPolicy("release.yml", doc.Content[0], policy)
 }
 
 func requireFinding(t *testing.T, findings []finding, want string) {

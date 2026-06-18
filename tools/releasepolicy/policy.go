@@ -29,6 +29,9 @@ type releasePolicy struct {
 }
 
 type releaseJobPolicy struct {
+	// concept is catalogue metadata for locality; it is validated for
+	// uniqueness but is not matched against workflow YAML.
+	concept        string
 	name           string
 	displayName    string
 	runsOn         string
@@ -53,6 +56,18 @@ type releaseStepPolicy struct {
 	continueOnError string
 }
 
+const (
+	conceptUnsupportedDispatchRef = "unsupported dispatch ref"
+	conceptSignedTagGate          = "signed tag gate"
+	conceptGoTestGate             = "go test gate"
+	conceptRaceTestGate           = "race test gate"
+	conceptVulnerabilityGate      = "vulnerability gate"
+	conceptSASTGate               = "sast gate"
+	conceptSBOMArtifact           = "sbom artifact"
+	conceptSBOMAttestation        = "sbom attestation"
+	conceptReleasePublication     = "release publication"
+)
+
 var acceptedReleasePolicy = releasePolicy{
 	workflowName: "Release Validation",
 	rootKeys:     []string{"name", "on", "permissions", "env", "concurrency", "jobs"},
@@ -71,6 +86,7 @@ var acceptedReleasePolicy = releasePolicy{
 	},
 	jobs: []releaseJobPolicy{
 		{
+			concept:        conceptUnsupportedDispatchRef,
 			name:           "unsupported-ref",
 			displayName:    "Unsupported Dispatch Ref",
 			runsOn:         "ubuntu-latest",
@@ -89,6 +105,7 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
+			concept:        conceptSignedTagGate,
 			name:           "verify-tag",
 			displayName:    "Verify Signed Tag",
 			runsOn:         "ubuntu-latest",
@@ -128,6 +145,7 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
+			concept:        conceptGoTestGate,
 			name:           "check",
 			displayName:    "Check",
 			runsOn:         "ubuntu-latest",
@@ -146,6 +164,7 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
+			concept:        conceptRaceTestGate,
 			name:           "race",
 			displayName:    "Race",
 			runsOn:         "ubuntu-latest",
@@ -164,6 +183,7 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
+			concept:        conceptVulnerabilityGate,
 			name:           "vuln",
 			displayName:    "Govulncheck",
 			runsOn:         "ubuntu-latest",
@@ -192,6 +212,7 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
+			concept:        conceptSASTGate,
 			name:           "gosec",
 			displayName:    "Gosec",
 			runsOn:         "ubuntu-latest",
@@ -242,6 +263,7 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
+			concept:        conceptSBOMArtifact,
 			name:           "sbom",
 			displayName:    "SBOM",
 			runsOn:         "ubuntu-latest",
@@ -296,6 +318,7 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
+			concept:        conceptSBOMAttestation,
 			name:           "sbom-attestation",
 			displayName:    "SBOM Attestation",
 			runsOn:         "ubuntu-latest",
@@ -364,6 +387,7 @@ var acceptedReleasePolicy = releasePolicy{
 			},
 		},
 		{
+			concept:        conceptReleasePublication,
 			name:           "release",
 			displayName:    "Release",
 			runsOn:         "ubuntu-latest",
