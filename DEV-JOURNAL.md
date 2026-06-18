@@ -1796,3 +1796,39 @@ PR #166 closed documentation follow-ups #145 and #164 by aligning reviewer-facin
 **Next**
 
 - Continue the follow-up sequence with message framing issues #155 and #160.
+
+---
+
+## Message framing follow-ups landed - 2026-06-18 00:08 EDT
+
+**Main:** `11f224ff0ff4`
+**Actor:** Codex
+
+**Summary**
+
+PR #168 closed message framing follow-ups #155 and #160 by tightening catalogue-derived fuzz seed construction, pinning Message A/B/C role bytes in tests, guarding exact-length helper ambiguity, and documenting the `readLEB128` field-length ceiling contract.
+
+**Completed**
+
+- Merged PR #168 (`Harden message framing follow-up coverage`) as `11f224ff0ff4d8533f4a3543af53863ebb5ce230`.
+- Added regression coverage proving Message A protocol fuzz seeds mutate decoded valid fields instead of rebuilding unrelated synthetic fields.
+- Added an ambiguity guard for exact-length catalogue lookups used by test helpers.
+- Extended package cap policy framing tests with literal role-byte pins for Message A/B/C.
+- Documented the internal `readLEB128(maxBytes)` contract and changed `TestLEB128CanonicalDecode` to use an explicit offset table field instead of name-based control flow.
+- RAS review-fix implementation `20260618T035833-84aa48641378d5fb36b4e4e4` / review run `20260618T035834-9c178b04a863fcecc6e186d7` reported no merge-blocking findings under the low/nit gate.
+- Created follow-up issue #169 and OmniFocus task `pPUR0M7BoHk` for the low-severity RAS test-polish findings that were intentionally not allowed to block PR #168.
+- GitHub issues #155 and #160 closed through the PR merge.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- Focused framing tests passed for Message A fuzz seed preservation, exact-length ambiguity rejection, role-byte pins, and LEB128 canonical decoding.
+- `FuzzRespondWithFuzzedMessageA/seed#4` passed with `go test -run '^FuzzRespondWithFuzzedMessageA/seed#4$' -covermode=count -coverprofile=/tmp/cpace-seed4.out .`.
+- Full local gates passed with `go test ./...`, `go test -race ./...`, `task check`, and `git diff --check`; `task check` reported the expected optional Syft skip because `syft` is not installed.
+- The role-byte mutation check failed as intended when the expected Message A role was temporarily changed to `0x02`, then passed after restoring the expected `0x01`.
+- GitHub checks on PR #168 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Keep #169 as a non-blocking follow-up for deeper message framing fuzz-seed helper regression coverage.
+- Continue the follow-up sequence with release policy issues #157 and #162.
