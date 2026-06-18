@@ -480,6 +480,7 @@ var acceptedReleasePolicy = releasePolicy{
 	},
 	requiredScripts: []string{
 		"scripts/release-tag-policy.sh",
+		"scripts/release-metadata.sh",
 		"scripts/release-tag-metadata.sh",
 		"scripts/validate-cyclonedx-sbom.sh",
 		"scripts/extract-release-notes.sh",

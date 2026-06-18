@@ -97,6 +97,9 @@ func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
 	if !seenScripts["scripts/release-tag-policy.sh"] {
 		t.Fatal("accepted release policy must require scripts/release-tag-policy.sh")
 	}
+	if !seenScripts["scripts/release-metadata.sh"] {
+		t.Fatal("accepted release policy must require scripts/release-metadata.sh")
+	}
 }
 
 func TestAcceptedReleasePolicyCatalogueRejectsConceptDefects(t *testing.T) {
@@ -689,6 +692,7 @@ func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "release.yml"), []byte(currentWorkflow(t)), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(acceptedReleasePolicy.expectedSigners), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-tag-policy.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
+	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-metadata.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-tag-metadata.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "validate-cyclonedx-sbom.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "extract-release-notes.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)

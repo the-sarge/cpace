@@ -65,6 +65,20 @@ assert_helper_reuses_release_tag_policy() {
   fi
 }
 
+assert_helper_reuses_release_metadata_module() {
+  helper=$1
+  helper_path="$repo_root/$helper"
+
+  if ! grep -Fq '. "$script_dir/release-metadata.sh"' "$helper_path"; then
+    echo "$helper does not source scripts/release-metadata.sh" >&2
+    exit 1
+  fi
+  if grep -Fq 'prerelease=false' "$helper_path" || grep -Fq 'latest=true' "$helper_path"; then
+    echo "$helper redefines release metadata derivation" >&2
+    exit 1
+  fi
+}
+
 assert_release_tag_policy_preserves_caller_names() {
   function_name=$1
   sh -c '
@@ -80,12 +94,30 @@ assert_release_tag_policy_preserves_caller_names() {
   ' sh "$repo_root/scripts/release-tag-policy.sh" "$function_name"
 }
 
+assert_release_metadata_module_preserves_caller_names() {
+  sh -c '
+    . "$1"
+    . "$2"
+    release_tag=before
+    tag=before
+    version=before
+    major=before
+    prerelease=before
+    latest=before
+    sbom_file=before
+    release_metadata_write v1.2.3 >/dev/null
+    test "$release_tag:$tag:$version:$major:$prerelease:$latest:$sbom_file" = before:before:before:before:before:before:before
+  ' sh "$repo_root/scripts/release-tag-policy.sh" "$repo_root/scripts/release-metadata.sh"
+}
+
 assert_helper_reuses_release_tag_policy scripts/extract-release-notes.sh
 assert_helper_reuses_release_tag_policy scripts/release-tag-metadata.sh
 assert_helper_reuses_release_tag_policy scripts/validate-cyclonedx-sbom.sh
+assert_helper_reuses_release_metadata_module scripts/release-tag-metadata.sh
 
 assert_release_tag_policy_preserves_caller_names release_tag_is_supported
 assert_release_tag_policy_preserves_caller_names release_tag_require_supported
+assert_release_metadata_module_preserves_caller_names
 
 "$repo_root/scripts/extract-release-notes.sh" "$changelog" v1.2.3 >"$tmpdir/notes.txt"
 grep -q 'Release note one' "$tmpdir/notes.txt"
@@ -169,9 +201,25 @@ assert_tag_metadata() {
   grep -Fxq "latest=$expected_latest" "$metadata"
 }
 
+assert_release_metadata_module() {
+  tag=$1
+  expected_prerelease=$2
+  expected_latest=$3
+  metadata="$tmpdir/module-tag-$tag.env"
+
+  sh -c '. "$1"; . "$2"; release_metadata_write "$3"' sh "$repo_root/scripts/release-tag-policy.sh" "$repo_root/scripts/release-metadata.sh" "$tag" >"$metadata"
+  grep -Fxq "release-tag=$tag" "$metadata"
+  grep -Fxq "sbom-file=cpace-$tag.cdx.json" "$metadata"
+  grep -Fxq "prerelease=$expected_prerelease" "$metadata"
+  grep -Fxq "latest=$expected_latest" "$metadata"
+}
+
 assert_tag_metadata v1.0.0 false true
 assert_tag_metadata v1.0.0-rc.1 true false
 assert_tag_metadata v0.1.3 true false
+assert_release_metadata_module v1.0.0 false true
+assert_release_metadata_module v1.0.0-rc.1 true false
+assert_release_metadata_module v0.1.3 true false
 
 if "$repo_root/scripts/release-tag-metadata.sh" 'v01.0.0' >"$tmpdir/tag-leading-zero.out" 2>"$tmpdir/tag-leading-zero.err"; then
   echo "leading-zero tag unexpectedly succeeded" >&2
