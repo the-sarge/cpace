@@ -167,15 +167,46 @@ func TestWorkflowCheckUsesSuppliedPolicy(t *testing.T) {
 func TestCloneReleasePolicyIsDeep(t *testing.T) {
 	clone := cloneReleasePolicy(acceptedReleasePolicy)
 	verifyTag := indexOfJob(t, acceptedReleasePolicy, "verify-tag")
+	gosec := indexOfJob(t, acceptedReleasePolicy, "gosec")
 	sbom := indexOfJob(t, acceptedReleasePolicy, "sbom")
+	release := indexOfJob(t, acceptedReleasePolicy, "release")
+	prepareRelease := indexOfStep(t, acceptedReleasePolicy.jobs[release], "Prepare release notes and assets")
 
 	clone.rootKeys[0] = "changed"
 	if acceptedReleasePolicy.rootKeys[0] == "changed" {
 		t.Fatal("root keys aliased")
 	}
+	clone.env["GOTOOLCHAIN"] = "changed"
+	if acceptedReleasePolicy.env["GOTOOLCHAIN"] == "changed" {
+		t.Fatal("env map aliased")
+	}
+	clone.concurrency["group"] = "changed"
+	if acceptedReleasePolicy.concurrency["group"] == "changed" {
+		t.Fatal("concurrency map aliased")
+	}
+	clone.triggerKeys[0] = "changed"
+	if acceptedReleasePolicy.triggerKeys[0] == "changed" {
+		t.Fatal("trigger keys aliased")
+	}
+	clone.pushKeys[0] = "changed"
+	if acceptedReleasePolicy.pushKeys[0] == "changed" {
+		t.Fatal("push keys aliased")
+	}
+	clone.pushTags[0] = "changed"
+	if acceptedReleasePolicy.pushTags[0] == "changed" {
+		t.Fatal("push tags aliased")
+	}
 	clone.topPermission["contents"] = "write"
 	if acceptedReleasePolicy.topPermission["contents"] == "write" {
 		t.Fatal("top permissions aliased")
+	}
+	clone.requiredScripts[0] = "changed"
+	if acceptedReleasePolicy.requiredScripts[0] == "changed" {
+		t.Fatal("required scripts aliased")
+	}
+	clone.jobs[gosec].permissions["contents"] = "write"
+	if acceptedReleasePolicy.jobs[gosec].permissions["contents"] == "write" {
+		t.Fatal("job permissions aliased")
 	}
 	clone.jobs[verifyTag].outputs["release-tag"] = "changed"
 	if acceptedReleasePolicy.jobs[verifyTag].outputs["release-tag"] == "changed" {
@@ -192,6 +223,10 @@ func TestCloneReleasePolicyIsDeep(t *testing.T) {
 	clone.jobs[verifyTag].steps[1].runLines[0] = "changed"
 	if acceptedReleasePolicy.jobs[verifyTag].steps[1].runLines[0] == "changed" {
 		t.Fatal("step run lines aliased")
+	}
+	clone.jobs[release].steps[prepareRelease].env["RELEASE_TAG"] = "changed"
+	if acceptedReleasePolicy.jobs[release].steps[prepareRelease].env["RELEASE_TAG"] == "changed" {
+		t.Fatal("step env map aliased")
 	}
 }
 
@@ -248,6 +283,17 @@ func indexOfJob(t *testing.T, policy releasePolicy, name string) int {
 		}
 	}
 	t.Fatalf("accepted release policy is missing job %q", name)
+	return -1
+}
+
+func indexOfStep(t *testing.T, job releaseJobPolicy, identity string) int {
+	t.Helper()
+	for i, step := range job.steps {
+		if step.identity == identity {
+			return i
+		}
+	}
+	t.Fatalf("accepted release policy job %q is missing step %q", job.name, identity)
 	return -1
 }
 

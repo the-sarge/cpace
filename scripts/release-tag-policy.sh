@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Sourced by release helpers; keep this file side-effect-free for caller shells.
 release_tag_semver_re='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?$'
 
 release_tag_is_supported() {
