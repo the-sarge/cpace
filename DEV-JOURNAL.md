@@ -2111,3 +2111,35 @@ PR #188 closed issue #185 by tightening the release-tag helper anti-drift guard 
 **Next**
 
 - Track follow-up issue #189 in OmniFocus as a non-blocking continuation of the release-tag shadow guard hardening.
+
+---
+
+## Release metadata shadow guard follow-up landed - 2026-06-18 13:47 EDT
+
+**Main:** `6c4a149495eb`
+**Actor:** Codex
+
+**Summary**
+
+PR #191 closed issue #186 by adding release metadata namespace shadow coverage to the release-helper anti-drift tests, keeping `scripts/release-metadata.sh` as the intentional `release_metadata_*` namespace owner.
+
+**Completed**
+
+- Merged PR #191 (`test: reject release metadata helper shadows`) as `6c4a149495eb598e7cce27bc86069fa0131dac06`.
+- Factored the release-helper direct-function scanner so the same helper checks both `release_tag_*` and `release_metadata_*` local definitions.
+- Applied the `release_metadata_*` direct-definition guard to helpers that source `scripts/release-metadata.sh`, while excluding `scripts/release-metadata.sh` itself because it intentionally defines the metadata namespace.
+- Added a generated shadow fixture proving a helper-local `release_metadata_write() { return 0; }` definition is rejected by the metadata module reuse check.
+- RAS review-fix run `20260618T173658-983368fd154a7de8050e8f54` completed with no merge-blocking findings under the configured gate policy.
+- Created follow-up issue #192 for non-blocking metadata fixture parity around path-based injection, reformatted metadata source lines, and metadata form matrices; shared scanner delimiter polish remains coordinated with issue #189.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- The initial red TDD check failed as expected with `scripts/release-tag-metadata.sh unexpectedly allowed local release_metadata_write definition: release_metadata_write() { return 0; }`.
+- The mutation probe failed as expected when `release_metadata_write() { return 0; }` was temporarily added to `scripts/release-tag-metadata.sh`, producing `scripts/release-tag-metadata.sh defines a local release metadata function`.
+- Final local gates passed with `scripts/test-release-helpers.sh`, `scripts/check-release-policy.sh`, `(cd tools/releasepolicy && go test ./...)`, `go test ./...`, `go test -race ./...`, `go vet ./...`, `task check`, and `git diff --check`; helper tests reported the expected optional Syft skip because `syft` is not installed.
+- GitHub checks on PR #191 passed before merge: Check, DCO, Dependency Gate, and SAST Gate; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Track follow-up issue #192 in OmniFocus as a non-blocking metadata shadow-fixture parity continuation.
