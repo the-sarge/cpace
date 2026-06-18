@@ -1832,3 +1832,44 @@ PR #168 closed message framing follow-ups #155 and #160 by tightening catalogue-
 
 - Keep #169 as a non-blocking follow-up for deeper message framing fuzz-seed helper regression coverage.
 - Continue the follow-up sequence with release policy issues #157 and #162.
+
+---
+
+## Release policy follow-ups landed - 2026-06-18 00:28 EDT
+
+**Main:** `622a65cedee0`
+**Actor:** Codex
+
+**Summary**
+
+PR #171 closed release-policy follow-ups #157 and #162 by hardening release-tag helper anti-drift coverage, adding SBOM filename rejection smoke tests for invalid SemVer-like tags, and expanding release-policy clone-helper deep-copy coverage.
+
+**Completed**
+
+- Merged PR #171 (`Harden release policy follow-up coverage`) as `622a65cedee04b96a0ac9123dcbf432ed60339c8`.
+- Added release-helper anti-drift checks proving `scripts/extract-release-notes.sh`, `scripts/release-tag-metadata.sh`, and `scripts/validate-cyclonedx-sbom.sh` source `scripts/release-tag-policy.sh` and do not reintroduce local SemVer policy definitions.
+- Strengthened sourced-helper namespace coverage for caller-relevant names: `release_tag`, `tag`, `version`, `major`, `prerelease`, and `latest`.
+- Added SBOM smoke coverage for invalid supported-name-shape filenames `cpace-v01.0.0.cdx.json` and `cpace-v1.2.cdx.json`, both expecting the supported-release-tag diagnostic.
+- Added the sourced-library intent comment to `scripts/release-tag-policy.sh` without changing helper execution policy.
+- Expanded `TestCloneReleasePolicyIsDeep` to cover `env`, `concurrency`, `triggerKeys`, `pushKeys`, `pushTags`, `requiredScripts`, job permissions, and step env deep copies.
+- Fixed the medium RAS finding by making clone-alias assertions restore global policy state before failing, so a deliberate clone regression does not pollute later release-policy tests.
+- RAS review-fix implementation `20260618T041523-9dd7bd22c4d907ff115807d9` found one medium test-hygiene issue and one low coverage gap; the medium issue was fixed before merge.
+- RAS review-fix implementation `20260618T042439-edbb238c470180d5164325ed` reran against head `a4cc501556fd5c47282b4a686eae8c0ffa675cdb` and reported no actionable findings.
+- Created follow-up issue #172 and OmniFocus task `nLenCIJ4Bhj` for the low-severity function-shadowing anti-drift guard gap, intentionally not blocking PR #171 on that low finding.
+- GitHub issues #157 and #162 closed through the PR merge.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- Release helper smoke tests passed with `scripts/test-release-helpers.sh`; the optional real Syft SBOM validation skipped because `syft` is not installed.
+- Release policy checker passed with `scripts/check-release-policy.sh`.
+- Release-policy tool validation passed with `(cd tools/releasepolicy && go test ./...)` and `(cd tools/releasepolicy && go vet ./...)`.
+- Full repo gate passed with `task check`; it included docs validation, release helper tests, CI classifier tests, evidence baseline checks, `go test ./...`, `go test -race ./...`, gofmt/goimports checks, `go vet ./...`, `staticcheck ./...`, `ast-grep scan --error`, and `govulncheck -test ./...`.
+- Whitespace validation passed with `git diff --check`.
+- Mutation evidence for #162 passed: temporarily removing `step.env = cloneStringMap(step.env)` made `TestCloneReleasePolicyIsDeep` fail with `step env map aliased`; after the medium-finding fix, `TestReleasePolicyStopsStepValidationAfterIdentityMismatch` still passed in the same mutated run, proving the alias failure no longer polluted later policy tests.
+- GitHub checks on PR #171 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Keep #169 and #172 as non-blocking follow-up issues from the RAS low-severity review findings.
+- Stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit if later work makes security-relevant changes.
