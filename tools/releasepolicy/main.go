@@ -71,7 +71,17 @@ func loadYAML(path string) (*yaml.Node, error) {
 }
 
 func checkWorkflow(path string, root *yaml.Node) []finding {
-	c := checker{path: path}
+	return checkWorkflowAgainstPolicy(path, root, acceptedReleasePolicy)
+}
+
+func checkWorkflowAgainstPolicy(path string, root *yaml.Node, policy releasePolicy) []finding {
+	c := checker{path: path, policy: policy}
+	c.findings = append(c.findings, checkAcceptedReleasePolicyCatalogue(policy)...)
+	// Report accepted policy catalogue defects before workflow drift so
+	// maintainers fix the checker oracle before interpreting YAML findings.
+	if len(c.findings) > 0 {
+		return c.findings
+	}
 	c.checkDuplicateKeys("$", root)
 	if len(c.findings) > 0 {
 		return c.findings
@@ -94,11 +104,31 @@ func checkWorkflow(path string, root *yaml.Node) []finding {
 
 type checker struct {
 	path     string
+	policy   releasePolicy
 	findings []finding
 }
 
 func (c *checker) fail(nodePath, msg string) {
 	c.findings = append(c.findings, finding{path: c.path + ":" + nodePath, msg: msg})
+}
+
+func checkAcceptedReleasePolicyCatalogue(policy releasePolicy) []finding {
+	const policyPath = "tools/releasepolicy/policy.go"
+	var findings []finding
+	seenConcepts := map[string]string{}
+	for _, job := range policy.jobs {
+		nodePath := policyPath + ":accepted-release-policy.jobs." + job.name
+		if job.concept == "" {
+			findings = append(findings, finding{path: nodePath, msg: "accepted release policy job must declare a policy concept"})
+			continue
+		}
+		if prev, ok := seenConcepts[job.concept]; ok {
+			findings = append(findings, finding{path: nodePath, msg: "policy concept duplicates job " + prev})
+			continue
+		}
+		seenConcepts[job.concept] = job.name
+	}
+	return findings
 }
 
 func (c *checker) checkDuplicateKeys(nodePath string, n *yaml.Node) {
@@ -128,7 +158,7 @@ func (c *checker) checkDuplicateKeys(nodePath string, n *yaml.Node) {
 }
 
 func (c *checker) checkRoot(root *yaml.Node) {
-	policy := acceptedReleasePolicy
+	policy := c.policy
 	if root.Kind != yaml.MappingNode {
 		c.fail("$", "workflow must be a mapping")
 	}
@@ -141,7 +171,7 @@ func (c *checker) checkRoot(root *yaml.Node) {
 }
 
 func (c *checker) checkTriggers(root *yaml.Node) {
-	policy := acceptedReleasePolicy
+	policy := c.policy
 	on := mapping(root, "on")
 	if on == nil {
 		c.fail("on", "missing trigger block")
@@ -167,7 +197,7 @@ func (c *checker) checkTriggers(root *yaml.Node) {
 }
 
 func (c *checker) checkTopPermissions(root *yaml.Node) {
-	policy := acceptedReleasePolicy
+	policy := c.policy
 	permissions := mapping(root, "permissions")
 	if permissions == nil {
 		c.fail("permissions", "missing top-level permissions")
@@ -182,7 +212,7 @@ func (c *checker) checkTopPermissions(root *yaml.Node) {
 }
 
 func (c *checker) checkJobSet(jobs *yaml.Node) {
-	want := acceptedReleasePolicy.jobNames()
+	want := c.policy.jobNames()
 	for _, name := range want {
 		if mapping(jobs, name) == nil {
 			c.fail("jobs."+name, "missing required job")
@@ -196,7 +226,7 @@ func (c *checker) checkJobSet(jobs *yaml.Node) {
 }
 
 func (c *checker) checkAcceptedJobs(jobs *yaml.Node) {
-	for _, policy := range acceptedReleasePolicy.jobs {
+	for _, policy := range c.policy.jobs {
 		job := mapping(jobs, policy.name)
 		if job == nil {
 			continue
@@ -206,12 +236,22 @@ func (c *checker) checkAcceptedJobs(jobs *yaml.Node) {
 }
 
 func (c *checker) checkAcceptedJob(jobPath string, job *yaml.Node, policy releaseJobPolicy) {
+	c.checkAcceptedJobEnvelope(jobPath, job, policy)
+	c.checkAcceptedJobNeeds(jobPath, job, policy)
+	c.checkAcceptedJobPermissions(jobPath, job, policy)
+	c.checkAcceptedJobOutputs(jobPath, job, policy)
+	c.checkAcceptedJobSteps(jobPath, job, policy)
+}
+
+func (c *checker) checkAcceptedJobEnvelope(jobPath string, job *yaml.Node, policy releaseJobPolicy) {
 	expectOnlyKeys(c, jobPath, job, []string{"name", "if", "needs", "runs-on", "timeout-minutes", "permissions", "outputs", "steps"})
 	expectExactScalar(c, jobPath+".name", mapping(job, "name"), policy.displayName)
 	expectExactScalar(c, jobPath+".runs-on", mapping(job, "runs-on"), policy.runsOn)
 	expectExactScalar(c, jobPath+".timeout-minutes", mapping(job, "timeout-minutes"), policy.timeoutMinutes)
 	expectExactScalar(c, jobPath+".if", mapping(job, "if"), policy.ifCond)
+}
 
+func (c *checker) checkAcceptedJobNeeds(jobPath string, job *yaml.Node, policy releaseJobPolicy) {
 	gotNeeds := needs(job)
 	switch {
 	case policy.needs == nil && mapping(job, "needs") != nil:
@@ -219,7 +259,9 @@ func (c *checker) checkAcceptedJob(jobPath string, job *yaml.Node, policy releas
 	case !sameStringSet(gotNeeds, policy.needs):
 		c.fail(jobPath+".needs", "needs must exactly match: "+strings.Join(policy.needs, ", "))
 	}
+}
 
+func (c *checker) checkAcceptedJobPermissions(jobPath string, job *yaml.Node, policy releaseJobPolicy) {
 	permissions := mapping(job, "permissions")
 	if policy.permissions == nil {
 		if permissions != nil {
@@ -228,7 +270,9 @@ func (c *checker) checkAcceptedJob(jobPath string, job *yaml.Node, policy releas
 	} else {
 		expectExactScalars(c, jobPath+".permissions", permissions, policy.permissions)
 	}
+}
 
+func (c *checker) checkAcceptedJobOutputs(jobPath string, job *yaml.Node, policy releaseJobPolicy) {
 	outputs := mapping(job, "outputs")
 	if policy.outputs == nil {
 		if outputs != nil {
@@ -237,7 +281,9 @@ func (c *checker) checkAcceptedJob(jobPath string, job *yaml.Node, policy releas
 	} else {
 		expectExactScalars(c, jobPath+".outputs", outputs, policy.outputs)
 	}
+}
 
+func (c *checker) checkAcceptedJobSteps(jobPath string, job *yaml.Node, policy releaseJobPolicy) {
 	jobSteps := steps(job)
 	gotStepIdentities := make([]string, 0, len(jobSteps))
 	for _, step := range jobSteps {
@@ -314,7 +360,7 @@ func (c *checker) checkActionPins(jobs *yaml.Node) {
 func (c *checker) checkCheckoutCredentials(jobs *yaml.Node) {
 	for _, jobName := range mapKeys(jobs) {
 		job := mapping(jobs, jobName)
-		if _, ok := acceptedReleasePolicy.job(jobName); ok {
+		if _, ok := c.policy.job(jobName); ok {
 			continue
 		}
 		for idx, step := range steps(job) {
