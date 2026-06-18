@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# Sourced by release helpers; keep this file side-effect-free for caller shells.
+# Sourced by release helpers; keep definitions under the release_tag_* namespace.
 release_tag_semver_re='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?$'
 
-release_tag_is_supported() {
+release_tag_policy_is_supported() {
   case "$1" in
     *'
 '*)
@@ -13,8 +13,22 @@ release_tag_is_supported() {
   printf '%s\n' "$1" | grep -Eq "$release_tag_semver_re"
 }
 
+release_tag_is_supported() {
+  release_tag_policy_is_supported "$1"
+}
+
 release_tag_require_supported() {
-  if release_tag_is_supported "$1"; then
+  if release_tag_policy_is_supported "$1"; then
+    return 0
+  fi
+  echo "unsupported release tag: $1" >&2
+  echo "expected vMAJOR.MINOR.PATCH with an optional SemVer prerelease suffix" >&2
+  return 1
+}
+
+release_tag_policy_require_supported_for_metadata() {
+  release_tag_policy_metadata_check_ran=1
+  if release_tag_policy_is_supported "$1"; then
     return 0
   fi
   echo "unsupported release tag: $1" >&2
