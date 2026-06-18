@@ -1873,3 +1873,31 @@ PR #171 closed release-policy follow-ups #157 and #162 by hardening release-tag 
 
 - Keep #169 and #172 as non-blocking follow-up issues from the RAS low-severity review findings.
 - Stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit if later work makes security-relevant changes.
+
+---
+
+## Message framing catalogue test deepening landed - 2026-06-18 01:03 EDT
+
+**Main:** `0ae3b1e2b5fe`
+**Actor:** Codex
+
+**Summary**
+
+PR #174 completed the first architecture-plan slice by concentrating Message framing catalogue behavior checks in `framing_catalogue_test.go` and removing duplicate helper-level LEB128 rejection tests now covered through message decoding.
+
+**Completed**
+
+- Merged PR #174 (`test: deepen message framing catalogue coverage`) as `0ae3b1e2b5fe4b4fe6b9fbbdd6365da68140670b`.
+- Moved malformed, aggregate-size precedence, max-field, and field-limit catalogue checks out of `api_test.go` and into the Message framing catalogue test module.
+- Removed the low-leverage `TestLEB128LengthInvariant` and direct malformed LEB128 rejection test after confirming malformed encodings remain covered through the Message framing decode path.
+- RAS review-fix implementation `20260618T050013-9be9112e366fe821fe9ccc44` reported no actionable findings and no low/nit follow-ups.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- Local gates passed before merge with `go test ./...`, `go test -race ./...`, `go vet ./...`, `task check`, and `git diff --check`; `task check` reported the expected optional Syft skip because `syft` is not installed.
+- GitHub checks on PR #174 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Continue the architecture plan with the Transcript module PR.
