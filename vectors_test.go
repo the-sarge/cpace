@@ -387,7 +387,7 @@ func TestCoreDraft21Vectors(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer clearBytes(respCore.isk)
-	defer clearBytes(respCore.transcript)
+	defer respCore.transcript.clear()
 	if !bytes.Equal(gotYb, v["Yb"]) {
 		t.Fatalf("newResponderCore Yb got %x want %x", gotYb, v["Yb"])
 	}

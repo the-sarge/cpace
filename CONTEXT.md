@@ -48,9 +48,8 @@ The Intermediate Session Key — the shared secret CPace derives by hashing the 
 _Avoid_: session key, shared secret, master key.
 
 **Transcript**:
-The injective initiator-responder ordering of both parties' public shares and
-associated data, fed into ISK derivation. This suite uses the IR ordering only.
-_Avoid_: log, history.
+The internal module that owns the injective initiator-responder ordering of both parties' public shares and associated data and derives from it the ISK, the two role confirmation tags, and the CPaceSidOutput transcript id. It holds only public wire data: the ISK it derives is a return value owned and cleared by the **CPace core**, never stored on the transcript. The initiator builds a finish-local transcript; the responder builds the transcript at construction and carries that same value through to Finish, so both roles compute their finish-time confirmation tag through one transcript interface rather than recomputing it from decomposed fields. This suite uses the IR ordering only.
+_Avoid_: log, history, decomposed ya/ada responder fields.
 
 **Confirmation tag**:
 The explicit key-confirmation MAC each party sends and verifies, proving both

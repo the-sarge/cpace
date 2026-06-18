@@ -17,11 +17,9 @@ type initiatorCore struct {
 }
 
 type responderCore struct {
-	isk        []byte // persistent secret — owned by clear()
-	transcript []byte // public wire data — zeroed alongside isk as hygiene
+	isk        []byte       // persistent secret — owned by clear()
+	transcript irTranscript // public wire data — zeroed alongside isk as hygiene
 	sid        []byte
-	ya         []byte
-	ada        []byte
 	peerID     []byte
 }
 
@@ -105,20 +103,18 @@ func newResponderCore(nc normalizedInput, peerYa, peerAda []byte, random io.Read
 	tagB := tr.responderConfirmationTag(isk, nc.sid)
 	return &responderCore{
 		isk:        isk,
-		transcript: tr.bytes(),
+		transcript: tr,
 		sid:        clone(nc.sid),
-		ya:         clone(peerYa),
-		ada:        clone(peerAda),
 		peerID:     clone(nc.initiatorID),
 	}, yb, tagB, nil
 }
 
 func (c *responderCore) finish(peerTagC []byte) (*Session, error) {
-	expectedA := initiatorRoleConfirmationTag(c.isk, c.sid, c.ya, c.ada)
+	expectedA := c.transcript.initiatorConfirmationTag(c.isk, c.sid)
 	if !hmac.Equal(expectedA, peerTagC) {
 		return nil, ErrConfirmationFailed
 	}
-	return newSession(c.isk, transcriptID(c.transcript), c.ada, c.peerID), nil
+	return newSession(c.isk, c.transcript.transcriptID(), c.transcript.initiatorAD(), c.peerID), nil
 }
 
 // clear zeroes then nils each persistent-secret field; a second call finds
@@ -131,14 +127,14 @@ func (c *initiatorCore) clear() {
 	c.scalar = nil
 }
 
-// clear zeroes then nils each persistent-secret field; a second call finds
-// nil and is a safe no-op. Safe on a nil receiver.
+// clear zeroes then nils the persistent ISK and wipes the stored transcript
+// bytes as hygiene; a second call finds nil and is a safe no-op. Safe on a nil
+// receiver.
 func (c *responderCore) clear() {
 	if c == nil {
 		return
 	}
 	clearBytes(c.isk)
-	clearBytes(c.transcript)
 	c.isk = nil
-	c.transcript = nil
+	c.transcript.clear()
 }

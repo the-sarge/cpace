@@ -250,21 +250,25 @@ func TestClearIdempotent(t *testing.T) {
 	}
 
 	isk := bytes.Repeat([]byte{0x42}, 64)
-	transcript := bytes.Repeat([]byte{0x24}, 32)
+	tr := newIRTranscript([]byte("ya"), []byte("ada"), []byte("yb"), []byte("adb"))
+	transcriptBody := tr.transcript // alias backing array before clear
 	responder := &responderCore{
 		isk:        isk,
-		transcript: transcript,
+		transcript: tr,
 	}
 	responder.clear()
 	responder.clear()
-	if responder.isk != nil || responder.transcript != nil {
-		t.Fatal("responder core retained cleared state references")
+	if responder.isk != nil {
+		t.Fatal("responder core retained isk reference after clear")
 	}
 	if !allZero(isk) {
 		t.Fatal("responder ISK was not zeroed by clear")
 	}
-	if !allZero(transcript) {
+	if !allZero(transcriptBody) {
 		t.Fatal("responder transcript was not zeroed by clear")
+	}
+	if responder.transcript.bytes() != nil {
+		t.Fatal("responder core retained transcript bytes after clear")
 	}
 }
 
@@ -609,7 +613,7 @@ func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 		t.Fatal(err)
 	}
 	responderISK := responder.state.core.isk
-	responderTranscript := responder.state.core.transcript
+	responderTranscript := responder.state.core.transcript.transcript
 
 	msgC, sI, err := initiator.Finish(msgB)
 	if err != nil {
@@ -626,7 +630,7 @@ func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if responder.state.core.isk != nil || responder.state.core.transcript != nil {
+	if responder.state.core.isk != nil || responder.state.core.transcript.bytes() != nil {
 		t.Fatal("responder retained cleared state references after Finish")
 	}
 	if !allZero(responderISK) {
@@ -704,11 +708,11 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 			t.Fatal(err)
 		}
 		responderISK := responder.state.core.isk
-		responderTranscript := responder.state.core.transcript
+		responderTranscript := responder.state.core.transcript.transcript
 		if _, err := responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
 			t.Fatalf("responder Finish garbage err=%v", err)
 		}
-		if responder.state.core.isk != nil || responder.state.core.transcript != nil {
+		if responder.state.core.isk != nil || responder.state.core.transcript.bytes() != nil {
 			t.Fatal("responder retained cleared state references after parse failure")
 		}
 		if !allZero(responderISK) {
@@ -734,11 +738,11 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		}
 		msgC[len(msgC)-1] ^= 0xff
 		responderISK := responder.state.core.isk
-		responderTranscript := responder.state.core.transcript
+		responderTranscript := responder.state.core.transcript.transcript
 		if _, err := responder.Finish(msgC); !errors.Is(err, ErrConfirmationFailed) {
 			t.Fatalf("responder Finish tampered tagA err=%v", err)
 		}
-		if responder.state.core.isk != nil || responder.state.core.transcript != nil {
+		if responder.state.core.isk != nil || responder.state.core.transcript.bytes() != nil {
 			t.Fatal("responder retained cleared state references after confirmation failure")
 		}
 		if !allZero(responderISK) {
@@ -896,11 +900,11 @@ func TestSingleUseStateCloseCleansAbandonedState(t *testing.T) {
 		t.Fatal(err)
 	}
 	responderISK := responder.state.core.isk
-	responderTranscript := responder.state.core.transcript
+	responderTranscript := responder.state.core.transcript.transcript
 	if err := responder.Close(); err != nil {
 		t.Fatalf("Responder.Close err=%v", err)
 	}
-	if responder.state.core.isk != nil || responder.state.core.transcript != nil {
+	if responder.state.core.isk != nil || responder.state.core.transcript.bytes() != nil {
 		t.Fatal("responder core retained cleared state references after Close")
 	}
 	if !allZero(responderISK) {
