@@ -1934,3 +1934,37 @@ PR #176 completed the second architecture-plan slice by moving draft `CPaceSidOu
 **Next**
 
 - Continue the architecture plan with the caller-input lifetime handoff PR.
+
+---
+
+## Caller input handoff slice landed - 2026-06-18 01:48 EDT
+
+**Main:** `3e9ec729710a`
+**Actor:** Codex
+
+**Summary**
+
+PR #178 completed the third architecture-plan slice by making caller input an explicit secret-lifetime handoff boundary instead of an implicit validation/normalization flow.
+
+**Completed**
+
+- Merged PR #178 (`Make caller input handoff explicit`) as `3e9ec729710ad57a3a53d315cfa3a759cc62efeb`.
+- Renamed the package-owned input clone state from `acceptedInput` to `callerInput` to reflect its ownership role.
+- Added `callerInput.handoff`, which maps role-local IDs into transcript roles, builds CI, clears residual context storage, transfers package-owned slice headers into `normalizedInput`, and nils the transferred headers in `callerInput`.
+- Simplified `normalizeInput` to install `defer caller.wipe()` immediately after accepting input, then return the handed-off normalized input.
+- Added `caller_input_test.go` coverage for ownership transfer, context zeroization, source-reference niling after handoff, and responder role ID mapping.
+- Updated `docs/adr-0009-secret-lifetime-audit.md` after the first RAS review found stale `acceptedInput` and `keep`-flag references.
+- RAS review-fix implementation `20260618T053316-0a1476bea26385c93214392c` fixed the ADR audit finding and reran cleanly against head `d9073817fdb34f5033beed9511e52385d64c9a99`, with no actionable findings and no tracked low/nit follow-ups.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- The initial red TDD check failed as expected with `caller.handoff undefined`.
+- Focused local checks passed with `go test -run 'TestCallerInputHandoff|TestMutableInputsAreCopied|TestInputErrorPathsDoNotMutateCallerSlices|TestPackageOwnedCapPolicyAcceptsInputCopies|TestPackageOwnedCapPolicyRejectsInputBeforeCopying' ./...`.
+- Stale audit references were checked with `rg -n "acceptedInput|keep" docs/adr-0009-secret-lifetime-audit.md`, which returned no matches.
+- Full local gates passed before merge with `go test ./...`, `go test -race ./...`, `go vet ./...`, `task check`, and `git diff --check`; `task check` reported the expected optional Syft skip because `syft` is not installed.
+- GitHub checks on PR #178 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Continue the architecture plan with the release metadata module PR.
