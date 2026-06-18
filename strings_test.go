@@ -137,6 +137,25 @@ func TestIRTranscriptInitiatorAD(t *testing.T) {
 	}
 }
 
+func TestIRTranscriptClear(t *testing.T) {
+	tr := newIRTranscript([]byte("ya"), []byte("ada"), []byte("yb"), []byte("adb"))
+	body := tr.transcript // alias the concatenated backing array before clearing
+	if allZero(body) {
+		t.Fatal("precondition: transcript bytes should be non-zero")
+	}
+
+	tr.clear()
+
+	if !allZero(body) {
+		t.Fatalf("clear did not zero transcript backing bytes: %x", body)
+	}
+	if tr.bytes() != nil {
+		t.Fatalf("clear did not nil transcript: %x", tr.bytes())
+	}
+
+	tr.clear() // second call must be a safe no-op
+}
+
 func TestWireFormatPrefixByte(t *testing.T) {
 	if wireFormatV1 != 0xc1 {
 		t.Fatalf("wireFormatV1=%#x, want 0xc1", wireFormatV1)

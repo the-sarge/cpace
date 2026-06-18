@@ -45,6 +45,26 @@ func (t irTranscript) initiatorAD() []byte {
 	return clone(t.ada)
 }
 
+// clear zeroes then nils the transcript's public byte fields. The responder
+// calls it from responderCore.clear so the stored transcript is wiped
+// alongside the ISK as hygiene (ADR-0001); the transcript holds no secret of
+// its own. Safe to call more than once and on a nil receiver.
+func (t *irTranscript) clear() {
+	if t == nil {
+		return
+	}
+	clearBytes(t.transcript)
+	clearBytes(t.ya)
+	clearBytes(t.ada)
+	clearBytes(t.yb)
+	clearBytes(t.adb)
+	t.transcript = nil
+	t.ya = nil
+	t.ada = nil
+	t.yb = nil
+	t.adb = nil
+}
+
 func (t irTranscript) initiatorConfirmationTag(isk, sid []byte) []byte {
 	return initiatorRoleConfirmationTag(isk, sid, t.ya, t.ada)
 }
