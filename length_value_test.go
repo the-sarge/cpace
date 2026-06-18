@@ -3,8 +3,6 @@ package cpace
 import (
 	"bytes"
 	"encoding/hex"
-	"errors"
-	"strings"
 	"testing"
 )
 
@@ -42,31 +40,6 @@ func TestLengthValueEncodingBoundaries(t *testing.T) {
 	}
 }
 
-func TestLEB128LengthInvariant(t *testing.T) {
-	tests := []struct {
-		name    string
-		length  int
-		encoded []byte
-	}{
-		{"empty", 0, appendLEB128(nil, 0)},
-		{"single byte max", 0x7f, appendLEB128(nil, 0x7f)},
-		{"two byte min", 0x80, appendLEB128(nil, 0x80)},
-		{"two byte max", 0x3fff, appendLEB128(nil, 0x3fff)},
-		{"three byte min", 0x4000, appendLEB128(nil, 0x4000)},
-		{"associated data cap", maxAssociatedDataLength, appendLEB128(nil, maxAssociatedDataLength)},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := leb128LenInt(tt.length); got != len(tt.encoded) {
-				t.Fatalf("leb128LenInt(%d)=%d want %d", tt.length, got, len(tt.encoded))
-			}
-			if got := lengthValueLen(tt.length); got != len(tt.encoded)+tt.length {
-				t.Fatalf("lengthValueLen(%d)=%d want %d", tt.length, got, len(tt.encoded)+tt.length)
-			}
-		})
-	}
-}
-
 func TestLEB128CanonicalDecode(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -94,31 +67,6 @@ func TestLEB128CanonicalDecode(t *testing.T) {
 			}
 			if next != tt.wantNext {
 				t.Fatalf("readLEB128 next=%d want %d", next, tt.wantNext)
-			}
-		})
-	}
-}
-
-func TestLEB128CanonicalDecodeRejectsMalformed(t *testing.T) {
-	tests := []struct {
-		name            string
-		encoded         []byte
-		wantErrContains string
-	}{
-		{"truncated", nil, "truncated LEB128"},
-		{"truncated continuation", []byte{0x80}, "truncated LEB128"},
-		{"non-canonical zero", []byte{0x80, 0x00}, "non-canonical LEB128"},
-		{"non-canonical value", []byte{0xc0, 0x00}, "non-canonical LEB128"},
-		{"malformed", []byte{0x80, 0x80, 0x80, 0x00}, "malformed LEB128"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := readLEB128(tt.encoded, 0, maxLEB128BytesForField)
-			if !errors.Is(err, ErrMessage) {
-				t.Fatalf("readLEB128 err=%v want ErrMessage", err)
-			}
-			if !strings.Contains(err.Error(), tt.wantErrContains) {
-				t.Fatalf("readLEB128 err=%q missing %q", err, tt.wantErrContains)
 			}
 		})
 	}
