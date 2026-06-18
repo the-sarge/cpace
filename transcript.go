@@ -55,6 +55,8 @@ func responderRoleConfirmationTag(isk, sid, yb, adb []byte) []byte {
 }
 
 func transcriptID(transcript []byte) []byte {
-	sidOut := sha512.Sum512(append([]byte("CPaceSidOutput"), transcript...))
-	return clone(sidOut[:])
+	h := sha512.New()
+	_, _ = h.Write([]byte("CPaceSidOutput"))
+	_, _ = h.Write(transcript)
+	return h.Sum(nil)
 }

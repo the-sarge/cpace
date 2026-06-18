@@ -374,6 +374,11 @@ func TestCoreDraft21Vectors(t *testing.T) {
 	if !bytes.Equal(initSession.state.isk, v["ISK_IR"]) {
 		t.Fatalf("initiator core session ISK got %x want %x", initSession.state.isk, v["ISK_IR"])
 	}
+	wantTranscriptID := v["sid_output_ir"]
+	initTranscriptID := initSession.TranscriptID()
+	if !bytes.Equal(initTranscriptID, wantTranscriptID) {
+		t.Fatalf("initiator core session TranscriptID got %x want %x", initTranscriptID, wantTranscriptID)
+	}
 
 	respNC := draftVectorInput(v, v["ADb"])
 	defer respNC.wipe()
@@ -398,6 +403,13 @@ func TestCoreDraft21Vectors(t *testing.T) {
 	}
 	if !bytes.Equal(respSession.state.isk, v["ISK_IR"]) {
 		t.Fatalf("responder core session ISK got %x want %x", respSession.state.isk, v["ISK_IR"])
+	}
+	respTranscriptID := respSession.TranscriptID()
+	if !bytes.Equal(respTranscriptID, wantTranscriptID) {
+		t.Fatalf("responder core session TranscriptID got %x want %x", respTranscriptID, wantTranscriptID)
+	}
+	if !bytes.Equal(initTranscriptID, respTranscriptID) {
+		t.Fatalf("core session TranscriptIDs differ: initiator %x responder %x", initTranscriptID, respTranscriptID)
 	}
 }
 
