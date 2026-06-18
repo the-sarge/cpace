@@ -300,7 +300,7 @@ func TestRistrettoDraft21Vectors(t *testing.T) {
 
 	ada := v["ADa"]
 	adb := v["ADb"]
-	trIR := transcriptIR(Ya, ada, Yb, adb)
+	trIR := newIRTranscript(Ya, ada, Yb, adb).bytes()
 	wantTrIR := hx(t, "20d6bac480f2c386c394efc7c47adb9925dcd2630b64f240c50f8d0eec482b915703414461203ea7e0b19560d7c0b0f5734f63b955286dfa8232b5ebe63324e2d9e7433f725803414462")
 	if !bytes.Equal(trIR, wantTrIR) {
 		t.Fatalf("transcript_ir got %x want %x", trIR, wantTrIR)
@@ -321,7 +321,7 @@ func TestRistrettoDraft21Vectors(t *testing.T) {
 		t.Fatalf("tagA got %x want %x", got, tags["tagA"])
 	}
 
-	trOC := transcriptOC(Ya, ada, Yb, adb)
+	trOC := testTranscriptOC(Ya, ada, Yb, adb)
 	iskOC := deriveISK(sid, wantK, trOC)
 	wantISKOC := v["ISK_SY"]
 	if !bytes.Equal(iskOC, wantISKOC) {

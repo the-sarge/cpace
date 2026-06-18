@@ -58,18 +58,18 @@ func (c *initiatorCore) finish(peerYb, peerAdb, peerTag []byte) ([]byte, *Sessio
 	if err != nil {
 		return nil, nil, err
 	}
-	tr := transcriptIR(c.ya, c.ada, peerYb, peerAdb)
-	isk := deriveISK(c.sid, k, tr)
+	tr := newIRTranscript(c.ya, c.ada, peerYb, peerAdb)
+	isk := tr.deriveISK(c.sid, k)
 	// Scratch — the initiator's finish-local ISK. The deferred wipe covers
 	// the tag computations below, including panic paths; newSession clones
 	// isk, so the returned Session is unaffected.
 	defer clearBytes(isk)
-	expectedB := confirmationTag(isk, c.sid, peerYb, peerAdb)
+	expectedB := tr.responderConfirmationTag(isk, c.sid)
 	if !hmac.Equal(expectedB, peerTag) {
 		return nil, nil, ErrConfirmationFailed
 	}
-	tagA := confirmationTag(isk, c.sid, c.ya, c.ada)
-	return tagA, newSession(isk, tr, peerAdb, c.peerID), nil
+	tagA := tr.initiatorConfirmationTag(isk, c.sid)
+	return tagA, newSession(isk, tr.bytes(), peerAdb, c.peerID), nil
 }
 
 func newResponderCore(nc normalizedInput, peerYa, peerAda []byte, random io.Reader) (*responderCore, []byte, []byte, error) {
@@ -100,12 +100,12 @@ func newResponderCore(nc normalizedInput, peerYa, peerAda []byte, random io.Read
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	tr := transcriptIR(peerYa, peerAda, yb, nc.ad)
-	isk := deriveISK(nc.sid, k, tr)
-	tagB := confirmationTag(isk, nc.sid, yb, nc.ad)
+	tr := newIRTranscript(peerYa, peerAda, yb, nc.ad)
+	isk := tr.deriveISK(nc.sid, k)
+	tagB := tr.responderConfirmationTag(isk, nc.sid)
 	return &responderCore{
 		isk:        isk,
-		transcript: tr,
+		transcript: tr.bytes(),
 		sid:        clone(nc.sid),
 		ya:         clone(peerYa),
 		ada:        clone(peerAda),
@@ -114,7 +114,7 @@ func newResponderCore(nc normalizedInput, peerYa, peerAda []byte, random io.Read
 }
 
 func (c *responderCore) finish(peerTagC []byte) (*Session, error) {
-	expectedA := confirmationTag(c.isk, c.sid, c.ya, c.ada)
+	expectedA := initiatorRoleConfirmationTag(c.isk, c.sid, c.ya, c.ada)
 	if !hmac.Equal(expectedA, peerTagC) {
 		return nil, ErrConfirmationFailed
 	}
