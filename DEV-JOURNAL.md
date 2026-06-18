@@ -1968,3 +1968,40 @@ PR #178 completed the third architecture-plan slice by making caller input an ex
 **Next**
 
 - Continue the architecture plan with the release metadata module PR.
+
+---
+
+## Release metadata module slice landed - 2026-06-18 02:56 EDT
+
+**Main:** `93a2557a772f`
+**Actor:** Codex
+
+**Summary**
+
+PR #180 completed the fourth architecture-plan slice by extracting release tag metadata derivation into a shell module while keeping `scripts/release-tag-metadata.sh` as the release-workflow adapter.
+
+**Completed**
+
+- Merged PR #180 (`Add release metadata helper module`) as `93a2557a772f14767b0718010aca37bbdc98f13f`.
+- Added `scripts/release-metadata.sh`, a sourced shell module that owns release tag metadata derivation for `release-tag`, `sbom-file`, `prerelease`, and `latest`.
+- Kept `scripts/release-tag-metadata.sh` as the primary adapter used by the release workflow before Go setup, now sourcing `release-tag-policy.sh` and `release-metadata.sh`.
+- Registered `scripts/release-metadata.sh` in the release-policy required-script catalogue and kept it executable.
+- Added release-helper smoke coverage for direct module output, direct invalid-tag rejection, adapter anti-drift, caller namespace preservation, missing-policy rejection, spoofed-marker rejection, and unset-hook PATH shadowing.
+- Hardened the metadata module after RAS review by replacing PATH-spoofable dependency checks with a policy-owned validation hook, then corrected the tests to target `release_tag_policy_require_supported_for_metadata` and `release_tag_policy_metadata_check_ran`.
+- RAS review-fix implementations `20260618T055417-f9a0d6a384db90535f8e58e2`, `20260618T060801-308478779e7948ae9935e112`, and `20260618T063629-69515f3b9034434467e0cdc8` drove the guard hardening and test correction.
+- Final RAS review-fix implementation `20260618T064538-97b2d093a5dad197e6aeb904` reran against head `a8681348b7c768b029a6d05f91f1e396e4d8cb96` and reported no open actionable findings or follow-ups.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- The initial red TDD check failed as expected because `scripts/release-tag-metadata.sh` did not source `scripts/release-metadata.sh`.
+- Targeted checks passed with `scripts/test-release-helpers.sh`, `scripts/check-release-policy.sh`, and `(cd tools/releasepolicy && go test ./...)`; helper tests reported the expected optional Syft skip because `syft` is not installed.
+- The release metadata module was checked across available shells with `/bin/sh`, `bash`, `dash`, `ksh`, and `zsh` where installed.
+- A focused spoof check confirmed a PATH stub for `release_tag_policy_require_supported_for_metadata` plus a spoofed marker cannot emit metadata without the sourced policy module.
+- Full local gates passed before merge with `go test ./...`, `go test -race ./...`, `go vet ./...`, `task check`, and `git diff --check`.
+- GitHub checks on PR #180 passed before merge: Check, CodeQL Analyze/CodeQL, macOS smoke, Windows smoke, DCO, Dependency Gate, SAST Gate, and Staticcheck; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- No follow-up issues were created from PR #180; all RAS findings were fixed or confirmed stale before merge.
+- Stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit if maintainers treat the release-helper hardening as security-relevant evidence scope.
