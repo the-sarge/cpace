@@ -385,7 +385,7 @@ func FuzzMessageARoundTrip(f *testing.F) {
 		}
 		msg := encodeMessageA(sid, ya, ada)
 		got, err := decodeMessageA(msg)
-		if !messageFieldsAcceptedBySpec(messageASpec, sid, ya, ada) {
+		if !messageFieldsMatchFramingShape(messageASpec, sid, ya, ada) {
 			if err == nil {
 				t.Fatalf("decodeMessageA accepted lengths sid=%d ya=%d ada=%d", len(sid), len(ya), len(ada))
 			}
@@ -410,7 +410,7 @@ func FuzzMessageBRoundTrip(f *testing.F) {
 		}
 		msg := encodeMessageB(yb, adb, tag)
 		got, err := decodeMessageB(msg)
-		if !messageFieldsAcceptedBySpec(messageBSpec, yb, adb, tag) {
+		if !messageFieldsMatchFramingShape(messageBSpec, yb, adb, tag) {
 			if err == nil {
 				t.Fatalf("decodeMessageB accepted lengths yb=%d adb=%d tag=%d", len(yb), len(adb), len(tag))
 			}
@@ -435,7 +435,7 @@ func FuzzMessageCRoundTrip(f *testing.F) {
 		}
 		msg := encodeMessageC(tag)
 		got, err := decodeMessageC(msg)
-		if !messageFieldsAcceptedBySpec(messageCSpec, tag) {
+		if !messageFieldsMatchFramingShape(messageCSpec, tag) {
 			if err == nil {
 				t.Fatalf("decodeMessageC accepted tag length %d", len(tag))
 			}

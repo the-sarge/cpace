@@ -96,6 +96,38 @@ func TestMessageFramingCatalogueAcceptsMaxFields(t *testing.T) {
 	}
 }
 
+func TestMessageFramingCatalogueOwnsFieldLengthAcceptance(t *testing.T) {
+	for _, spec := range messageFramingCatalogue() {
+		t.Run(spec.name, func(t *testing.T) {
+			maxFields := maxMessageFieldsForCatalogue(spec)
+			if !spec.acceptsFieldLengths(maxFields...) {
+				t.Fatal("rejected max-size fields")
+			}
+			if spec.acceptsFieldLengths(maxFields[:len(maxFields)-1]...) {
+				t.Fatal("accepted too few fields")
+			}
+			if spec.acceptsFieldLengths(append(maxFields, nil)...) {
+				t.Fatal("accepted wrong field count")
+			}
+			for i, field := range spec.fields {
+				if field.exact && field.length > 0 {
+					invalidLength := field.length - 1
+					fields := messageFieldsForCatalogueWithLength(spec, i, invalidLength)
+					if spec.acceptsFieldLengths(fields...) {
+						t.Fatalf("accepted invalid %s length %d", field.name, invalidLength)
+					}
+				}
+
+				invalidLength := field.length + 1
+				fields := messageFieldsForCatalogueWithLength(spec, i, invalidLength)
+				if spec.acceptsFieldLengths(fields...) {
+					t.Fatalf("accepted invalid %s length %d", field.name, invalidLength)
+				}
+			}
+		})
+	}
+}
+
 func TestMessageFramingCatalogueRejectsFieldLimits(t *testing.T) {
 	for _, tc := range messageFramingFieldLimitCases() {
 		t.Run(tc.name, func(t *testing.T) {
@@ -134,6 +166,18 @@ func maxMessageFieldsForCatalogue(spec messageSpec) [][]byte {
 	fields := make([][]byte, len(spec.fields))
 	for i, field := range spec.fields {
 		fields[i] = bytes.Repeat([]byte{byte(0x30 + i)}, field.length)
+	}
+	return fields
+}
+
+func messageFieldsForCatalogueWithLength(spec messageSpec, target, length int) [][]byte {
+	fields := make([][]byte, 0, len(spec.fields))
+	for i, field := range spec.fields {
+		n := field.length
+		if i == target {
+			n = length
+		}
+		fields = append(fields, bytes.Repeat([]byte{byte(0x30 + i)}, n))
 	}
 	return fields
 }
@@ -271,13 +315,13 @@ func messageFuzzSeeds(spec messageSpec, valid, crossRole, invalidY []byte) [][]b
 		withMessageRole(valid, otherMessageRole(spec.role)),
 		append(messageHeader(spec.role), 0x80, 0x00),
 	}
-	if pointIndex, ok := exactMessageFieldIndex(spec, pointSize); ok {
+	if pointIndex, ok := spec.exactFieldIndex(pointSize); ok {
 		seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, identityEncoding))
 		if invalidY != nil {
 			seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, invalidY))
 		}
 	}
-	if tagIndex, ok := exactMessageFieldIndex(spec, tagSize); ok {
+	if tagIndex, ok := spec.exactFieldIndex(tagSize); ok {
 		seeds = append(seeds, messageWithDecodedField(spec, valid, tagIndex, bytes.Repeat([]byte{0x99}, tagSize-1)))
 		seeds = append(seeds, withMessageTamperedLastByte(valid))
 	}
@@ -481,13 +525,13 @@ func TestExactMessageFieldIndexRejectsAmbiguousLengths(t *testing.T) {
 	defer func() {
 		got := recover()
 		if got == nil {
-			t.Fatal("exactMessageFieldIndex accepted ambiguous exact field lengths")
+			t.Fatal("messageSpec.exactFieldIndex accepted ambiguous exact field lengths")
 		}
 		if !strings.Contains(fmt.Sprint(got), "ambiguous exact 32-byte field") {
 			t.Fatalf("panic=%v want ambiguous exact field diagnostic", got)
 		}
 	}()
-	_, _ = exactMessageFieldIndex(spec, pointSize)
+	_, _ = spec.exactFieldIndex(pointSize)
 }
 
 func TestMessageFuzzSeedsRejectsAmbiguousExactFieldLengths(t *testing.T) {
@@ -540,14 +584,16 @@ func TestMessageFuzzSeedsSkipsAbsentExactFieldLengths(t *testing.T) {
 	}
 }
 
-func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
+func (spec messageSpec) exactFieldIndex(length int) (int, bool) {
 	found := -1
+	foundName := ""
 	for i, field := range spec.fields {
 		if field.exact && field.length == length {
 			if found >= 0 {
-				panic(fmt.Sprintf("cpace test: %s has ambiguous exact %d-byte field: %s and %s", spec.name, length, spec.fields[found].name, field.name))
+				panic(fmt.Sprintf("cpace test: %s has ambiguous exact %d-byte field: %s and %s", spec.name, length, foundName, field.name))
 			}
 			found = i
+			foundName = field.name
 		}
 	}
 	if found < 0 {
@@ -557,7 +603,7 @@ func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
 }
 
 func exactMessageFieldBytes(spec messageSpec, length int, fill byte, delta int) []byte {
-	i, ok := exactMessageFieldIndex(spec, length)
+	i, ok := spec.exactFieldIndex(length)
 	if !ok {
 		panic("cpace test: exact message field missing from catalogue")
 	}
@@ -577,15 +623,28 @@ func messageWithDecodedField(spec messageSpec, msg []byte, fieldIndex int, value
 	return spec.encode(fields...)
 }
 
-func messageFieldsAcceptedBySpec(spec messageSpec, fields ...[]byte) bool {
+func (spec messageSpec) acceptsFieldLengths(fields ...[]byte) bool {
 	if len(fields) != len(spec.fields) {
 		return false
 	}
 	remainingSpecs := spec.fields
 	for _, got := range fields {
-		if len(remainingSpecs) == 0 {
+		field := remainingSpecs[0]
+		remainingSpecs = remainingSpecs[1:]
+		if err := field.validateMessageLength(len(got)); err != nil {
 			return false
 		}
+	}
+	return true
+}
+
+func messageFieldsMatchFramingShape(spec messageSpec, fields ...[]byte) bool {
+	if len(fields) != len(spec.fields) {
+		return false
+	}
+	// Keep this independent from acceptsFieldLengths and validateMessageLength so round-trip fuzzers can detect decoder acceptance drift.
+	remainingSpecs := spec.fields
+	for _, got := range fields {
 		field := remainingSpecs[0]
 		remainingSpecs = remainingSpecs[1:]
 		gotLength := len(got)
