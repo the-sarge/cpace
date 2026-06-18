@@ -70,8 +70,8 @@ assert_helper_path_defines_no_local_release_tag_policy_functions() {
   helper=$1
   helper_path=$2
 
-  if grep -Eq '^[[:space:]]*release_tag_[A-Za-z0-9_]+[[:space:]]*\([[:space:]]*\)' "$helper_path" ||
-    grep -Eq '^[[:space:]]*function[[:space:]]+release_tag_[A-Za-z0-9_]+' "$helper_path"; then
+  if grep -Eq '(^|[[:space:];{&|])release_tag_[A-Za-z0-9_]+[[:space:]]*\([[:space:]]*\)' "$helper_path" ||
+    grep -Eq '(^|[[:space:];{&|])function[[:space:]]+release_tag_[A-Za-z0-9_]+' "$helper_path"; then
     echo "$helper defines a local release tag policy function" >&2
     exit 1
   fi
@@ -86,16 +86,26 @@ assert_helper_rejects_release_tag_policy_function_shadow() {
   helper=$1
   function_name=$2
   function_definition=$3
+  assert_helper_path_rejects_release_tag_policy_function_shadow "$helper" "$repo_root/$helper" "$function_name" "$function_definition"
+}
+
+assert_helper_path_rejects_release_tag_policy_function_shadow() {
+  helper=$1
+  helper_path=$2
+  function_name=$3
+  function_definition=$4
   shadow_helper="$tmpdir/$(basename -- "$helper")-$function_name-shadow.sh"
   injected=false
 
   while IFS= read -r line || [ -n "$line" ]; do
     printf '%s\n' "$line"
-    if [ "$line" = '. "$script_dir/release-tag-policy.sh"' ]; then
-      printf '%s\n' "$function_definition"
-      injected=true
-    fi
-  done <"$repo_root/$helper" >"$shadow_helper"
+    case "$line" in
+      *'. "$script_dir/release-tag-policy.sh"'*)
+        printf '%s\n' "$function_definition"
+        injected=true
+        ;;
+    esac
+  done <"$helper_path" >"$shadow_helper"
 
   if [ "$injected" != true ]; then
     echo "injection anchor not found in $helper" >&2
@@ -125,6 +135,25 @@ assert_helper_rejects_release_tag_policy_function_shadow_forms() {
 { return 0; }"
   assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "function $function_name() { return 0; }"
   assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "function $function_name { return 0; }"
+  assert_helper_rejects_release_tag_policy_function_shadow "$helper" "$function_name" "true && $function_name() { return 0; }"
+}
+
+assert_helper_rejects_release_tag_policy_function_shadow_after_reformatted_source() {
+  helper=$1
+  function_name=$2
+  helper_path="$tmpdir/$(basename -- "$helper")-$function_name-reformatted-source.sh"
+
+  awk '
+    $0 == ". \"$script_dir/release-tag-policy.sh\"" {
+      print "  " $0 " # required policy module"
+      next
+    }
+    {
+      print
+    }
+  ' "$repo_root/$helper" >"$helper_path"
+
+  assert_helper_path_rejects_release_tag_policy_function_shadow "$helper with reformatted policy source" "$helper_path" "$function_name" "$function_name() { return 0; }"
 }
 
 assert_helper_reuses_release_metadata_module() {
@@ -183,6 +212,7 @@ assert_helper_reuses_release_tag_policy scripts/validate-cyclonedx-sbom.sh
 assert_helper_path_defines_no_local_release_tag_policy_functions scripts/release-metadata.sh "$repo_root/scripts/release-metadata.sh"
 assert_helper_rejects_release_tag_policy_function_shadow_forms scripts/release-tag-metadata.sh release_tag_is_supported
 assert_helper_rejects_release_tag_policy_function_shadow_forms scripts/release-tag-metadata.sh release_tag_require_supported
+assert_helper_rejects_release_tag_policy_function_shadow_after_reformatted_source scripts/release-tag-metadata.sh release_tag_is_supported
 assert_helper_rejects_release_tag_policy_function_shadow scripts/release-tag-metadata.sh release_tag_policy_is_supported 'release_tag_policy_is_supported() { return 0; }'
 assert_helper_rejects_release_tag_policy_function_shadow scripts/release-tag-metadata.sh release_tag_policy_require_supported_for_metadata 'release_tag_policy_require_supported_for_metadata() { return 0; }'
 assert_helper_reuses_release_metadata_module scripts/release-tag-metadata.sh
