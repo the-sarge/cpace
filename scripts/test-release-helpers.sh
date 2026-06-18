@@ -230,8 +230,8 @@ assert_release_metadata_module_rejects_unsupported_tag() {
 assert_release_metadata_module_requires_sourced_policy() {
   path_stub_dir="$tmpdir/release-metadata-path-stub"
   mkdir "$path_stub_dir"
-  printf '#!/bin/sh\nexit 0\n' >"$path_stub_dir/release_tag_require_supported"
-  chmod +x "$path_stub_dir/release_tag_require_supported"
+  printf '#!/bin/sh\nexit 0\n' >"$path_stub_dir/release_tag_policy_require_supported_for_metadata"
+  chmod +x "$path_stub_dir/release_tag_policy_require_supported_for_metadata"
 
   set +e
   PATH="$path_stub_dir:$PATH" sh -c '. "$1"; release_metadata_write v01.0.0' sh "$repo_root/scripts/release-metadata.sh" >"$tmpdir/module-missing-policy.out" 2>"$tmpdir/module-missing-policy.err"
@@ -251,11 +251,11 @@ assert_release_metadata_module_requires_sourced_policy() {
 assert_release_metadata_module_rejects_spoofed_policy_marker() {
   path_stub_dir="$tmpdir/release-metadata-spoofed-marker-path-stub"
   mkdir "$path_stub_dir"
-  printf '#!/bin/sh\nexit 0\n' >"$path_stub_dir/release_tag_require_supported"
-  chmod +x "$path_stub_dir/release_tag_require_supported"
+  printf '#!/bin/sh\nexit 0\n' >"$path_stub_dir/release_tag_policy_require_supported_for_metadata"
+  chmod +x "$path_stub_dir/release_tag_policy_require_supported_for_metadata"
 
   set +e
-  release_tag_policy_loaded=1 PATH="$path_stub_dir:$PATH" sh -c '. "$1"; release_metadata_write v01.0.0' sh "$repo_root/scripts/release-metadata.sh" >"$tmpdir/module-spoofed-marker.out" 2>"$tmpdir/module-spoofed-marker.err"
+  release_tag_policy_metadata_check_ran=1 PATH="$path_stub_dir:$PATH" sh -c '. "$1"; release_metadata_write v01.0.0' sh "$repo_root/scripts/release-metadata.sh" >"$tmpdir/module-spoofed-marker.out" 2>"$tmpdir/module-spoofed-marker.err"
   status=$?
   set -e
   if [ "$status" -ne 2 ]; then
@@ -272,22 +272,22 @@ assert_release_metadata_module_rejects_spoofed_policy_marker() {
 assert_release_metadata_module_rejects_unset_policy_function() {
   path_stub_dir="$tmpdir/release-metadata-unset-function-path-stub"
   mkdir "$path_stub_dir"
-  printf '#!/bin/sh\nexit 0\n' >"$path_stub_dir/release_tag_require_supported"
-  chmod +x "$path_stub_dir/release_tag_require_supported"
+  printf '#!/bin/sh\nexit 0\n' >"$path_stub_dir/release_tag_policy_require_supported_for_metadata"
+  chmod +x "$path_stub_dir/release_tag_policy_require_supported_for_metadata"
 
   set +e
-  PATH="$path_stub_dir:$PATH" sh -c '. "$1"; . "$2"; unset -f release_tag_require_supported; release_metadata_write v01.0.0' sh "$repo_root/scripts/release-tag-policy.sh" "$repo_root/scripts/release-metadata.sh" >"$tmpdir/module-unset-function.out" 2>"$tmpdir/module-unset-function.err"
+  PATH="$path_stub_dir:$PATH" sh -c '. "$1"; . "$2"; unset -f release_tag_policy_require_supported_for_metadata; release_metadata_write v01.0.0' sh "$repo_root/scripts/release-tag-policy.sh" "$repo_root/scripts/release-metadata.sh" >"$tmpdir/module-unset-function.out" 2>"$tmpdir/module-unset-function.err"
   status=$?
   set -e
-  if [ "$status" -eq 0 ]; then
-    echo "release metadata module unexpectedly accepted tag after policy function was unset" >&2
+  if [ "$status" -ne 2 ]; then
+    echo "release metadata module unset-function status got $status want 2" >&2
     exit 1
   fi
   if [ -s "$tmpdir/module-unset-function.out" ]; then
     echo "release metadata module emitted metadata after policy function was unset" >&2
     exit 1
   fi
-  grep -Eq 'unsupported release tag|release metadata requires scripts/release-tag-policy.sh' "$tmpdir/module-unset-function.err"
+  grep -q 'release metadata requires scripts/release-tag-policy.sh' "$tmpdir/module-unset-function.err"
 }
 
 assert_tag_metadata v1.0.0 false true
