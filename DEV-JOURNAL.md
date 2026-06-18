@@ -2143,3 +2143,31 @@ PR #191 closed issue #186 by adding release metadata namespace shadow coverage t
 **Next**
 
 - Track follow-up issue #192 in OmniFocus as a non-blocking metadata shadow-fixture parity continuation.
+
+---
+
+## Message framing oracle deepened - 2026-06-18 16:58 EDT
+
+**Main:** `c67d60aa15cb`
+**Actor:** Codex
+
+### Summary
+
+Deepened the Message framing acceptance oracle by moving field-length catalogue checks into shared test helpers while keeping round-trip fuzz acceptance intentionally independent from decoder validation.
+
+### Completed
+
+- Merged PR #194, `refactor: deepen message framing acceptance oracle`, at `c67d60aa15cbf6310b214f94fa8bfca374df6fba`.
+- Added catalogue coverage for valid maximum fields, too few fields, extra fields, shortened exact fields, overlong exact fields, and over-cap variable fields.
+- Kept fuzz round-trip acceptance on `messageFieldsMatchFramingShape` so the fuzz oracle can detect decoder acceptance drift instead of delegating to the decoder-facing predicate.
+- Kept acceptance helpers test-only after RAS and SAST rejected the earlier production-helper shape.
+
+### Validation
+
+- `go test ./... -run 'TestMessageFramingCatalogueOwnsFieldLengthAcceptance|TestMessage|FuzzMessage'`
+- `go test ./...`
+- `go test ./... -count=1`
+- `go run github.com/securego/gosec/v2/cmd/gosec@v2.26.1 -exclude-dir=.ras -tests ./...`
+- `git diff --check`
+- GitHub checks for PR #194 passed on head `abaa6ee4df9d1491a19390e50308a5bfcfc64ec3`.
+- `ras review-fix 194` found and fixed the initial SAST/test-oracle issues, then completed on the final head with no merge-blocking code findings; the only final note was an out-of-scope reviewer timeout.
