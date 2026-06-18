@@ -3,7 +3,6 @@ package cpace
 import (
 	"bytes"
 	"crypto/rand"
-	"crypto/sha512"
 	"fmt"
 	"io"
 	"sync"
@@ -191,11 +190,10 @@ func (r *Responder) finishCore() (*responderCore, error) {
 	return r.state.claimFinish()
 }
 
-func newSession(isk, transcript, peerAD, peerID []byte) *Session {
-	sidOut := sha512.Sum512(append([]byte("CPaceSidOutput"), transcript...))
+func newSession(isk, transcriptID, peerAD, peerID []byte) *Session {
 	return &Session{
 		state:        &sessionState{isk: clone(isk)},
-		transcriptID: sidOut[:],
+		transcriptID: clone(transcriptID),
 		peerAD:       clone(peerAD),
 		peerID:       clone(peerID),
 	}

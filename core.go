@@ -69,7 +69,7 @@ func (c *initiatorCore) finish(peerYb, peerAdb, peerTag []byte) ([]byte, *Sessio
 		return nil, nil, ErrConfirmationFailed
 	}
 	tagA := tr.initiatorConfirmationTag(isk, c.sid)
-	return tagA, newSession(isk, tr.bytes(), peerAdb, c.peerID), nil
+	return tagA, newSession(isk, tr.transcriptID(), peerAdb, c.peerID), nil
 }
 
 func newResponderCore(nc normalizedInput, peerYa, peerAda []byte, random io.Reader) (*responderCore, []byte, []byte, error) {
@@ -118,7 +118,7 @@ func (c *responderCore) finish(peerTagC []byte) (*Session, error) {
 	if !hmac.Equal(expectedA, peerTagC) {
 		return nil, ErrConfirmationFailed
 	}
-	return newSession(c.isk, c.transcript, c.ada, c.peerID), nil
+	return newSession(c.isk, transcriptID(c.transcript), c.ada, c.peerID), nil
 }
 
 // clear zeroes then nils each persistent-secret field; a second call finds

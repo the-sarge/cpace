@@ -300,7 +300,8 @@ func TestRistrettoDraft21Vectors(t *testing.T) {
 
 	ada := v["ADa"]
 	adb := v["ADb"]
-	trIR := newIRTranscript(Ya, ada, Yb, adb).bytes()
+	transcriptIR := newIRTranscript(Ya, ada, Yb, adb)
+	trIR := transcriptIR.bytes()
 	wantTrIR := hx(t, "20d6bac480f2c386c394efc7c47adb9925dcd2630b64f240c50f8d0eec482b915703414461203ea7e0b19560d7c0b0f5734f63b955286dfa8232b5ebe63324e2d9e7433f725803414462")
 	if !bytes.Equal(trIR, wantTrIR) {
 		t.Fatalf("transcript_ir got %x want %x", trIR, wantTrIR)
@@ -328,15 +329,13 @@ func TestRistrettoDraft21Vectors(t *testing.T) {
 		t.Fatalf("ISK_SY got %x want %x", iskOC, wantISKOC)
 	}
 
-	sidOut := sha512.Sum512(append([]byte("CPaceSidOutput"), trIR...))
 	wantSidOut := v["sid_output_ir"]
-	if !bytes.Equal(sidOut[:], wantSidOut) {
-		t.Fatalf("sid_output got %x want %x", sidOut, wantSidOut)
+	if got := transcriptIR.transcriptID(); !bytes.Equal(got, wantSidOut) {
+		t.Fatalf("sid_output got %x want %x", got, wantSidOut)
 	}
-	sidOutOC := sha512.Sum512(append([]byte("CPaceSidOutput"), trOC...))
 	wantSidOutOC := v["sid_output_oc"]
-	if !bytes.Equal(sidOutOC[:], wantSidOutOC) {
-		t.Fatalf("sid_output_oc got %x want %x", sidOutOC, wantSidOutOC)
+	if got := transcriptID(trOC); !bytes.Equal(got, wantSidOutOC) {
+		t.Fatalf("sid_output_oc got %x want %x", got, wantSidOutOC)
 	}
 }
 

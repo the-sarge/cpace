@@ -73,6 +73,10 @@ func TestIRTranscriptDraftVectorFlow(t *testing.T) {
 	if got := tr.initiatorConfirmationTag(isk, v["sid"]); !bytes.Equal(got, tags["tagA"]) {
 		t.Fatalf("initiator confirmation tag=%x want %x", got, tags["tagA"])
 	}
+	wantTranscriptID := hx(t, "bb1c449b35f0ea79a65c209f329a693d475e0ce2387bed9fe4b78f60b2a27c219813fb2cfe175ef40d2222d9261e66da7d78f7c55a303b1b8611dcdfab880c47")
+	if got := tr.transcriptID(); !bytes.Equal(got, wantTranscriptID) {
+		t.Fatalf("TranscriptID=%x want %x", got, wantTranscriptID)
+	}
 }
 
 func TestIRTranscriptOwnsInputsAndOutput(t *testing.T) {
@@ -84,6 +88,7 @@ func TestIRTranscriptOwnsInputsAndOutput(t *testing.T) {
 	sid := []byte("sid")
 	isk := []byte("isk")
 	wantTranscript := tr.bytes()
+	wantTranscriptID := tr.transcriptID()
 	wantTagA := tr.initiatorConfirmationTag(isk, sid)
 	wantTagB := tr.responderConfirmationTag(isk, sid)
 
@@ -96,6 +101,11 @@ func TestIRTranscriptOwnsInputsAndOutput(t *testing.T) {
 
 	if !bytes.Equal(tr.bytes(), wantTranscript) {
 		t.Fatalf("transcript changed after caller mutation")
+	}
+	gotTranscriptID := tr.transcriptID()
+	gotTranscriptID[0] ^= 0xff
+	if !bytes.Equal(tr.transcriptID(), wantTranscriptID) {
+		t.Fatalf("transcript ID changed after caller mutation")
 	}
 	if got := tr.initiatorConfirmationTag(isk, sid); !bytes.Equal(got, wantTagA) {
 		t.Fatalf("initiator tag changed after caller mutation")

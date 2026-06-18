@@ -1,5 +1,7 @@
 package cpace
 
+import "crypto/sha512"
+
 type irTranscript struct {
 	transcript []byte
 	ya         []byte
@@ -28,6 +30,10 @@ func (t irTranscript) bytes() []byte {
 	return clone(t.transcript)
 }
 
+func (t irTranscript) transcriptID() []byte {
+	return transcriptID(t.transcript)
+}
+
 func (t irTranscript) deriveISK(sid, k []byte) []byte {
 	return deriveISK(sid, k, t.transcript)
 }
@@ -46,4 +52,9 @@ func initiatorRoleConfirmationTag(isk, sid, ya, ada []byte) []byte {
 
 func responderRoleConfirmationTag(isk, sid, yb, adb []byte) []byte {
 	return confirmationTag(isk, sid, yb, adb)
+}
+
+func transcriptID(transcript []byte) []byte {
+	sidOut := sha512.Sum512(append([]byte("CPaceSidOutput"), transcript...))
+	return clone(sidOut[:])
 }
