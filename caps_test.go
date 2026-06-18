@@ -53,12 +53,13 @@ func TestPackageOwnedCapPolicyFeedsMessageFramingSpecs(t *testing.T) {
 		capPolicy[field.name] = field
 	}
 	want := []struct {
-		name   string
-		fields []messageFieldSpec
+		name     string
+		roleByte byte
+		fields   []messageFieldSpec
 	}{
-		{"A", []messageFieldSpec{messageASessionIDCap, messageAPointCap, messageAAssociatedDataCap}},
-		{"B", []messageFieldSpec{messageBPointCap, messageBAssociatedDataCap, messageBTagCap}},
-		{"C", []messageFieldSpec{messageCTagCap}},
+		{"A", 0x01, []messageFieldSpec{messageASessionIDCap, messageAPointCap, messageAAssociatedDataCap}},
+		{"B", 0x02, []messageFieldSpec{messageBPointCap, messageBAssociatedDataCap, messageBTagCap}},
+		{"C", 0x03, []messageFieldSpec{messageCTagCap}},
 	}
 	got := messageFramingCatalogue()
 	if len(got) != len(want) {
@@ -69,6 +70,9 @@ func TestPackageOwnedCapPolicyFeedsMessageFramingSpecs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if spec.name != tc.name {
 				t.Fatalf("name=%q want %q", spec.name, tc.name)
+			}
+			if spec.role != tc.roleByte {
+				t.Fatalf("role=%#x want %#x", spec.role, tc.roleByte)
 			}
 			if !slices.Equal(spec.fields, tc.fields) {
 				t.Fatalf("fields=%#v want %#v", spec.fields, tc.fields)

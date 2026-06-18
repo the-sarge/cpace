@@ -71,24 +71,21 @@ func TestLEB128CanonicalDecode(t *testing.T) {
 	tests := []struct {
 		name     string
 		encoded  []byte
+		off      int
 		want     int
 		wantNext int
 	}{
-		{"empty", []byte{0x00, 0xff}, 0, 1},
-		{"single byte max", []byte{0x7f, 0xff}, 0x7f, 1},
-		{"two byte min", []byte{0x80, 0x01, 0xff}, 0x80, 2},
-		{"two byte max", []byte{0xff, 0x7f, 0xff}, 0x3fff, 2},
-		{"three byte min", []byte{0x80, 0x80, 0x01, 0xff}, 0x4000, 3},
-		{"associated data cap", []byte{0x80, 0x80, 0x04, 0xff}, maxAssociatedDataLength, 3},
-		{"offset", []byte{0xaa, 0x80, 0x01, 0xff}, 0x80, 3},
+		{"empty", []byte{0x00, 0xff}, 0, 0, 1},
+		{"single byte max", []byte{0x7f, 0xff}, 0, 0x7f, 1},
+		{"two byte min", []byte{0x80, 0x01, 0xff}, 0, 0x80, 2},
+		{"two byte max", []byte{0xff, 0x7f, 0xff}, 0, 0x3fff, 2},
+		{"three byte min", []byte{0x80, 0x80, 0x01, 0xff}, 0, 0x4000, 3},
+		{"associated data cap", []byte{0x80, 0x80, 0x04, 0xff}, 0, maxAssociatedDataLength, 3},
+		{"offset", []byte{0xaa, 0x80, 0x01, 0xff}, 1, 0x80, 3},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			off := 0
-			if tt.name == "offset" {
-				off = 1
-			}
-			got, next, err := readLEB128(tt.encoded, off, maxLEB128BytesForField)
+			got, next, err := readLEB128(tt.encoded, tt.off, maxLEB128BytesForField)
 			if err != nil {
 				t.Fatal(err)
 			}
