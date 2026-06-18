@@ -59,7 +59,7 @@ assert_helper_path_reuses_release_tag_policy() {
     echo "$helper does not source scripts/release-tag-policy.sh" >&2
     exit 1
   fi
-  if grep -Eq '^[[:space:]]*release_tag_(is_supported|require_supported)[[:space:]]*\(\)' "$helper_path"; then
+  if grep -Eq '^[[:space:]]*release_tag_[A-Za-z0-9_]+[[:space:]]*\(\)' "$helper_path"; then
     echo "$helper defines a local release tag policy function" >&2
     exit 1
   fi
@@ -150,6 +150,8 @@ assert_helper_reuses_release_tag_policy scripts/release-tag-metadata.sh
 assert_helper_reuses_release_tag_policy scripts/validate-cyclonedx-sbom.sh
 assert_helper_rejects_release_tag_policy_function_shadow scripts/release-tag-metadata.sh release_tag_is_supported
 assert_helper_rejects_release_tag_policy_function_shadow scripts/release-tag-metadata.sh release_tag_require_supported
+assert_helper_rejects_release_tag_policy_function_shadow scripts/release-tag-metadata.sh release_tag_policy_is_supported
+assert_helper_rejects_release_tag_policy_function_shadow scripts/release-tag-metadata.sh release_tag_policy_require_supported_for_metadata
 assert_helper_reuses_release_metadata_module scripts/release-tag-metadata.sh
 
 assert_release_tag_policy_preserves_caller_names release_tag_is_supported
