@@ -292,27 +292,177 @@ func TestMessageAProtocolFuzzSeedsPreserveValidFields(t *testing.T) {
 		t.Fatal(err)
 	}
 	invalid := fuzzDraftInvalidVector(t)
+	var decoded messageAProtocolFuzzSeedCounts
 	for _, seed := range messageAProtocolFuzzSeeds(msgA, msgB, invalid.InvalidY1) {
 		got, err := decodeMessageA(seed)
 		if err != nil {
 			continue
 		}
-		switch {
-		case bytes.Equal(got.ya, identityEncoding), bytes.Equal(got.ya, invalid.InvalidY1):
-			if !bytes.Equal(got.sid, baseA.sid) {
-				t.Fatalf("point mutation changed sid: got %x want %x", got.sid, baseA.sid)
-			}
-			if !bytes.Equal(got.ada, baseA.ada) {
-				t.Fatalf("point mutation changed ADa: got %x want %x", got.ada, baseA.ada)
-			}
-		case bytes.Equal(got.sid, []byte("other sid")):
-			if !bytes.Equal(got.ya, baseA.ya) {
-				t.Fatalf("sid mutation changed Ya: got %x want %x", got.ya, baseA.ya)
-			}
-			if !bytes.Equal(got.ada, baseA.ada) {
-				t.Fatalf("sid mutation changed ADa: got %x want %x", got.ada, baseA.ada)
-			}
+		category := classifyMessageAProtocolFuzzSeed(got, baseA, invalid.InvalidY1)
+		decoded.add(category)
+		if category == messageAProtocolFuzzSeedUnclassified {
+			t.Fatalf("unclassified Message A protocol fuzz seed decoded as sid=%x ya=%x ada=%x", got.sid, got.ya, got.ada)
 		}
+	}
+	if want := (messageAProtocolFuzzSeedCounts{valid: 1, identityPoint: 1, invalidPoint: 1, otherSessionID: 1}); decoded != want {
+		t.Fatalf("decoded Message A protocol fuzz seed categories=%+v want %+v", decoded, want)
+	}
+}
+
+func TestMessageAProtocolFuzzSeedPreservationRejectsUnclassifiedDecode(t *testing.T) {
+	_, _, _, msgA, _, _ := makeFuzzExchange(t)
+	baseA, err := decodeMessageA(msgA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unclassified := encodeMessageA(baseA.sid, baseA.ya, []byte("unexpected ADa"))
+	got, err := decodeMessageA(unclassified)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if classifyMessageAProtocolFuzzSeed(got, baseA, fuzzDraftInvalidVector(t).InvalidY1) != messageAProtocolFuzzSeedUnclassified {
+		t.Fatal("unclassified successful decode passed preservation assertion")
+	}
+}
+
+type messageAProtocolFuzzSeedCategory byte
+
+const (
+	messageAProtocolFuzzSeedUnclassified messageAProtocolFuzzSeedCategory = iota
+	messageAProtocolFuzzSeedValid
+	messageAProtocolFuzzSeedIdentityPoint
+	messageAProtocolFuzzSeedInvalidPoint
+	messageAProtocolFuzzSeedOtherSessionID
+)
+
+type messageAProtocolFuzzSeedCounts struct {
+	valid          int
+	identityPoint  int
+	invalidPoint   int
+	otherSessionID int
+}
+
+func (c *messageAProtocolFuzzSeedCounts) add(category messageAProtocolFuzzSeedCategory) {
+	switch category {
+	case messageAProtocolFuzzSeedValid:
+		c.valid++
+	case messageAProtocolFuzzSeedIdentityPoint:
+		c.identityPoint++
+	case messageAProtocolFuzzSeedInvalidPoint:
+		c.invalidPoint++
+	case messageAProtocolFuzzSeedOtherSessionID:
+		c.otherSessionID++
+	}
+}
+
+func classifyMessageAProtocolFuzzSeed(got, base messageA, invalidY []byte) messageAProtocolFuzzSeedCategory {
+	switch {
+	case bytes.Equal(got.sid, base.sid) && bytes.Equal(got.ya, base.ya) && bytes.Equal(got.ada, base.ada):
+		return messageAProtocolFuzzSeedValid
+	case bytes.Equal(got.ya, identityEncoding) && bytes.Equal(got.sid, base.sid) && bytes.Equal(got.ada, base.ada):
+		return messageAProtocolFuzzSeedIdentityPoint
+	case bytes.Equal(got.ya, invalidY) && bytes.Equal(got.sid, base.sid) && bytes.Equal(got.ada, base.ada):
+		return messageAProtocolFuzzSeedInvalidPoint
+	case bytes.Equal(got.sid, []byte("other sid")):
+		if bytes.Equal(got.ya, base.ya) && bytes.Equal(got.ada, base.ada) {
+			return messageAProtocolFuzzSeedOtherSessionID
+		}
+		return messageAProtocolFuzzSeedUnclassified
+	default:
+		return messageAProtocolFuzzSeedUnclassified
+	}
+}
+
+func TestMessageBFuzzSeedsPreserveValidFields(t *testing.T) {
+	_, _, _, _, msgB, msgC := makeFuzzExchange(t)
+	baseB, err := decodeMessageB(msgB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	invalid := fuzzDraftInvalidVector(t)
+	var decoded messageBFuzzSeedCounts
+	for _, seed := range messageBFuzzSeeds(msgB, msgC, invalid.InvalidY1) {
+		got, err := decodeMessageB(seed)
+		if err != nil {
+			continue
+		}
+		category := classifyMessageBFuzzSeed(got, baseB, invalid.InvalidY1)
+		decoded.add(category)
+		if category == messageBFuzzSeedUnclassified {
+			t.Fatalf("unclassified Message B fuzz seed decoded as yb=%x adb=%x tag=%x", got.yb, got.adb, got.tag)
+		}
+	}
+	if want := (messageBFuzzSeedCounts{valid: 1, identityPoint: 1, invalidPoint: 1, tamperedTag: 1}); decoded != want {
+		t.Fatalf("decoded Message B fuzz seed categories=%+v want %+v", decoded, want)
+	}
+}
+
+func TestMessageBFuzzSeedPreservationRejectsUnclassifiedDecode(t *testing.T) {
+	_, _, _, _, msgB, _ := makeFuzzExchange(t)
+	baseB, err := decodeMessageB(msgB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unclassified := encodeMessageB(baseB.yb, []byte("unexpected ADb"), baseB.tag)
+	got, err := decodeMessageB(unclassified)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if classifyMessageBFuzzSeed(got, baseB, fuzzDraftInvalidVector(t).InvalidY1) != messageBFuzzSeedUnclassified {
+		t.Fatal("unclassified successful Message B decode passed preservation assertion")
+	}
+}
+
+type messageBFuzzSeedCategory byte
+
+const (
+	messageBFuzzSeedUnclassified messageBFuzzSeedCategory = iota
+	messageBFuzzSeedValid
+	messageBFuzzSeedIdentityPoint
+	messageBFuzzSeedInvalidPoint
+	messageBFuzzSeedTamperedTag
+)
+
+type messageBFuzzSeedCounts struct {
+	valid         int
+	identityPoint int
+	invalidPoint  int
+	tamperedTag   int
+}
+
+func (c *messageBFuzzSeedCounts) add(category messageBFuzzSeedCategory) {
+	switch category {
+	case messageBFuzzSeedValid:
+		c.valid++
+	case messageBFuzzSeedIdentityPoint:
+		c.identityPoint++
+	case messageBFuzzSeedInvalidPoint:
+		c.invalidPoint++
+	case messageBFuzzSeedTamperedTag:
+		c.tamperedTag++
+	}
+}
+
+func classifyMessageBFuzzSeed(got, base messageB, invalidY []byte) messageBFuzzSeedCategory {
+	tamperedTag := clone(base.tag)
+	if len(tamperedTag) > 0 {
+		tamperedTag[len(tamperedTag)-1] ^= 0x01
+	}
+
+	switch {
+	case bytes.Equal(got.yb, base.yb) && bytes.Equal(got.adb, base.adb) && bytes.Equal(got.tag, base.tag):
+		return messageBFuzzSeedValid
+	case bytes.Equal(got.yb, identityEncoding) && bytes.Equal(got.adb, base.adb) && bytes.Equal(got.tag, base.tag):
+		return messageBFuzzSeedIdentityPoint
+	case bytes.Equal(got.yb, invalidY) && bytes.Equal(got.adb, base.adb) && bytes.Equal(got.tag, base.tag):
+		return messageBFuzzSeedInvalidPoint
+	case bytes.Equal(got.tag, tamperedTag):
+		if bytes.Equal(got.yb, base.yb) && bytes.Equal(got.adb, base.adb) {
+			return messageBFuzzSeedTamperedTag
+		}
+		return messageBFuzzSeedUnclassified
+	default:
+		return messageBFuzzSeedUnclassified
 	}
 }
 
@@ -325,9 +475,50 @@ func TestExactMessageFieldIndexRejectsAmbiguousLengths(t *testing.T) {
 			{name: "second exact", length: pointSize, exact: true},
 		},
 	}
-	if got, ok := exactMessageFieldIndex(spec, pointSize); ok {
-		t.Fatalf("exactMessageFieldIndex=%d, true; want ambiguity rejected", got)
+	defer func() {
+		got := recover()
+		if got == nil {
+			t.Fatal("exactMessageFieldIndex accepted ambiguous exact field lengths")
+		}
+		if !strings.Contains(fmt.Sprint(got), "ambiguous exact 32-byte field") {
+			t.Fatalf("panic=%v want ambiguous exact field diagnostic", got)
+		}
+	}()
+	_, _ = exactMessageFieldIndex(spec, pointSize)
+}
+
+func TestMessageFuzzSeedsRejectsAmbiguousExactFieldLengths(t *testing.T) {
+	spec := messageSpec{
+		name: "ambiguous",
+		role: roleA,
+		fields: []messageFieldSpec{
+			{name: "first exact", length: pointSize, exact: true},
+			{name: "second exact", length: pointSize, exact: true},
+		},
 	}
+	valid := spec.encode(bytes.Repeat([]byte{0x11}, pointSize), bytes.Repeat([]byte{0x22}, pointSize))
+	defer func() {
+		got := recover()
+		if got == nil {
+			t.Fatal("messageFuzzSeeds accepted ambiguous exact field lengths")
+		}
+		if !strings.Contains(fmt.Sprint(got), "ambiguous exact 32-byte field") {
+			t.Fatalf("panic=%v want ambiguous exact field diagnostic", got)
+		}
+	}()
+	_ = messageFuzzSeeds(spec, valid, withMessageRole(valid, otherMessageRole(spec.role)), nil)
+}
+
+func TestMessageFuzzSeedsSkipsAbsentExactFieldLengths(t *testing.T) {
+	spec := messageSpec{
+		name: "no exact fields",
+		role: roleA,
+		fields: []messageFieldSpec{
+			{name: "associated data", length: maxAssociatedDataLength},
+		},
+	}
+	valid := spec.encode([]byte("AD"))
+	_ = messageFuzzSeeds(spec, valid, withMessageRole(valid, otherMessageRole(spec.role)), nil)
 }
 
 func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
@@ -335,7 +526,7 @@ func exactMessageFieldIndex(spec messageSpec, length int) (int, bool) {
 	for i, field := range spec.fields {
 		if field.exact && field.length == length {
 			if found >= 0 {
-				return 0, false
+				panic(fmt.Sprintf("cpace test: %s has ambiguous exact %d-byte field: %s and %s", spec.name, length, spec.fields[found].name, field.name))
 			}
 			found = i
 		}
