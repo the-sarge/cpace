@@ -38,6 +38,13 @@ func (t irTranscript) deriveISK(sid, k []byte) []byte {
 	return deriveISK(sid, k, t.transcript)
 }
 
+// initiatorAD returns a copy of the initiator's associated data bound into the
+// transcript. The responder uses it to populate the confirmed Session's peer
+// associated data without retaining a decomposed field of its own.
+func (t irTranscript) initiatorAD() []byte {
+	return clone(t.ada)
+}
+
 func (t irTranscript) initiatorConfirmationTag(isk, sid []byte) []byte {
 	return initiatorRoleConfirmationTag(isk, sid, t.ya, t.ada)
 }

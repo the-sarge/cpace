@@ -115,6 +115,28 @@ func TestIRTranscriptOwnsInputsAndOutput(t *testing.T) {
 	}
 }
 
+func TestIRTranscriptInitiatorAD(t *testing.T) {
+	ada := []byte("ada")
+	tr := newIRTranscript([]byte("ya"), ada, []byte("yb"), []byte("adb"))
+
+	got := tr.initiatorAD()
+	if !bytes.Equal(got, []byte("ada")) {
+		t.Fatalf("initiatorAD=%q want %q", got, "ada")
+	}
+
+	// Returned slice is an independent copy: mutating it must not affect the transcript.
+	got[0] ^= 0xff
+	if again := tr.initiatorAD(); !bytes.Equal(again, []byte("ada")) {
+		t.Fatalf("initiatorAD returned aliased slice: %q", again)
+	}
+
+	// Transcript owns its inputs: mutating the caller's slice must not change it.
+	ada[0] = 'A'
+	if again := tr.initiatorAD(); !bytes.Equal(again, []byte("ada")) {
+		t.Fatalf("initiatorAD changed after caller mutation: %q", again)
+	}
+}
+
 func TestWireFormatPrefixByte(t *testing.T) {
 	if wireFormatV1 != 0xc1 {
 		t.Fatalf("wireFormatV1=%#x, want 0xc1", wireFormatV1)
