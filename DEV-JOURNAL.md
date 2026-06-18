@@ -1764,3 +1764,35 @@ PRs #159, #161, and #163 completed the no-freeze architecture depth pass by deep
 
 - Keep #160, #162, and #164 as non-blocking follow-up issues from the architecture review loops.
 - Stronger release-readiness claims still require refreshing pinned dependency-review, fuzz, and security-audit evidence against the exact candidate commit after these parser-, policy-, and transcript-adjacent changes.
+
+---
+
+## Docs traceability follow-ups landed - 2026-06-17 23:51 EDT
+
+**Main:** `870742d79903`
+**Actor:** Codex
+
+**Summary**
+
+PR #166 closed documentation follow-ups #145 and #164 by aligning reviewer-facing role-local identity terminology and refreshing the spec-matrix transcript traceability after the IR transcript refactor.
+
+**Completed**
+
+- Merged PR #166 (`Docs traceability follow-ups`) as `870742d79903fcbf77d8f4d218435a6b7a123c55`.
+- Updated `docs/reviewer-outreach.md` so the review focus now names role-local identity input consistently with `docs/threat-model.md` and `docs/project-plan.md`.
+- Updated `docs/spec-matrix.md` so draft `transcript_ir` maps to `newIRTranscript` / `irTranscript` in `transcript.go`, with symmetric/OC transcript helpers documented as test-vector-only through `testTranscriptOC`.
+- RAS review-fix implementation `20260618T034803-b5ac3e79c38edefe92f8be30` reported no actionable findings.
+- GitHub issues #145 and #164 closed through the PR merge.
+- No RAS run was performed for this journal-only update, per instruction.
+
+**Validation**
+
+- Traceability searches passed for `orientation|role-local identity` across reviewer outreach, threat model, and project plan.
+- Transcript traceability search passed for `transcriptIR|strings.go|newIRTranscript|transcript.go|testTranscriptOC` across the spec matrix, transcript implementation, and string/vector tests.
+- Docs validation passed with `task docs:check`.
+- Whitespace validation passed with `git diff --check`.
+- GitHub checks on PR #166 passed before merge: Check, DCO, Dependency Gate, and SAST Gate; the standalone gosec child check was neutral/skipping as expected.
+
+**Next**
+
+- Continue the follow-up sequence with message framing issues #155 and #160.
