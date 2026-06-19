@@ -2238,3 +2238,35 @@ Merged PR #199 after applying the Go 1.26.4 `go fix` modernization and tightenin
 ### Next
 
 - Refresh exact-candidate release evidence on post-merge `main` before making stronger release-readiness claims, because this release-policy/SBOM work changes evidence-relevant release tooling after the prior pinned evidence baseline.
+
+---
+
+## Evidence refresh landed - 2026-06-19 15:41 EDT
+
+**Main:** `f31709e43600`
+**Actor:** Codex
+
+### Summary
+
+Merged PR #201 to refresh the exact-candidate release-evidence packet for package-code commit `f7efa6a963a954952b1ecad3f46530f13799fe89` without changing package code or relaxing the production-readiness caveat.
+
+### Completed
+
+- Merged PR #201, `docs: refresh release evidence for f7efa6a`, as merge commit `f31709e43600f53f73b126e0c5a7ffbdebb3db3d`.
+- Added `docs/evidence/f7efa6a-20260619/` with checksum-covered local analysis, paired long-fuzz transcripts for `m1mini.local` and `iMacPro.local`, tag-ruleset capture, GitHub status and open-alert captures, Scorecard run capture, and cross-toolchain vector-stability evidence.
+- Updated the release evidence index and summary docs so dependency, Capslock, security/spec, fuzz, release-checklist, CI-policy, project-plan, and external-review handoff references point at the exact `f7efa6a` package-code baseline while preserving `v0.1.2` as historical prerelease evidence.
+- Ran RAS review `20260619T191321-5660f51cb3dc1840295b44f0`; the actionable findings were evidence accuracy issues around identical fuzz timestamps, transcript attribution, stale `v0.1.2` handoff language, cached race evidence, local path hygiene, missing checksum linkage, and baseline lineage.
+- Recaptured `local-analysis.log` from an isolated detached clone, added explicit non-cached race evidence with `go clean -testcache` and `go test -race -count=1 ./...`, documented the paired-run launcher timestamp semantics, removed the noisy local SBOM rehearsal artifact, scrubbed nonessential maintainer-local paths, regenerated `SHA256SUMS`, and amended PR #201 to head `b869a6721f68b15f1b3747618188df50eb955f56`.
+- Ran RAS verification of review run `20260619T191321-5660f51cb3dc1840295b44f0` against PR head `b869a6721f68b15f1b3747618188df50eb955f56`; it reported all prior Fix First findings resolved and no new concerns.
+
+### Validation
+
+- `shasum -a 256 -c docs/evidence/f7efa6a-20260619/SHA256SUMS`
+- `scripts/check-evidence-baseline.sh`
+- `cmark --validate-utf8 docs/evidence/f7efa6a-20260619/README.md >/dev/null`
+- `task check`
+- GitHub checks on PR #201 passed before merge: Check, DCO, Dependency Gate, and SAST Gate; the standalone gosec child check was neutral as expected.
+
+### Next
+
+- Keep external review and independent cryptographic review as release blockers before any production-readiness claim.
