@@ -1,0 +1,38 @@
+# cpace tag-ruleset capture
+# start_utc=2026-06-19T04:04:54Z
+
+$ gh --version
+gh version 2.95.0 (2026-06-17)
+https://github.com/cli/cli/releases/tag/v2.95.0
+
+$ gh auth status
+github.com
+  ✓ Logged in to github.com account the-sarge (keyring)
+  - Active account: true
+  - Git operations protocol: ssh
+  - Token: gho_************************************
+  - Token scopes: 'admin:public_key', 'gist', 'read:org', 'repo'
+
+$ gh api /repos/the-sarge/cpace/rulesets > /tmp/cpace-evidence-f7efa6a-20260619/rulesets-list.json
+
+$ gh api /repos/the-sarge/cpace/rulesets/16048307 > /tmp/cpace-evidence-f7efa6a-20260619/ruleset-16048307.json
+
+$ jq verification
+{
+  "bypass_actors": [],
+  "current_user_can_bypass": "never",
+  "enforcement": "active",
+  "id": 16048307,
+  "include": [
+    "refs/tags/v*"
+  ],
+  "name": "Protect release tags",
+  "rules": [
+    "creation",
+    "deletion",
+    "update"
+  ],
+  "target": "tag",
+  "verified": true
+}
+# end_utc=2026-06-19T04:04:55Z exit=0

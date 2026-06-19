@@ -2,7 +2,7 @@
 
 Target: `draft-irtf-cfrg-cpace-21`, published April 23, 2026.
 
-Audit: the original matrix was reviewed against implementation commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08. The current security/spec audit evidence baseline is indexed in `docs/evidence-baseline.md`; `docs/security-spec-audit.md` records the `933ece246e6170b11e838395bf36f852cba0cd02` audit and post-baseline caveats. The `scalar_mult_vfy` and invalid/weak-point rows were amended 2026-06-11 for ADR-0003 and 2026-06-16 for issue #80's responder-side decoded-share reuse (post-audit-baseline; see *Post-Baseline Changes* in `docs/security-spec-audit.md`).
+Audit: the original matrix was reviewed against implementation commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08. The current security/spec audit evidence baseline is indexed in `docs/evidence-baseline.md`; `docs/security-spec-audit.md` records the `f7efa6a963a954952b1ecad3f46530f13799fe89` exact-candidate audit. The `scalar_mult_vfy` and invalid/weak-point rows were amended 2026-06-11 for ADR-0003 and 2026-06-16 for issue #80's responder-side decoded-share reuse, both now covered by the exact-candidate audit.
 
 | Draft requirement | Implementation | Tests |
 | --- | --- | --- |

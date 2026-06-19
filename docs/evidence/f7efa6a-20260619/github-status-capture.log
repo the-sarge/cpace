@@ -1,0 +1,31 @@
+# cpace GitHub status capture
+# candidate=f7efa6a963a954952b1ecad3f46530f13799fe89
+# start_utc=2026-06-19T04:09:53Z
+
+$ gh run list --commit f7efa6a963a954952b1ecad3f46530f13799fe89 --json ...
+27804789297	OpenSSF Scorecard	completed	success	f7efa6a963a954952b1ecad3f46530f13799fe89	https://github.com/the-sarge/cpace/actions/runs/27804789297
+27803513984	Dependabot Updates	completed	success	f7efa6a963a954952b1ecad3f46530f13799fe89	https://github.com/the-sarge/cpace/actions/runs/27803513984
+27803505622	CI	completed	success	f7efa6a963a954952b1ecad3f46530f13799fe89	https://github.com/the-sarge/cpace/actions/runs/27803505622
+27803505618	CodeQL	completed	success	f7efa6a963a954952b1ecad3f46530f13799fe89	https://github.com/the-sarge/cpace/actions/runs/27803505618
+
+$ gh run view 27804789297 --json ...
+27804789297	OpenSSF Scorecard	completed	success	f7efa6a963a954952b1ecad3f46530f13799fe89	https://github.com/the-sarge/cpace/actions/runs/27804789297
+
+$ gh run list --workflow scorecard.yml --branch main
+27804789297	completed	success	f7efa6a963a954952b1ecad3f46530f13799fe89	2026-06-19T04:09:04Z	https://github.com/the-sarge/cpace/actions/runs/27804789297
+27613571567	completed	success	bd0111425a82f4181622e72e04a1129e46122fb7	2026-06-16T11:14:34Z	https://github.com/the-sarge/cpace/actions/runs/27613571567
+27200532291	completed	success	7e257632b4640945c8bdf383ecacc56c80c3581d	2026-06-09T10:38:34Z	https://github.com/the-sarge/cpace/actions/runs/27200532291
+26815462919	completed	success	c8438552f5ad16505e6dfac864e65102cffa19e5	2026-06-02T11:01:20Z	https://github.com/the-sarge/cpace/actions/runs/26815462919
+26092020338	completed	success	97af2dc3b2abdc68f0be9cc8d55aae8a8fd70aaa	2026-05-19T10:40:58Z	https://github.com/the-sarge/cpace/actions/runs/26092020338
+25728187441	completed	success	8fc41e0cdb98811440cd5071d0aeec29569fa56a	2026-05-12T10:17:53Z	https://github.com/the-sarge/cpace/actions/runs/25728187441
+25592181980	completed	success	890d04303564ee0b76262258ef16314fc79aa420	2026-05-09T04:52:33Z	https://github.com/the-sarge/cpace/actions/runs/25592181980
+25479830747	completed	success	39ccb58f827d88f6742628c1fadf9375539fb017	2026-05-07T06:29:36Z	https://github.com/the-sarge/cpace/actions/runs/25479830747
+25476617755	completed	success	2078a1d7a4b9f04bd4960f25108d4e9ecfb39587	2026-05-07T04:47:42Z	https://github.com/the-sarge/cpace/actions/runs/25476617755
+25474654125	completed	success	4052a8038353c4515420c1b491a8e1a04185043d	2026-05-07T03:35:53Z	https://github.com/the-sarge/cpace/actions/runs/25474654125
+
+$ gh api /repos/the-sarge/cpace/code-scanning/alerts?state=open
+0
+
+$ gh api /repos/the-sarge/cpace/dependabot/alerts?state=open
+0
+# end_utc=2026-06-19T04:09:56Z exit=0

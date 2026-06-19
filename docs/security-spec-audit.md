@@ -1,18 +1,18 @@
 # Security/Spec Audit
 
-Date: 2026-06-11
+Date: 2026-06-19
 
 Target module: `github.com/the-sarge/cpace`
 
-Implementation baseline: `933ece246e6170b11e838395bf36f852cba0cd02`
-
-ADR-0001 interim addendum: 2026-06-12 at `7aa79e4a40304a14610df36d0bd906fd6c7e3a24`
+Implementation baseline: `f7efa6a963a954952b1ecad3f46530f13799fe89`
 
 Documentation/evidence baseline: the merge commit containing this file.
 
 Toolchain: Go 1.26.4
 
-Evidence transcript: `docs/evidence/go1264-20260611/local-analysis.log`
+Evidence transcript: `docs/evidence/f7efa6a-20260619/local-analysis.log`
+
+Vector-stability transcript: `docs/evidence/f7efa6a-20260619/vector-stability.log`
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether this pinned audit is fresh for the latest release candidate.
 
@@ -21,12 +21,7 @@ Draft source: `draft-irtf-cfrg-cpace-21`
 
 ## Scope
 
-This audit checked `docs/security-assessment.md` and `docs/spec-matrix.md` (as
-updated by PR #73, which shipped its own documentation updates alongside its
-code changes) against the implementation baseline, tests, refreshed Go 1.26.4
-release evidence, and the draft-21 text. It is a documentation and conformance
-audit, not an independent cryptographic review. This is a project-side
-self-audit, distinct from independent cryptographic review or external review.
+This audit checked `docs/security-assessment.md` and `docs/spec-matrix.md` against the implementation baseline, tests, refreshed Go 1.26.4 release evidence, and the draft-21 text. It is a documentation and conformance audit, not an independent cryptographic review. This is a project-side self-audit, distinct from independent cryptographic review or external review.
 
 The audit covered:
 
@@ -38,18 +33,13 @@ The audit covered:
 - test/vector/fuzz/dependency/Capslock evidence referenced by the
   release-readiness docs;
 - the go1.26.4 toolchain security release (2026-06-02) impact;
-- the PR #73 package-code changes (the safe fixes from the 2026-05-27
-  multi-agent review: deferred wipe unification, `sampleScalar` retry,
-  protocol-identity test pins, SAST gate workflow).
+- the accepted-ADR implementation sequence through ADR-0003, ADR-0001, ADR-0002, ADR-0009, issue #80, and PR #199's Go fix modernization.
 
 ## Result
 
 No security/spec drift was found at the implementation baseline.
 
-`task check` passes under Go 1.26.4 at the implementation baseline (transcript
-records exit 0 with both test lanes green). The clean-worktree evidence
-transcript records dependency, gosec, and Capslock commands at the
-implementation baseline.
+`task check` passes under Go 1.26.4 at the implementation baseline (transcript records exit 0 with both test lanes green). The clean-worktree evidence transcript records dependency, gosec, Capslock, pinned Staticcheck, an explicit non-cached race test, and `task check`. Separate bundle artifacts record candidate GitHub status (`github-status-capture.log` and `github-runs-for-candidate.json`), fresh tag-ruleset capture (`tagruleset-capture.log`, `rulesets-list.json`, `ruleset-16048307.json`, and `ruleset-16048307-verify.json`), and the fresh Scorecard run (`github-scorecard-20260619-run.json`).
 
 The security assessment and spec matrix accurately describe the current
 implementation:
@@ -58,56 +48,33 @@ implementation:
 - only initiator-responder mode is exposed;
 - `Respond` success is not authentication; sessions are returned only after
   explicit key confirmation;
-- `transcript_ir`, generator derivation, ISK derivation, confirmation tags,
-  scalar sampling, and `scalar_mult_vfy` handling match the documented
-  draft-21 profile;
+- `transcript_ir`, generator derivation, ISK derivation, confirmation tags, scalar sampling, and `scalar_mult_vfy` handling match the documented draft-21 profile, including the intentional internal-only ADR-0003 nil-plus-error convention for invalid peer-share handling;
 - package-owned CI construction, binary framing, non-configurable field caps,
   `Session.Export`, `Session.Close`, `PeerAssociatedData`, and `PeerID` are
   correctly documented as package-profile behavior;
-- dependency, Capslock, and long-fuzz evidence references point to the refreshed Go 1.26.4 pinned evidence baseline indexed in `docs/evidence-baseline.md`; post-baseline security-relevant changes are out of scope for this audit and require the consolidated exact-candidate refresh.
+- dependency, Capslock, and paired long-fuzz evidence references point to the refreshed Go 1.26.4 pinned evidence baseline indexed in `docs/evidence-baseline.md`.
 
 The go1.26.4 release (2026-06-02) is a security release: fixes to
 `crypto/x509`, `mime`, and `net/textproto`, plus bug fixes to
 `crypto/fips140`, the compiler, and the runtime. CPace does not import the
 three patched packages; it does transitively use Go crypto internals including
-`crypto/fips140`, so evidence is re-recorded under Go 1.26.4. Separately,
-PR #73 merged the safe fixes from the 2026-05-27 multi-agent review into
-`api.go`, `crypto.go`, and `session.go` (deferred wipe unification,
-`sampleScalar` retry, protocol-identity test pins); those changes were
-multi-agent-reviewed, shipped with their own security-assessment and
-spec-matrix updates, and pin protocol identity with dedicated tests. At this
-baseline `task check` reran the draft/RFC vector assertions. No Go API,
-wire/protocol, dependency, or vector behavior change was found.
+`crypto/fips140`, so evidence is re-recorded under Go 1.26.4. The accepted-ADR implementation sequence changed package internals and public caller input, but the current docs correctly record the intended public API, wire format, package profile, error surface, and residual memory-handling limits. At this baseline `task check` reran the draft/RFC vector assertions. No unintended wire/protocol, dependency, or vector behavior change was found.
 
 ### Toolchain Vector Stability
 
-For this refresh, the draft/RFC vector assertions were run under **both**
-toolchains and recorded in the evidence transcript: `go test -count=1 -run
-'Vector' -v ./...` under go1.26.4, and the same command under
-`GOTOOLCHAIN=go1.26.3`. All vector tests pass identically under both
-(`TestStringUtilitiesDraftVectors`, `TestEmbeddedDraftVectorJSON`,
-`TestEmbeddedDraftInvalidVectorJSON`, `TestRistrettoDraft21Vectors`,
-`TestScalarMultVFYDraftInvalidVectors`, and the vector-loader fuzz seeds).
-This is the first refresh to record the old/new pair the evidence policy asks
-for; future toolchain-triggered refreshes should continue the practice.
+For this refresh, the draft/RFC vector assertions were run under both toolchains and recorded in `docs/evidence/f7efa6a-20260619/vector-stability.log`: the default go1.26.4 toolchain, and `GOTOOLCHAIN=go1.26.3` as the previous-toolchain comparison. The selected vector tests pass under both (`TestStringUtilitiesDraftVectors`, `TestEmbeddedDraftVectorJSON`, `TestEmbeddedDraftGeneratorJSON`, `TestEmbeddedDraftConfirmationTagGoldens`, `TestEmbeddedDraftInvalidVectorJSON`, `TestRistrettoDraft21Vectors`, and `TestScalarMultVFYDraftInvalidVectors`). Future toolchain-triggered refreshes should continue the old/new comparison pattern.
 
-## Post-Baseline Changes
+## Current Implementation Notes
 
-ADR-0003 (peer-share error semantics, implemented 2026-06-11, PR #78) landed after this audit's implementation baseline. It adds the exported `ErrPeerShareEncoding`/`ErrPeerShareIdentity` sentinels and changes the internal `scalarMultVFY` failure convention to nil plus an `ErrAbort`-wrapped error — an intentional internal-only divergence from draft-21's function-level neutral-element return with no protocol-visible change; the `scalar_mult_vfy` abort behavior audited above is unchanged. Read the "match the documented draft-21 profile" claim with that divergence in mind; the consolidated post-implementation evidence refresh will re-audit at the new baseline.
+ADR-0003 is included in this baseline: exported peer-share sentinels classify public-wire decode and identity-element failures while preserving `ErrAbort` wrapping and protocol abort behavior. Internally, `scalarMultVFY` returns nil plus an error on failure instead of draft-21's function-level neutral-element return convention; that divergence is internal-only and documented in `docs/security-assessment.md` and `docs/spec-matrix.md`.
 
-ADR-0001 (deep CPace core extraction) landed on this feature branch after the audit's implementation baseline. The public API and wire format are unchanged except for the ADR-recorded zero-value hardening: caller-fabricated zero-value `Initiator` and `Responder` shells now return `ErrInvalidInput` without consuming state, closing the previous zero-value responder forged-tag path where `Responder.Finish(encodeMessageC(confirmationTag(nil, nil, nil, nil)))` could return a Session keyed from nil ISK.
+ADR-0001 is included in this baseline: `Initiator` and `Responder` are thin shells over core state, caller-fabricated zero-value shells return `ErrInvalidInput` without consuming state, and the manual secret-lifetime findings remain the same in kind as documented. Secret-derived comparisons remain `hmac.Equal`; no `bytes.Equal` or `reflect.DeepEqual` over secret-derived values was introduced.
 
-Interim verification for the ADR-0001 addendum: `task check` passed after the cleanup-consolidation commit; `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz` ran locally on `darwin/arm64` with Go 1.26.4 and Task 3.51.1 from `2026-06-12T04:08:47Z` to `2026-06-12T05:04:52Z`, passing all 14 registered targets with `rc=0`. This is an interim gate only and does not replace the pinned paired long-fuzz evidence or the consolidated Phase 3 exact-candidate refresh.
+ADR-0002 is included in this baseline: the exported inert suite markers are removed before v1.0.0, while the package remains single-suite and the wire suite byte remains `0x01` through internal constants.
 
-Manual zeroization audit for the ADR-0001 addendum: `Initiator` and `Responder` are now thin shells with named `core` fields; `initiatorCore` holds the persistent initiator scalar only, and `responderCore` holds the persistent responder ISK plus the public transcript zeroed as hygiene. Neither core has a password, generator, DH point `k`, responder scalar, or initiator finish-local ISK field. `startWithRandom` and `respondWithRandom` retain the normalized-config `wipe()` backstop; core constructors eagerly clear the normalized password after generator derivation; `initiatorCore.finish` defers `clearBytes(isk)` immediately after `deriveISK`; `initiatorCore.clear()` and `responderCore.clear()` are nil-safe, idempotent, and zero-then-nil persistent fields; and both shell `Finish` methods defer `core.clear()` immediately after successful `consume()`, covering parse failure, confirmation failure, and success. Secret-derived comparisons remain `hmac.Equal`; no `bytes.Equal` or `reflect.DeepEqual` over secret-derived values was introduced.
+ADR-0009 is included in this baseline: role-local `Input` maps `SelfID` and `PeerID` per role before building CI, `LocalAssociatedData` names caller-local associated data, and the wire format is preserved. The named manual secret-lifetime audit for this implementation is `docs/adr-0009-secret-lifetime-audit.md`.
 
-Residual memory risks after the ADR-0001 addendum are unchanged in kind: a single-use state abandoned without `Finish` can retain its core-owned persistent secret until garbage collection; `lvCat`/`prependLen` still create heap intermediates that are not individually cleared, including password material inside `calculateGenerator` and K material inside `deriveISK`; and `hmac.New` retains internal key-pad copies outside package control. These are best-effort-zeroization limitations, not protocol-visible behavior changes.
-
-ADR-0002 (suite API cleanup) landed on this feature branch after the audit's implementation baseline. It removes only the exported inert suite markers (`Suite` and `SuiteCPaceRistretto255SHA512`) before v1.0.0, keeps the package single-suite, and preserves the wire suite byte as `0x01` through internal `currentSuite`/`wireSuite` constants. Interim verification for the ADR-0002 implementation: `task check` passed; `go test ./...`, `go test -race ./...`, and `gosec -tests ./...` passed; and `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz` ran locally on `darwin/arm64` with Go 1.26.4 and Task 3.51.1 from `2026-06-12T14:48:13Z` to `2026-06-12T15:44:29Z`, passing all 14 registered targets with `rc=0`. This is an interim gate only and does not replace the pinned paired long-fuzz evidence or the consolidated Phase 3 exact-candidate refresh.
-
-ADR-0009 (caller input) landed after the audit's implementation baseline. It replaces the public `Config` caller-input shape with role-local `Input`, maps `SelfID` and `PeerID` per role before building CI, renames caller local associated data to `LocalAssociatedData`, and preserves the wire format. This is a security-relevant package-code change; the pinned dependency, Capslock, security/spec audit, and paired long-fuzz evidence remain historical until refreshed at the exact release candidate. The named manual secret-lifetime audit for this implementation is `docs/adr-0009-secret-lifetime-audit.md`.
-
-Issue #80 (responder peer-share decoded-element reuse) landed after the audit's implementation baseline. It keeps the encoded-byte `scalarMultVFY` helper for draft/vector traceability, adds an internal element-accepting path for the responder after `Ya` has already passed role-aware peer-share prevalidation, and preserves validate-before-randomness, ADR-0003 peer-share sentinels, post-multiply neutral-element defense, public API, and wire behavior. This is a security-relevant peer-share rejection and CPace core change; the consolidated exact-candidate evidence refresh must re-audit it before stronger release-readiness claims.
+Issue #80 is included in this baseline: responder-side decoded-share reuse avoids reparsing `Ya` after role-aware peer-share prevalidation while preserving validate-before-randomness, ADR-0003 peer-share sentinels, post-multiply neutral-element defense, public API, and wire behavior.
 
 ## Residual Risk
 

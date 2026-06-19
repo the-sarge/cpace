@@ -1,0 +1,107 @@
+# cpace exact-candidate vector stability
+# candidate=f7efa6a963a954952b1ecad3f46530f13799fe89
+# start_utc=2026-06-19T04:08:06Z
+
+$ go version
+# start_utc=2026-06-19T04:08:06Z
+go version go1.26.4 darwin/arm64
+# end_utc=2026-06-19T04:08:06Z exit=0
+
+$ go test -v -run Test\(StringUtilitiesDraftVectors\|EmbeddedDraft.\*\|RistrettoDraft21Vectors\|ScalarMultVFYDraftInvalidVectors\)\$ -count=1 ./...
+# start_utc=2026-06-19T04:08:06Z
+=== RUN   TestStringUtilitiesDraftVectors
+=== RUN   TestStringUtilitiesDraftVectors/prepend_empty
+=== RUN   TestStringUtilitiesDraftVectors/prepend_1234
+=== RUN   TestStringUtilitiesDraftVectors/lv_cat
+=== RUN   TestStringUtilitiesDraftVectors/o_cat_first
+=== RUN   TestStringUtilitiesDraftVectors/o_cat_second
+=== RUN   TestStringUtilitiesDraftVectors/transcript_ir
+=== RUN   TestStringUtilitiesDraftVectors/transcript_oc
+--- PASS: TestStringUtilitiesDraftVectors (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/prepend_empty (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/prepend_1234 (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/lv_cat (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/o_cat_first (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/o_cat_second (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/transcript_ir (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/transcript_oc (0.00s)
+=== RUN   TestEmbeddedDraftVectorJSON
+--- PASS: TestEmbeddedDraftVectorJSON (0.00s)
+=== RUN   TestEmbeddedDraftGeneratorJSON
+--- PASS: TestEmbeddedDraftGeneratorJSON (0.00s)
+=== RUN   TestEmbeddedDraftConfirmationTagGoldens
+--- PASS: TestEmbeddedDraftConfirmationTagGoldens (0.00s)
+=== RUN   TestEmbeddedDraftInvalidVectorJSON
+--- PASS: TestEmbeddedDraftInvalidVectorJSON (0.00s)
+=== RUN   TestRistrettoDraft21Vectors
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_nil
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_empty
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_appended
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_truncated
+--- PASS: TestRistrettoDraft21Vectors (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_nil (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_empty (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_appended (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_truncated (0.00s)
+=== RUN   TestScalarMultVFYDraftInvalidVectors
+--- PASS: TestScalarMultVFYDraftInvalidVectors (0.00s)
+PASS
+ok  	github.com/the-sarge/cpace	0.290s
+# end_utc=2026-06-19T04:08:06Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.3 go version
+# start_utc=2026-06-19T04:08:06Z
+go version go1.26.3 darwin/arm64
+# end_utc=2026-06-19T04:08:06Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.3 go test -v -run Test\(StringUtilitiesDraftVectors\|EmbeddedDraft.\*\|RistrettoDraft21Vectors\|ScalarMultVFYDraftInvalidVectors\)\$ -count=1 ./...
+# start_utc=2026-06-19T04:08:06Z
+=== RUN   TestStringUtilitiesDraftVectors
+=== RUN   TestStringUtilitiesDraftVectors/prepend_empty
+=== RUN   TestStringUtilitiesDraftVectors/prepend_1234
+=== RUN   TestStringUtilitiesDraftVectors/lv_cat
+=== RUN   TestStringUtilitiesDraftVectors/o_cat_first
+=== RUN   TestStringUtilitiesDraftVectors/o_cat_second
+=== RUN   TestStringUtilitiesDraftVectors/transcript_ir
+=== RUN   TestStringUtilitiesDraftVectors/transcript_oc
+--- PASS: TestStringUtilitiesDraftVectors (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/prepend_empty (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/prepend_1234 (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/lv_cat (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/o_cat_first (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/o_cat_second (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/transcript_ir (0.00s)
+    --- PASS: TestStringUtilitiesDraftVectors/transcript_oc (0.00s)
+=== RUN   TestEmbeddedDraftVectorJSON
+--- PASS: TestEmbeddedDraftVectorJSON (0.00s)
+=== RUN   TestEmbeddedDraftGeneratorJSON
+--- PASS: TestEmbeddedDraftGeneratorJSON (0.00s)
+=== RUN   TestEmbeddedDraftConfirmationTagGoldens
+--- PASS: TestEmbeddedDraftConfirmationTagGoldens (0.00s)
+=== RUN   TestEmbeddedDraftInvalidVectorJSON
+--- PASS: TestEmbeddedDraftInvalidVectorJSON (0.00s)
+=== RUN   TestRistrettoDraft21Vectors
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_nil
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_empty
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_appended
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_truncated
+--- PASS: TestRistrettoDraft21Vectors (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_nil (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_empty (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_appended (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_truncated (0.00s)
+=== RUN   TestScalarMultVFYDraftInvalidVectors
+--- PASS: TestScalarMultVFYDraftInvalidVectors (0.00s)
+PASS
+ok  	github.com/the-sarge/cpace	0.218s
+# end_utc=2026-06-19T04:08:09Z exit=0
+# end_utc=2026-06-19T04:08:09Z
+# failures=0

@@ -51,7 +51,7 @@ bundle shape, required metadata, checksum verification, and optional detached
 signature handling. Summary docs may explain evidence, but the evidence packet
 should preserve the raw logs or immutable workflow links.
 
-Before each release, capture the active `refs/tags/v*` tag-authority ruleset JSON as recurring release evidence. Record `gh api /repos/the-sarge/cpace/rulesets` and `gh api /repos/the-sarge/cpace/rulesets/16048307`, then confirm ruleset `16048307` is active, covers creation/update/deletion for `refs/tags/v*`, has `bypass_actors: []`, and reports `current_user_can_bypass: never`. The 2026-06-10 baseline is committed under `docs/evidence/tagruleset-20260610/`; each release needs a fresh capture because GitHub ruleset state is admin-mutable.
+Before each release, capture the active `refs/tags/v*` tag-authority ruleset JSON as recurring release evidence. Record `gh api /repos/the-sarge/cpace/rulesets` and `gh api /repos/the-sarge/cpace/rulesets/16048307`, then confirm ruleset `16048307` is active, covers creation/update/deletion for `refs/tags/v*`, has `bypass_actors: []`, and reports `current_user_can_bypass: never`. The 2026-06-10 baseline is committed under `docs/evidence/tagruleset-20260610/`, and the 2026-06-19 exact-candidate capture is committed under `docs/evidence/f7efa6a-20260619/`; each release needs a fresh capture because GitHub ruleset state is admin-mutable.
 
 ## 4. Long Fuzz Evidence
 

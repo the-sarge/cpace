@@ -1,0 +1,17 @@
+{
+  "bypass_actors": [],
+  "current_user_can_bypass": "never",
+  "enforcement": "active",
+  "id": 16048307,
+  "include": [
+    "refs/tags/v*"
+  ],
+  "name": "Protect release tags",
+  "rules": [
+    "creation",
+    "deletion",
+    "update"
+  ],
+  "target": "tag",
+  "verified": true
+}

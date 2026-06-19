@@ -1,6 +1,6 @@
 # Security Assessment
 
-Status: maintained self-assessment for an auditable draft implementation. The original assessment was reviewed against commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08. The current security/spec audit evidence baseline is indexed in `docs/evidence-baseline.md`; `docs/security-spec-audit.md` records the `933ece246e6170b11e838395bf36f852cba0cd02` audit and post-baseline caveats.
+Status: maintained self-assessment for an auditable draft implementation. The original assessment was reviewed against commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08. The current security/spec audit evidence baseline is indexed in `docs/evidence-baseline.md`; `docs/security-spec-audit.md` records the `f7efa6a963a954952b1ecad3f46530f13799fe89` exact-candidate audit.
 
 ## Cryptographic Scope
 

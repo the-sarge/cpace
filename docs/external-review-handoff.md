@@ -8,11 +8,9 @@ Last released tag: `v0.1.2`
 
 Last released commit: `4e661bc1f925ebedf1f270668129d85bab73e468`
 
-Current evidence baseline: see `docs/evidence-baseline.md`. The original `v0.1.2` external-review packet remains historical prerelease evidence; later Go 1.26.4 and post-baseline freshness caveats are centralized in the baseline index.
+Current evidence baseline: see `docs/evidence-baseline.md`. The original `v0.1.2` external-review packet remains historical prerelease evidence; the current exact-candidate evidence bundle is `docs/evidence/f7efa6a-20260619/`.
 
-Evidence status: refreshed for the v0.1.2 package-code candidate and packaged
-in the signed `v0.1.2` prerelease. This is still an unaudited prerelease
-evidence packet, not a production-readiness claim.
+Evidence status: refreshed for the exact package-code candidate `f7efa6a963a954952b1ecad3f46530f13799fe89` in `docs/evidence/f7efa6a-20260619/`. The signed `v0.1.2` prerelease remains historical prerelease context. The current bundle is still unaudited prerelease evidence, not a production-readiness claim.
 
 Status: auditable draft implementation. This package has not had independent
 cryptographic review and is not production-ready.
@@ -38,6 +36,7 @@ cryptographic review before any production-ready claim.
 - `docs/fuzz-evidence.md` for local smoke and long-fuzz campaign evidence.
 - `docs/capslock-report.md` for static capability-analysis evidence.
 - `docs/evidence-baseline.md` for the current pinned evidence baseline and stale-trigger index.
+- `docs/evidence/f7efa6a-20260619/` for the current exact-candidate raw evidence bundle and SHA-256 digests.
 - `docs/evidence/v012-candidate-20260508/` for raw v0.1.2 candidate transcript
   files and SHA-256 digests.
 - `docs/evidence/v012-soak-20260509/` for raw v0.1.2 supplemental fuzz soak
@@ -96,7 +95,7 @@ The `v0.1.2` prerelease contains the external-review packet, Go 1.26
 modernization, and refreshed evidence. It has no intended Go API,
 wire/protocol, dependency, or vector behavior change.
 
-The current pinned package-code evidence baseline and freshness caveats are indexed in `docs/evidence-baseline.md`. Repeat dependency review, long fuzzing, Capslock, and security/spec audit against the exact release candidate before any production-readiness claim, or sooner if protocol, parser/framing, fuzz harness, dependency, toolchain, or package-profile docs change.
+The current pinned package-code evidence baseline and freshness caveats are indexed in `docs/evidence-baseline.md`. The `f7efa6a963a954952b1ecad3f46530f13799fe89` exact-candidate bundle refreshes dependency review, long fuzzing, Capslock, security/spec audit support, tag-ruleset capture, GitHub status, Scorecard, and vector stability. Repeat those lanes before any production-readiness claim if protocol, parser/framing, fuzz harness, dependency, toolchain, or package-profile docs change.
 
 Capslock capability-analysis evidence is recorded in `docs/capslock-report.md`; its pinned baseline and freshness caveat are indexed in `docs/evidence-baseline.md`.
 
@@ -126,7 +125,7 @@ upstream review.
   profile choices.
 - Obtain independent cryptographic review before any production-ready claim.
 - Refresh exact-release dependency review, long fuzz evidence, Capslock
-  capability evidence, and security/spec audit after review-driven changes and
-  before any production-readiness candidate.
+  capability evidence, and security/spec audit after review-driven or
+  security-relevant changes before any production-readiness claim.
 - Resolve any critical or high review findings before moving beyond the `v0.x`
   prerelease line.

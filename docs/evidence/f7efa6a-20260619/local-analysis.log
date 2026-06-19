@@ -1,0 +1,322 @@
+# cpace exact-candidate local analysis
+# candidate=f7efa6a963a954952b1ecad3f46530f13799fe89
+# transcript_start_utc=2026-06-19T19:27:46Z
+# capture_worktree=/tmp/cpace-evidence-recapture-f7efa6a
+# note=GOPATH and GOMODCACHE path values were omitted from the committed transcript because they are host-local and not material to the evidence claim.
+
+$ hostname
+# start_utc=2026-06-19T19:27:47Z
+mbp128.local
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ sw_vers
+# start_utc=2026-06-19T19:27:47Z
+ProductName:		macOS
+ProductVersion:		26.5.1
+BuildVersion:		25F80
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ uname -a
+# start_utc=2026-06-19T19:27:47Z
+Darwin mbp128.local 25.5.0 Darwin Kernel Version 25.5.0: Mon Apr 27 20:41:15 PDT 2026; root:xnu-12377.121.6~2/RELEASE_ARM64_T6041 arm64
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ pwd
+# start_utc=2026-06-19T19:27:47Z
+/tmp/cpace-evidence-recapture-f7efa6a
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ git rev-parse HEAD
+# start_utc=2026-06-19T19:27:47Z
+f7efa6a963a954952b1ecad3f46530f13799fe89
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ git status --short
+# start_utc=2026-06-19T19:27:47Z
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ git diff --stat
+# start_utc=2026-06-19T19:27:47Z
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ go version
+# start_utc=2026-06-19T19:27:47Z
+go version go1.26.4 darwin/arm64
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ go env GOOS GOARCH GOVERSION GOTOOLCHAIN
+# start_utc=2026-06-19T19:27:47Z
+darwin
+arm64
+go1.26.4
+auto
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ task --version
+# start_utc=2026-06-19T19:27:47Z
+3.51.1
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ jq --version
+# start_utc=2026-06-19T19:27:47Z
+jq-1.7.1-apple
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ govulncheck -version
+# start_utc=2026-06-19T19:27:47Z
+Go: go1.26.4
+Scanner: govulncheck@v1.3.0
+DB: https://vuln.go.dev
+DB updated: 2026-06-16 23:55:18 +0000 UTC
+
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ syft version
+# start_utc=2026-06-19T19:27:47Z
+Application:   syft
+Version:       1.45.1
+BuildDate:     2026-06-05T13:55:57Z
+GitCommit:     Homebrew
+GitDescription: [not provided]
+Platform:      darwin/arm64
+GoVersion:     go1.26.4
+Compiler:      gc
+SchemaVersion: 16.1.3
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ go mod verify
+# start_utc=2026-06-19T19:27:47Z
+all modules verified
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ go list -m all
+# start_utc=2026-06-19T19:27:47Z
+github.com/the-sarge/cpace
+filippo.io/edwards25519 v1.2.0
+github.com/gtank/ristretto255 v0.2.0
+# end_utc=2026-06-19T19:27:47Z exit=0
+
+$ govulncheck -test -show verbose ./...
+# start_utc=2026-06-19T19:27:47Z
+Fetching vulnerabilities from the database...
+
+Checking the code against the vulnerabilities...
+
+The package pattern matched the following 4 root packages:
+  github.com/the-sarge/cpace
+  github.com/the-sarge/cpace
+  github.com/the-sarge/cpace_test
+  github.com/the-sarge/cpace.test
+Govulncheck scanned the following 3 modules and the go1.26.4 standard library:
+  github.com/the-sarge/cpace
+  filippo.io/edwards25519@v1.2.0
+  github.com/gtank/ristretto255@v0.2.0
+
+No vulnerabilities found.
+# end_utc=2026-06-19T19:27:48Z exit=0
+
+$ go run github.com/securego/gosec/v2/cmd/gosec@v2.26.1 ./...
+# start_utc=2026-06-19T19:27:48Z
+[gosec] 2026/06/19 15:27:49 Including rules: default
+[gosec] 2026/06/19 15:27:49 Excluding rules: default
+[gosec] 2026/06/19 15:27:49 Including analyzers: default
+[gosec] 2026/06/19 15:27:49 Excluding analyzers: default
+[gosec] 2026/06/19 15:27:49 Import directory: /tmp/cpace-evidence-recapture-f7efa6a/tools/releasepolicy
+[gosec] 2026/06/19 15:27:49 Import directory: /tmp/cpace-evidence-recapture-f7efa6a
+[gosec] 2026/06/19 15:27:49 Import directory: /tmp/cpace-evidence-recapture-f7efa6a/tools/evidencebaseline
+[gosec] 2026/06/19 15:27:50 Checking package: cpace
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/api.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/caps.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/core.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/crypto.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/doc.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/errors.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/framing.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/input.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/length_value.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/peer_share.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/session.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/terminal_state.go
+[gosec] 2026/06/19 15:27:50 Checking file: /tmp/cpace-evidence-recapture-f7efa6a/transcript.go
+Results:
+
+
+Summary:
+  Gosec  : dev
+  Files  : 13
+  Lines  : 1478
+  Nosec  : 0
+  Issues : 0
+
+# end_utc=2026-06-19T19:27:50Z exit=0
+
+$ go run github.com/google/capslock/cmd/capslock@v0.3.2 -version
+# start_utc=2026-06-19T19:27:50Z
+capslock version v0.3.2
+compiled with Go version go1.26.4
+includes Go tools version v0.43.0
+# end_utc=2026-06-19T19:27:52Z exit=0
+
+$ go run github.com/google/capslock/cmd/capslock@v0.3.2 -packages ./...
+# start_utc=2026-06-19T19:27:52Z
+Capslock is an experimental tool for static analysis of Go packages.
+Share feedback and file bugs at https://github.com/google/capslock.
+For additional debugging signals, use verbose mode with -output=verbose
+To get machine-readable full analysis output, use -output=json
+
+Analyzed packages:
+  filippo.io/edwards25519 v1.2.0
+  github.com/gtank/ristretto255 v0.2.0
+
+ARBITRARY_EXECUTION: 11 references
+UNANALYZED: 13 references
+
+# end_utc=2026-06-19T19:27:53Z exit=0
+
+$ go run github.com/google/capslock/cmd/capslock@v0.3.2 -packages ./... -output=verbose
+# start_utc=2026-06-19T19:27:53Z
+Capslock is an experimental tool for static analysis of Go packages.
+Share feedback and file bugs at https://github.com/google/capslock.
+To get machine-readable full analysis output, use -output=json
+
+Analyzed packages:
+  filippo.io/edwards25519 v1.2.0
+  github.com/gtank/ristretto255 v0.2.0
+
+ARBITRARY_EXECUTION: 11 references (11 direct, 0 transitive)
+Example callpath:
+  github.com/the-sarge/cpace.Respond
+  api.go:76:26:github.com/the-sarge/cpace.respondWithRandom
+  api.go:92:41:github.com/the-sarge/cpace.newResponderCore
+  core.go:103:37:(github.com/the-sarge/cpace.irTranscript).responderConfirmationTag
+  transcript.go:73:24:github.com/the-sarge/cpace.confirmationTag
+  crypto.go:131:15:crypto/hmac.New
+  hmac.go:48:25:crypto/internal/fips140only.Enforced
+  fips140only.go:20:25:crypto/fips140.Enforced
+  enforcement.go:37:31:crypto/fips140.isBypassed
+
+UNANALYZED: 13 references (13 direct, 0 transitive)
+Example callpath:
+  github.com/the-sarge/cpace.Respond
+  api.go:76:26:github.com/the-sarge/cpace.respondWithRandom
+  api.go:92:41:github.com/the-sarge/cpace.newResponderCore
+  core.go:90:24:github.com/the-sarge/cpace.sampleScalar
+  crypto.go:59:27:io.ReadFull
+
+# end_utc=2026-06-19T19:27:53Z exit=0
+
+$ go clean -testcache
+# start_utc=2026-06-19T19:27:53Z
+# end_utc=2026-06-19T19:27:53Z exit=0
+
+$ go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...
+# start_utc=2026-06-19T19:27:53Z
+# end_utc=2026-06-19T19:27:55Z exit=0
+
+$ go test -race -count=1 ./...
+# start_utc=2026-06-19T19:27:55Z
+ok  	github.com/the-sarge/cpace	1.552s
+# end_utc=2026-06-19T19:27:57Z exit=0
+
+$ task docs:check
+# start_utc=2026-06-19T19:27:57Z
+task: [docs:check] git diff --check
+task: [docs:check] md_files="$(git ls-files '*.md')"
+if [ -z "$md_files" ]; then
+  exit 0
+fi
+command -v cmark >/dev/null 2>&1 || {
+  echo "cmark not found; install cmark or set CMARK=/path/to/cmark"
+  exit 1
+}
+cmark --validate-utf8 $md_files >/dev/null
+
+# end_utc=2026-06-19T19:27:57Z exit=0
+
+$ task quick
+# start_utc=2026-06-19T19:27:57Z
+task: [lint:gofmt] unformatted="$(gofmt -l $(git ls-files '*.go'))"
+if [ -n "$unformatted" ]; then
+  echo "gofmt check failed. Run gofmt on:"
+  echo "$unformatted"
+  exit 1
+fi
+
+task: [docs:check] git diff --check
+task: [docs:check] md_files="$(git ls-files '*.md')"
+if [ -z "$md_files" ]; then
+  exit 0
+fi
+command -v cmark >/dev/null 2>&1 || {
+  echo "cmark not found; install cmark or set CMARK=/path/to/cmark"
+  exit 1
+}
+cmark --validate-utf8 $md_files >/dev/null
+
+task: [ci:classifier] scripts/test-ci-classifier.sh
+CI change classifier tests passed
+task: [quick-test] go test ./...
+ok  	github.com/the-sarge/cpace	0.233s
+# end_utc=2026-06-19T19:27:59Z exit=0
+
+$ task check
+# start_utc=2026-06-19T19:27:59Z
+task: [docs:check] git diff --check
+task: [docs:check] md_files="$(git ls-files '*.md')"
+if [ -z "$md_files" ]; then
+  exit 0
+fi
+command -v cmark >/dev/null 2>&1 || {
+  echo "cmark not found; install cmark or set CMARK=/path/to/cmark"
+  exit 1
+}
+cmark --validate-utf8 $md_files >/dev/null
+
+task: [release:helpers] scripts/test-release-helpers.sh
+ok  	github.com/the-sarge/cpace/tools/releasepolicy	0.250s
+release policy checker passed
+release helper smoke tests passed
+task: [ci:classifier] scripts/test-ci-classifier.sh
+CI change classifier tests passed
+task: [evidence:baseline] scripts/check-evidence-baseline.sh
+ok  	github.com/the-sarge/cpace/tools/evidencebaseline	0.841s
+evidence baseline checker passed
+task: [evidence:lint] go vet ./...
+task: [evidence:lint] staticcheck ./...
+task: [test] go test ./...
+ok  	github.com/the-sarge/cpace	(cached)
+task: [test:race] go test -race ./...
+ok  	github.com/the-sarge/cpace	1.436s
+task: [lint:gofmt] unformatted="$(gofmt -l $(git ls-files '*.go'))"
+if [ -n "$unformatted" ]; then
+  echo "gofmt check failed. Run gofmt on:"
+  echo "$unformatted"
+  exit 1
+fi
+
+task: [lint:goimports] command -v goimports >/dev/null 2>&1 || {
+  echo "goimports not found; install goimports or set GOIMPORTS=/path/to/goimports"
+  exit 1
+}
+
+task: [lint:goimports] unformatted="$(goimports -l $(git ls-files '*.go'))"
+if [ -n "$unformatted" ]; then
+  echo "goimports check failed. Run goimports on:"
+  echo "$unformatted"
+  exit 1
+fi
+
+task: [lint:go] go vet ./...
+task: [lint:go] staticcheck ./...
+task: [lint-ast-grep] command -v ast-grep >/dev/null 2>&1 || {
+  echo "ast-grep not found; install ast-grep or set AST_GREP=/path/to/ast-grep"
+  exit 1
+}
+
+task: [lint-ast-grep] ast-grep scan --error
+task: [vuln] govulncheck -test ./...
+No vulnerabilities found.
+# end_utc=2026-06-19T19:28:31Z exit=0
+
+# transcript_end_utc=2026-06-19T19:28:40Z
+# failures=0

@@ -43,16 +43,9 @@ All rows below are closed and preserved as the policy/API decision record.
    scope, current evidence, and remaining release blockers. Track findings in
    focused follow-up PRs.
 2. Evidence-process hardening for issue #44.
-   PR #48 covers phase 1: a reusable evidence-bundle policy and
-   cross-toolchain vector-stability checklist. Phase 2 remains applying that
-   policy to the next exact-candidate packet. Keep the issue open until the
-   packet includes committed raw artifacts with `SHA256SUMS`, or immutable
-   workflow links following `docs/evidence/README.md`, plus the
-   vector-stability result or an explicit unavailable-toolchain rationale.
+   PR #48 covers phase 1: a reusable evidence-bundle policy and cross-toolchain vector-stability checklist. The `f7efa6a963a954952b1ecad3f46530f13799fe89` evidence bundle applies that policy with committed raw artifacts, `SHA256SUMS`, and vector-stability results. Keep the issue open only if additional release-packet acceptance criteria remain outside this exact-candidate bundle.
 3. Exact-candidate evidence refresh.
-   After any review-driven changes, repeat dependency review, long fuzzing, and
-   security/spec audit against the exact release-candidate commit before making
-   any stronger readiness claim.
+   The current exact-candidate dependency review, long fuzzing, Capslock, security/spec audit support, tag-ruleset capture, GitHub status, Scorecard, and vector-stability evidence are indexed in `docs/evidence-baseline.md`. Repeat those lanes after any review-driven or security-relevant changes before making a stronger readiness claim.
 
 ## Completed Evidence
 
@@ -62,7 +55,7 @@ Current pinned evidence baselines and freshness caveats are indexed in `docs/evi
 | --- | --- | --- |
 | Dependency review | `docs/evidence-baseline.md` indexes the current pinned dependency, vulnerability, and SAST/gosec baseline; `docs/dependency-review.md` carries the lane-specific summary and raw transcript link. | Repeat on the exact release tag if dependencies, toolchain, parser/framing, protocol, security-relevant code, or package-profile docs change. |
 | Long fuzz evidence | `docs/evidence-baseline.md` indexes the current pinned paired long-fuzz baseline; `docs/fuzz-evidence.md` carries the lane-specific summary, raw log links, historical prerelease soak, and interim non-evidence gates. | Repeat if parser, protocol, fuzz harness, dependency, or toolchain changes before release. |
-| Security/spec audit | `docs/evidence-baseline.md` indexes the current pinned security/spec audit baseline; `docs/security-spec-audit.md` records the audited implementation baseline and post-baseline caveats. | Repeat if protocol code, parser/framing code, package-profile docs, dependencies, toolchain, or the targeted draft revision changes. |
+| Security/spec audit | `docs/evidence-baseline.md` indexes the current pinned security/spec audit baseline; `docs/security-spec-audit.md` records the audited implementation baseline. | Repeat if protocol code, parser/framing code, package-profile docs, dependencies, toolchain, or the targeted draft revision changes. |
 | Integration guidance | `docs/integration-guidance.md` documents outer PAKE/version negotiation, downgrade-protection, role-local identity input, and session-output guidance. | External reviewers should still evaluate whether this guidance is sufficient for real integrations. |
 | Release validation and CI hardening | `v0.1.2` is a signed annotated prerelease tag at commit `4e661bc1f925ebedf1f270668129d85bab73e468`. Tag-triggered Release Validation passed `Check`, `Race`, `Govulncheck`, and `Gosec` with SARIF upload in workflow run `25588835119`. Public background signal also includes CodeQL, OpenSSF Scorecard, Staticcheck Advisory, Actionlint, cross-platform smoke, scheduled vulnerability scanning, scheduled gosec, and scheduled fuzz regression. | CI evidence supports auditable prerelease hygiene, not production readiness. Keep release tags signed, watch scheduled lanes, and keep external and cryptographic review as release blockers. |
 | External review handoff | `docs/external-review-handoff.md` summarizes supported scope, package-owned choices, evidence, review questions, and remaining release blockers for external reviewers. | The handoff is a review input, not a completed review. Findings still need to be tracked and resolved. |
