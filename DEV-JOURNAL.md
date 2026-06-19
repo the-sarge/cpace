@@ -2205,3 +2205,36 @@ Deepened the Transcript so the responder stores and reuses the `irTranscript` va
 ### Next
 
 - Track follow-up issue #197 in OmniFocus as a non-blocking `irTranscript.clear()` test-hardening continuation.
+
+---
+
+## Go fix modernization landed - 2026-06-18 23:24 EDT
+
+**Main:** `942ed0448b08`
+**Actor:** Codex
+
+### Summary
+
+Merged PR #199 after applying the Go 1.26.4 `go fix` modernization and tightening the release SBOM configuration guard that RAS found around the new Syft config file.
+
+### Completed
+
+- Merged PR #199, `chore: apply go fix suggestions`, as merge commit `942ed0448b088ab0501c961f193f26492427f58a`.
+- Applied the low-risk `go fix` suggestions for the framing catalogue tests and the nested release/evidence helper modules: removed the stale range-variable copy, used newer formatting/allocation helpers, and replaced manual map copy/string-split patterns with standard-library helpers.
+- Added `.github/syft-release.yaml` with explicit `source.name: github.com/the-sarge/cpace` and shared Syft excludes for `./.git/**` and `./.ras/**`.
+- Routed both Release Validation and the local real-Syft smoke through the shared Syft config instead of carrying local-only exclude flags.
+- Extended the release-policy checker so `.github/syft-release.yaml` is a required non-executable release config, rejecting missing, symlinked, directory, and non-regular paths before validating `source.name` and the shared exclude sequence.
+- Ran RAS review `20260619T023843-85d672b9aee9841f5667ad9b`; the actionable findings were the missing config-file guard and local/CI Syft config drift.
+- Fixed the first RAS verification edge case by requiring regular files, then reran RAS verification on PR head `27cc0e9ab2c994781d7b479cc168f6cc565eb9af`; verification reported no still-open findings and no new concerns.
+
+### Validation
+
+- `(cd tools/releasepolicy && go test ./...)`
+- `task release:helpers`
+- `task check`
+- GitHub checks on PR #199 passed before merge: Actionlint, Check, CodeQL, DCO, Dependency Gate, SAST Gate, Staticcheck, macos-latest, and windows-latest; the standalone gosec child check was neutral as expected.
+- RAS verification confirmed the Syft config drift and release-policy config guard findings were resolved on the merged head.
+
+### Next
+
+- Refresh exact-candidate release evidence on post-merge `main` before making stronger release-readiness claims, because this release-policy/SBOM work changes evidence-relevant release tooling after the prior pinned evidence baseline.
