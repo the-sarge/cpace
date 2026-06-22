@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- CI hardening: split Autoscaled Fuzz across arm64 and amd64 GARM runner labels,
+  cap scheduled fuzz defaults with `GOMAXPROCS` and `FUZZ_TEST_PARALLEL`
+  tuning, and add a pinned GolangCI-Lint advisory lane for curated analyzers.
 - Internal peer-share optimization: `Respond` now reuses the initiator share decoded during prevalidation when computing the responder Diffie-Hellman result, preserving validate-before-randomness, ADR-0003 peer-share errors, post-multiply neutral-element defense, public API, and wire behavior.
 - Harden release-helper contracts: release-note extraction now rejects unsupported tag shapes before scanning `CHANGELOG.md`, and CycloneDX SBOM validation now enforces the `cpace-<tag>.cdx.json` asset name plus exact Go module entries.
 - Pre-v1 caller-input API change (breaking relative to `v0.1.2`): replace public `Config` with role-local `Input`. Removed fields are `InitiatorID`, `ResponderID`, and `AssociatedData`; callers now use `SelfID`, `PeerID`, and `LocalAssociatedData`. Migration rule: the initiator calls `Start` with `SelfID=initiator, PeerID=responder`, and the responder calls `Respond` with `SelfID=responder, PeerID=initiator`. `Password`, `Context`, `SessionID`, and `AllowEmptySessionID` keep the same semantics, and wire format is unchanged.

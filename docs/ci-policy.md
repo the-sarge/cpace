@@ -11,8 +11,10 @@ Local validation uses `Taskfile.yml` as the command facade:
 - `task docs:check` validates tracked Markdown and whitespace.
 - `task quick` runs Go formatting checks, docs validation, and `go test ./...`.
 - `task check` runs docs validation, release-helper smoke tests, evidence baseline validation, nested evidence-checker linting, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for CycloneDX SBOM JSON validation.
+- `task lint:golangci` runs a pinned, curated advisory `golangci-lint` analyzer set; it is not part of the required local gate.
 - `task fuzz` runs every fuzz target in `.github/fuzz-targets.json` with the
-  caller-provided `FUZZTIME`, `PARALLEL`, and `FUZZ_RACE` settings.
+  caller-provided `FUZZTIME`, `PARALLEL`, `FUZZ_RACE`, `GOMAXPROCS`, and
+  `FUZZ_TEST_PARALLEL` settings.
 
 Repository CI runs on these events:
 
@@ -20,11 +22,13 @@ Repository CI runs on these events:
   `Dependency Gate` runs blocking SCA tooling, and `SAST Gate` runs blocking
   `gosec`.
 - Pull requests that touch Go code or Go module files: CodeQL and Staticcheck
-  Advisory run as background signal.
+  Advisory run as background signal. Pull requests that touch Go code, Go
+  module files, `Taskfile.yml`, `.golangci.yml`, or the GolangCI-Lint workflow
+  also run GolangCI-Lint Advisory.
 - Pushes to `main`: required `Check` runs again, and CodeQL analyzes the main
   branch.
-- Scheduled or manual runs: Vulnerability Scan, Gosec Advisory, Nightly Fuzz,
-  Autoscaled Fuzz, CodeQL, Staticcheck Advisory, Scorecard, and
+- Scheduled or manual runs: Vulnerability Scan, Gosec Advisory, GolangCI-Lint
+  Advisory, Nightly Fuzz, Autoscaled Fuzz, CodeQL, Staticcheck Advisory, Scorecard, and
   cross-platform smoke workflows provide background and release-posture signal.
 - Release tags matching `v*`: Release Validation verifies the signed annotated tag first, runs tests, race tests, `govulncheck`, and `gosec` with SARIF upload, then generates, validates, attests, and publishes the GitHub Release with SBOM assets. `v0.x` and SemVer prerelease tags are published as GitHub prereleases and are explicitly not marked latest.
 
@@ -56,11 +60,12 @@ required gate.
 
 ## Background Signal
 
-`Vulnerability Scan`, `Gosec Advisory`, and `Nightly Fuzz` run on GitHub-hosted
-runners through both `workflow_dispatch` and scheduled triggers. `Autoscaled
-Fuzz` validates inputs on a GitHub-hosted preflight job, then runs fuzzing on the
-self-hosted GARM `cpace-garm-linux-fuzz` runner label through scheduled triggers
-and trusted main-branch manual dispatch. These lanes provide scheduled drift
+`Vulnerability Scan`, `Gosec Advisory`, `GolangCI-Lint Advisory`, and `Nightly
+Fuzz` run on GitHub-hosted runners through both `workflow_dispatch` and scheduled
+triggers. `Autoscaled Fuzz` validates inputs on a GitHub-hosted preflight job,
+then runs fuzzing on the self-hosted GARM `cpace-garm-linux-fuzz-arm64` and
+`cpace-garm-linux-fuzz-amd64` runner labels through scheduled triggers and
+trusted main-branch manual dispatch. These lanes provide scheduled drift
 detection, Code Scanning history, and fuzz regression signal in addition to the
 PR gates.
 
@@ -72,16 +77,15 @@ The hosted scheduled fuzz lane is a short 5-minute-per-target regression run.
 It can catch crashes and upload new failure corpus files, but it is not
 long-fuzz release evidence by itself.
 
-The autoscaled fuzz lane is a longer 20-minute-per-target background run. It
-defaults to `FUZZ_RACE=1` because it does not run `task check` before fuzzing,
-so scheduled runs provide their own race-instrumented fuzz coverage. Trusted
-main-branch manual dispatch can set `FUZZ_RACE=0` for targeted non-race runs.
-Its default `PARALLEL=2` and `GOMAXPROCS=4` settings assume a runner with at
-least eight vCPUs and enough memory for two concurrent race-enabled fuzz
-processes; reduce those values if the autoscaled runner class is smaller. The
-preflight job rejects manual inputs unless `FUZZTIME` matches `[0-9]+[smh]`,
-`PARALLEL` is a positive integer, `FUZZ_RACE` is `0` or `1`, and
-`ceil(targets/PARALLEL) * FUZZTIME` stays below the 240-minute fuzz job timeout.
+The autoscaled fuzz lane is a longer 10-minute-per-target background run.
+Scheduled runs default to `FUZZ_RACE=0`, `PARALLEL=1`, `GOMAXPROCS=1`, and
+`FUZZ_TEST_PARALLEL=1` so the self-hosted Mac remains responsive while fuzzing
+runs. Race coverage remains owned by `task check` and can be requested on this
+lane only by trusted main-branch manual dispatch. The preflight job rejects
+manual inputs unless `FUZZTIME` matches `[0-9]+[smh]`, `PARALLEL`,
+`GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` are positive integers, `FUZZ_RACE` is
+`0` or `1`, and `ceil(targets/PARALLEL) * FUZZTIME` stays below the 240-minute
+fuzz job timeout.
 
 ## Long Fuzzing And Release Evidence
 
@@ -110,12 +114,13 @@ CI attests the generated SBOM asset, not the CPace protocol implementation, Go A
 GitHub-hosted runners handle untrusted PR validation. Self-hosted runners must
 not run code from untrusted fork PRs.
 
-The current self-hosted lane is `Autoscaled Fuzz`, which uses the
-`infra-autoscale-cpace-fuzz-linux` runner label. Its job-level guard skips the
-checked-in fuzz job except for scheduled runs and manual dispatches from
-`refs/heads/main`. Treat that guard as workflow hygiene and defense in depth:
-the trust boundary is that fork PRs cannot schedule or dispatch this workflow,
-and manual dispatch requires repository write access.
+The current self-hosted lane is `Autoscaled Fuzz`, which uses separate
+`cpace-garm-linux-fuzz-arm64` and `cpace-garm-linux-fuzz-amd64` GitHub runner
+labels. Its job-level guard skips the checked-in fuzz job except for scheduled
+runs and manual dispatches from `refs/heads/main`. Treat that guard as workflow
+hygiene and defense in depth: the trust boundary is that fork PRs cannot
+schedule or dispatch this workflow, and manual dispatch requires repository
+write access.
 
 The autoscaled runner image must provide a POSIX/GNU userland and a working C
 compiler for Linux race-detector fuzz builds. At minimum the workflow checks

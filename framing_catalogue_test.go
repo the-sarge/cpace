@@ -387,6 +387,7 @@ type messageAProtocolFuzzSeedCounts struct {
 
 func (c *messageAProtocolFuzzSeedCounts) add(category messageAProtocolFuzzSeedCategory) {
 	switch category {
+	case messageAProtocolFuzzSeedUnclassified:
 	case messageAProtocolFuzzSeedValid:
 		c.valid++
 	case messageAProtocolFuzzSeedIdentityPoint:
@@ -483,6 +484,7 @@ type messageBFuzzSeedCounts struct {
 
 func (c *messageBFuzzSeedCounts) add(category messageBFuzzSeedCategory) {
 	switch category {
+	case messageBFuzzSeedUnclassified:
 	case messageBFuzzSeedValid:
 		c.valid++
 	case messageBFuzzSeedIdentityPoint:

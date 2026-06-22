@@ -4,11 +4,12 @@
 #   task quick
 #   task check
 #   task check:changed
+#   task lint:golangci
 #   task bench
 #
 # Fuzzing:
 #   task fuzz FUZZTIME=30s PARALLEL=2
-#   FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz
+#   FUZZ_RACE=0 GOMAXPROCS=4 FUZZ_TEST_PARALLEL=2 FUZZTIME=8m PARALLEL=2 task fuzz
 
 version: "3"
 
@@ -20,6 +21,7 @@ vars:
   GOSEC: '{{.GOSEC | default "gosec"}}'
   GOFMT: '{{.GOFMT | default "gofmt"}}'
   GOIMPORTS: '{{.GOIMPORTS | default "goimports"}}'
+  GOLANGCI_LINT: '{{.GOLANGCI_LINT | default "go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2"}}'
   GOVULNCHECK: '{{.GOVULNCHECK | default "govulncheck"}}'
   STATICCHECK: '{{.STATICCHECK | default "staticcheck"}}'
   FUZZTIME: '{{.FUZZTIME | default "30s"}}'
@@ -102,6 +104,11 @@ tasks:
           exit 1
         }
       - "{{.AST_GREP}} scan --error"
+
+  lint:golangci:
+    desc: Run curated golangci-lint advisory analyzers
+    cmds:
+      - "{{.GOLANGCI_LINT}} run"
 
   docs:check:
     desc: Validate tracked Markdown and whitespace
@@ -278,7 +285,45 @@ tasks:
             ;;
         esac
 
-        echo "Running $target_count fuzz targets (PARALLEL=$parallel, FUZZTIME=$fuzztime, FUZZ_RACE=$race)"
+        gomaxprocs="${GOMAXPROCS:-}"
+        if [ -n "$gomaxprocs" ]; then
+          case "$gomaxprocs" in
+            ''|*[!0-9]*)
+              echo "GOMAXPROCS must be a positive integer (got: '$gomaxprocs')"
+              exit 1
+              ;;
+          esac
+          case "$gomaxprocs" in
+            *[1-9]*) ;;
+            *)
+              echo "GOMAXPROCS must be a positive integer (got: '$gomaxprocs')"
+              exit 1
+              ;;
+          esac
+          if [ "${#gomaxprocs}" -gt 6 ]; then
+            echo "GOMAXPROCS value is too large (got: '$gomaxprocs')"
+            exit 1
+          fi
+        fi
+
+        fuzz_test_parallel="${FUZZ_TEST_PARALLEL:-}"
+        if [ -n "$fuzz_test_parallel" ]; then
+          case "$fuzz_test_parallel" in
+            ''|*[!0-9]*)
+              echo "FUZZ_TEST_PARALLEL must be a positive integer (got: '$fuzz_test_parallel')"
+              exit 1
+              ;;
+          esac
+          case "$fuzz_test_parallel" in
+            *[1-9]*) ;;
+            *)
+              echo "FUZZ_TEST_PARALLEL must be a positive integer (got: '$fuzz_test_parallel')"
+              exit 1
+              ;;
+          esac
+        fi
+
+        echo "Running $target_count fuzz targets (PARALLEL=$parallel, FUZZTIME=$fuzztime, FUZZ_RACE=$race, GOMAXPROCS=${gomaxprocs:-default}, FUZZ_TEST_PARALLEL=${fuzz_test_parallel:-default})"
         log_dir="$(mktemp -d)"
         trap 'rm -rf "$log_dir"' EXIT
 
@@ -292,7 +337,11 @@ tasks:
             if [ "${FUZZ_RACE:-1}" != "0" ]; then
               race_args=(-race)
             fi
-            if out=$(go test "${race_args[@]}" -timeout=0 -fuzz="$target" -fuzztime="$FUZZTIME" "$pkg" 2>&1); then
+            parallel_args=()
+            if [ -n "${FUZZ_TEST_PARALLEL:-}" ]; then
+              parallel_args=(-parallel="${FUZZ_TEST_PARALLEL}")
+            fi
+            if out=$(go test "${race_args[@]}" "${parallel_args[@]}" -timeout=0 -fuzz="$target" -fuzztime="$FUZZTIME" "$pkg" 2>&1); then
               printf "=== PASS: %s ===\n" "$target" > "$dir/$target.log"
             else
               printf "=== FAIL: %s (%s) ===\n%s\n" "$target" "$pkg" "$out" > "$dir/$target.log"
@@ -310,4 +359,7 @@ tasks:
         echo "All $target_count fuzz targets passed"
     env:
       FUZZTIME: "{{.FUZZTIME}}"
+      PARALLEL: '{{.PARALLEL | default ""}}'
       FUZZ_RACE: '{{.FUZZ_RACE | default "1"}}'
+      GOMAXPROCS: '{{.GOMAXPROCS | default ""}}'
+      FUZZ_TEST_PARALLEL: '{{.FUZZ_TEST_PARALLEL | default ""}}'

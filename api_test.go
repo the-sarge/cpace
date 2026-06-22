@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1956,7 +1957,7 @@ func TestPeerShareRolePassesThroughNonSentinelErrors(t *testing.T) {
 	// The ADR-0003 call-site mapping sanctions exactly two behaviors: rewrap
 	// the two exported sentinels with role context, and pass every other
 	// error through unchanged. Pin the pass-through half with the two real
-	// non-sentinel errors the helpers can produce, asserting value identity
+	// non-sentinel errors the helpers can produce, asserting pointer identity
 	// so both a role-context rewrap (the duplicated-prefix shape) and an
 	// error-swallowing regression fail loudly.
 	invalid := mustLoadDraftInvalidVector(t)
@@ -1976,11 +1977,26 @@ func TestPeerShareRolePassesThroughNonSentinelErrors(t *testing.T) {
 		{"post-multiply neutral element", neutralErr},
 	} {
 		for _, role := range []peerShareRole{initiatorPeerShare, responderPeerShare} {
-			if got := role.wrapError(tc.err); got != tc.err {
+			if got := role.wrapError(tc.err); !samePointerErrorValue(got, tc.err) {
 				t.Fatalf("%s/%s: wrapError returned %v, want the identical error value", tc.name, role, got)
 			}
 		}
 	}
+}
+
+func samePointerErrorValue(got, want error) bool {
+	if got == nil || want == nil {
+		return got == nil && want == nil
+	}
+	gotValue := reflect.ValueOf(got)
+	wantValue := reflect.ValueOf(want)
+	if gotValue.Type() != wantValue.Type() {
+		return false
+	}
+	if gotValue.Kind() != reflect.Pointer {
+		return false
+	}
+	return gotValue.Pointer() == wantValue.Pointer()
 }
 
 func TestPeerShareRoleSharedSecretAddsRoleContext(t *testing.T) {

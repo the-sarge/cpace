@@ -6,13 +6,21 @@ on:
       fuzztime:
         description: Per-target Go fuzz duration ([0-9]+[smh], total waves under 240m)
         required: false
-        default: 20m
+        default: 10m
       parallel:
         description: Concurrent fuzz targets
         required: false
-        default: "2"
+        default: "1"
       fuzz_race:
         description: Run fuzzing with the race detector (1 or 0)
+        required: false
+        default: "0"
+      gomaxprocs:
+        description: Go scheduler CPU cap per fuzz target
+        required: false
+        default: "1"
+      fuzz_test_parallel:
+        description: Go fuzz worker cap per target
         required: false
         default: "1"
   schedule:
@@ -29,11 +37,12 @@ env:
   GOTOOLCHAIN: local
   # Keep these fallbacks in sync with the workflow_dispatch defaults above;
   # scheduled events do not provide inputs.
-  FUZZTIME: ${{ inputs.fuzztime || '20m' }}
-  PARALLEL: ${{ inputs.parallel || '2' }}
-  # This lane defaults to race fuzzing because it does not run task check first.
-  FUZZ_RACE: ${{ inputs.fuzz_race || '1' }}
-  GOMAXPROCS: "4"
+  FUZZTIME: ${{ inputs.fuzztime || '10m' }}
+  PARALLEL: ${{ inputs.parallel || '1' }}
+  # Keep scheduled runs host-friendly; use workflow_dispatch to opt into race fuzzing.
+  FUZZ_RACE: ${{ inputs.fuzz_race || '0' }}
+  GOMAXPROCS: ${{ inputs.gomaxprocs || '1' }}
+  FUZZ_TEST_PARALLEL: ${{ inputs.fuzz_test_parallel || '1' }}
 
 jobs:
   validate_inputs:
@@ -59,6 +68,8 @@ jobs:
           fuzztime="${FUZZTIME}"
           parallel="${PARALLEL}"
           fuzz_race="${FUZZ_RACE}"
+          gomaxprocs="${GOMAXPROCS}"
+          fuzz_test_parallel="${FUZZ_TEST_PARALLEL}"
 
           case "$fuzztime" in
             *[smh])
@@ -105,6 +116,34 @@ jobs:
               fail "FUZZ_RACE must match ^[01]$ (got: '$fuzz_race')"
               ;;
           esac
+          case "$gomaxprocs" in
+            ''|*[!0-9]*)
+              fail "GOMAXPROCS must match ^[0-9]+$ (got: '$gomaxprocs')"
+              ;;
+          esac
+          case "$gomaxprocs" in
+            *[1-9]*) ;;
+            *)
+              fail "GOMAXPROCS must be positive (got: '$gomaxprocs')"
+              ;;
+          esac
+          if [ "${#gomaxprocs}" -gt 6 ]; then
+            fail "GOMAXPROCS value is too large (got: '$gomaxprocs')"
+          fi
+          case "$fuzz_test_parallel" in
+            ''|*[!0-9]*)
+              fail "FUZZ_TEST_PARALLEL must match ^[0-9]+$ (got: '$fuzz_test_parallel')"
+              ;;
+          esac
+          case "$fuzz_test_parallel" in
+            *[1-9]*) ;;
+            *)
+              fail "FUZZ_TEST_PARALLEL must be positive (got: '$fuzz_test_parallel')"
+              ;;
+          esac
+          if [ "${#fuzz_test_parallel}" -gt 6 ]; then
+            fail "FUZZ_TEST_PARALLEL value is too large (got: '$fuzz_test_parallel')"
+          fi
 
           fuzztime_number=$((10#$fuzztime_value))
           parallel_number=$((10#$parallel))
@@ -132,16 +171,24 @@ jobs:
             fail "ceil(targets/PARALLEL) * FUZZTIME must stay under 240 minutes (got about ${estimated_minutes}m)"
           fi
 
-          echo "Validated FUZZTIME=${fuzztime}, PARALLEL=${parallel}, FUZZ_RACE=${fuzz_race}"
+          echo "Validated FUZZTIME=${fuzztime}, PARALLEL=${parallel}, FUZZ_RACE=${fuzz_race}, GOMAXPROCS=${gomaxprocs}, FUZZ_TEST_PARALLEL=${fuzz_test_parallel}"
 
   fuzz:
-    name: Autoscaled fuzz
+    name: Autoscaled fuzz (${{ matrix.arch }})
     needs: validate_inputs
     if: (github.event_name == 'schedule' || github.ref == 'refs/heads/main') && needs.validate_inputs.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner_label: cpace-garm-linux-fuzz-arm64
+          - arch: amd64
+            runner_label: cpace-garm-linux-fuzz-amd64
     runs-on:
       - self-hosted
       - linux
-      - cpace-garm-linux-fuzz
+      - ${{ matrix.runner_label }}
     timeout-minutes: 240
 
     steps:
@@ -199,6 +246,8 @@ jobs:
           echo "PARALLEL=${PARALLEL}"
           echo "FUZZ_RACE=${FUZZ_RACE}"
           echo "GOMAXPROCS=${GOMAXPROCS}"
+          echo "FUZZ_TEST_PARALLEL=${FUZZ_TEST_PARALLEL}"
+          echo "ARCH=${{ matrix.arch }}"
           jq -r '.[] | "\(.target) \(.package)"' .github/fuzz-targets.json
 
       - name: Snapshot corpus state
@@ -211,7 +260,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FUZZ_RACE="${FUZZ_RACE}" PARALLEL="${PARALLEL}" GOMAXPROCS="${GOMAXPROCS}" \
+          FUZZ_RACE="${FUZZ_RACE}" PARALLEL="${PARALLEL}" GOMAXPROCS="${GOMAXPROCS}" FUZZ_TEST_PARALLEL="${FUZZ_TEST_PARALLEL}" \
             "$(go env GOPATH)/bin/task" fuzz FUZZTIME="${FUZZTIME}"
 
       - name: Find newly captured corpus files
@@ -236,7 +285,7 @@ jobs:
         if: steps.fuzz.outcome == 'failure' && steps.corpus.outputs.found == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: autoscaled-fuzz-corpus
+          name: autoscaled-fuzz-${{ matrix.arch }}-corpus
           path: ${{ steps.corpus.outputs.files }}
           retention-days: 14
 
