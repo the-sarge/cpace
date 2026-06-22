@@ -72,16 +72,15 @@ The hosted scheduled fuzz lane is a short 5-minute-per-target regression run.
 It can catch crashes and upload new failure corpus files, but it is not
 long-fuzz release evidence by itself.
 
-The autoscaled fuzz lane is a longer 20-minute-per-target background run. It
-defaults to `FUZZ_RACE=1` because it does not run `task check` before fuzzing,
-so scheduled runs provide their own race-instrumented fuzz coverage. Trusted
-main-branch manual dispatch can set `FUZZ_RACE=0` for targeted non-race runs.
-Its default `PARALLEL=2` and `GOMAXPROCS=4` settings assume a runner with at
-least eight vCPUs and enough memory for two concurrent race-enabled fuzz
-processes; reduce those values if the autoscaled runner class is smaller. The
-preflight job rejects manual inputs unless `FUZZTIME` matches `[0-9]+[smh]`,
-`PARALLEL` is a positive integer, `FUZZ_RACE` is `0` or `1`, and
-`ceil(targets/PARALLEL) * FUZZTIME` stays below the 240-minute fuzz job timeout.
+The autoscaled fuzz lane is a longer 10-minute-per-target background run.
+Scheduled runs default to `FUZZ_RACE=0`, `PARALLEL=1`, `GOMAXPROCS=1`, and
+`FUZZ_TEST_PARALLEL=1` so the self-hosted Mac remains responsive while fuzzing
+runs. Race coverage remains owned by `task check` and can be requested on this
+lane only by trusted main-branch manual dispatch. The preflight job rejects
+manual inputs unless `FUZZTIME` matches `[0-9]+[smh]`, `PARALLEL`,
+`GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` are positive integers, `FUZZ_RACE` is
+`0` or `1`, and `ceil(targets/PARALLEL) * FUZZTIME` stays below the 240-minute
+fuzz job timeout.
 
 ## Long Fuzzing And Release Evidence
 

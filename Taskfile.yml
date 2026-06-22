@@ -8,7 +8,7 @@
 #
 # Fuzzing:
 #   task fuzz FUZZTIME=30s PARALLEL=2
-#   FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=8m PARALLEL=2 task fuzz
+#   FUZZ_RACE=0 GOMAXPROCS=4 FUZZ_TEST_PARALLEL=2 FUZZTIME=8m PARALLEL=2 task fuzz
 
 version: "3"
 
@@ -278,7 +278,24 @@ tasks:
             ;;
         esac
 
-        echo "Running $target_count fuzz targets (PARALLEL=$parallel, FUZZTIME=$fuzztime, FUZZ_RACE=$race)"
+        fuzz_test_parallel="${FUZZ_TEST_PARALLEL:-}"
+        if [ -n "$fuzz_test_parallel" ]; then
+          case "$fuzz_test_parallel" in
+            ''|*[!0-9]*)
+              echo "FUZZ_TEST_PARALLEL must be a positive integer (got: '$fuzz_test_parallel')"
+              exit 1
+              ;;
+          esac
+          case "$fuzz_test_parallel" in
+            *[1-9]*) ;;
+            *)
+              echo "FUZZ_TEST_PARALLEL must be a positive integer (got: '$fuzz_test_parallel')"
+              exit 1
+              ;;
+          esac
+        fi
+
+        echo "Running $target_count fuzz targets (PARALLEL=$parallel, FUZZTIME=$fuzztime, FUZZ_RACE=$race, FUZZ_TEST_PARALLEL=${fuzz_test_parallel:-default})"
         log_dir="$(mktemp -d)"
         trap 'rm -rf "$log_dir"' EXIT
 
@@ -292,7 +309,11 @@ tasks:
             if [ "${FUZZ_RACE:-1}" != "0" ]; then
               race_args=(-race)
             fi
-            if out=$(go test "${race_args[@]}" -timeout=0 -fuzz="$target" -fuzztime="$FUZZTIME" "$pkg" 2>&1); then
+            parallel_args=()
+            if [ -n "${FUZZ_TEST_PARALLEL:-}" ]; then
+              parallel_args=(-parallel="${FUZZ_TEST_PARALLEL}")
+            fi
+            if out=$(go test "${race_args[@]}" "${parallel_args[@]}" -timeout=0 -fuzz="$target" -fuzztime="$FUZZTIME" "$pkg" 2>&1); then
               printf "=== PASS: %s ===\n" "$target" > "$dir/$target.log"
             else
               printf "=== FAIL: %s (%s) ===\n%s\n" "$target" "$pkg" "$out" > "$dir/$target.log"
@@ -311,3 +332,4 @@ tasks:
     env:
       FUZZTIME: "{{.FUZZTIME}}"
       FUZZ_RACE: '{{.FUZZ_RACE | default "1"}}'
+      FUZZ_TEST_PARALLEL: '{{.FUZZ_TEST_PARALLEL | default ""}}'
