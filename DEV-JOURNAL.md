@@ -2270,3 +2270,41 @@ Merged PR #201 to refresh the exact-candidate release-evidence packet for packag
 ### Next
 
 - Keep external review and independent cryptographic review as release blockers before any production-readiness claim.
+
+---
+
+## Autoscaled fuzz CI hardening landed - 2026-06-22 14:48 EDT
+
+**Main:** `a401e329609d`
+**Actor:** Codex
+
+### Summary
+
+Merged PR #57 to harden Autoscaled Fuzz CI after the GARM runner split and add a pinned, curated GolangCI-Lint advisory lane without replacing the existing direct vet, Staticcheck, gosec, and repository gates.
+
+### Completed
+
+- Merged PR #57, `ci: split, cap, and lint autoscaled fuzz runners`, as merge commit `a401e329609d75e254c29107b7ce84504eb8f192`.
+- Split Autoscaled Fuzz into explicit arm64 and amd64 GARM lanes with architecture-specific failure corpus artifacts.
+- Capped scheduled autoscaled fuzz defaults and added `GOMAXPROCS`, `FUZZ_TEST_PARALLEL`, and `PARALLEL` task plumbing plus local validation for fuzz tuning.
+- Added `.github/workflows/golangci-lint.yml` and `.golangci.yml` as a pinned advisory lane for curated analyzers, then cleaned up the test-only patterns it surfaced.
+- Reconciled the CI policy, README, changelog, and actionlint runner-label docs with the fuzz split and lint lane.
+- Ran RAS review `20260622T171015-39b65ce71da2b4ab3cd0213e`, fixed the actionable findings, and verified the pushed PR head `96f3f5c147eda6d17ba247d33c11326c1a75cc1a` cleanly.
+
+### Validation
+
+- `git diff --check 27ad88410d47eda49b462dc1f8df6c29e177905e...HEAD`
+- `golangci-lint config verify`
+- `task lint:golangci`
+- `actionlint`
+- `task docs:check`
+- `go test ./...`
+- `task check:changed`
+- `task check`
+- Fuzz smoke and expected-failure validation for valid, non-numeric, zero, oversized, and zero-parallel `GOMAXPROCS` / `FUZZ_TEST_PARALLEL` inputs.
+- `ras verify 20260622T171015-39b65ce71da2b4ab3cd0213e --head 96f3f5c147eda6d17ba247d33c11326c1a75cc1a` reported all actionable clusters resolved, no still-open findings, and no new concerns.
+- GitHub checks on PR #57 passed before merge: CodeQL, Actionlint, Analyze, Check, DCO, Dependency Gate, GolangCI-Lint, SAST Gate, Staticcheck, macos-latest, and windows-latest; the standalone gosec child check was neutral/skipping as expected.
+
+### Next
+
+- Keep the post-routing autoscaled fuzz evidence capture open until a post-merge scheduled or manual Autoscaled Fuzz run is captured against the split GARM lanes.
