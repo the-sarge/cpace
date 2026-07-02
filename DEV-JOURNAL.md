@@ -2453,3 +2453,34 @@ PR #210 landed the second approved architecture-plan PR: a behavior-preserving, 
 
 - Track follow-up issue #211, `Harden exchange fixture review nits`, outside the completed PR-B merge.
 - Refresh dependency-review, fuzz, and security-audit evidence only for a later security-relevant change or release claim against an exact candidate commit.
+
+---
+
+## Stale journal PRs merged and branch cleanup - 2026-07-02 14:41 EDT
+
+**Main:** `e0ef65d00be9`
+**Actor:** Claude Code
+
+**Summary**
+
+Closed the two stale development-journal PRs whose entries were missing from main's history, and swept the merged-branch backlog: 42 local and 42 remote branches deleted after verification against GitHub's merged-PR record.
+
+**Completed**
+
+- Rebased PR #85 (`docs/journal-adr-0002-merge`, original commit `45f2082`) onto current main, resolving the append-at-EOF conflict by inserting the `ADR-0002 suite API cleanup merged - 2026-06-12 12:09 EDT` entry at its chronological position between the ADR-0001 and ADR-0005 entries. Squash-merged as `534c9f6fcebd6c78f24f08c6b3aa4015f407598f`.
+- Rebased PR #106 (`codex/evidence-baseline-journal`, original commit `d938056`) the same way, inserting the `Evidence baseline module merged - 2026-06-14 06:54 EDT` entry between the 06:14 and 07:27 entries of 2026-06-14, then re-rebased onto post-#85 main for branch protection. Squash-merged as `e0ef65d00be9167f7abc7c6c790277baf46350d2`.
+- Deleted 42 merged local branches and 42 merged origin branches, each verified by exact head-branch match against the merged-PR list (squash merges make `git branch --merged` ancestry checks unusable, so the PR record was the authority).
+- Discarded a redundant commit (`9331c58`) on local main after confirming its journal addition was byte-identical to the content merged via PR #209; local main was reset to origin/main.
+- Deliberately kept for maintainer decision: `backup/pr-104-before-dco-signoff` (named backup), `docs/gitignore-local-noise` (carries one unlanded `/.ras/` ignore line superseded by the narrower merged form), eight `ras-consider/*` local branches and `ras/*` remote refs (ras-owned), and `pr-14-latest` / `pr-15-latest` (old PR snapshots).
+
+**Validation**
+
+- Both rebased PRs before merge: `git diff --check` clean, `task docs:check` exit 0, diffs of exactly one journal entry each (25 and 31 insertions, zero deletions), author and `Signed-off-by` trailers preserved for DCO.
+- GitHub checks green on both PR heads before each merge: Check, DCO, Dependency Gate, and SAST Gate; the standalone gosec child check was neutral/skipping as expected.
+- No package code, docs content, or evidence claims changed; both merges were journal-only history repairs.
+
+**Next**
+
+- Triage the failing required `Check` on dependabot PR #206 (GitHub Actions group bump).
+- Reviewer outreach for issues #29-#31 remains the standing next release-arc step; the packet at `docs/reviewer-outreach.md` is current against the `f7efa6a` evidence baseline.
+- Decide the fate of the flagged leftover branches listed above.
