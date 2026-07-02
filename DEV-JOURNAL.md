@@ -1210,6 +1210,37 @@ PR #104 merged the Peer-share rejection module deepening after the DCO-only rewr
 
 ---
 
+## Evidence baseline module merged - 2026-06-14 06:54 EDT
+
+**Main:** `6ff48372b02a`
+**Actor:** Codex
+
+**Summary**
+
+PR #105 merged the Evidence baseline module, giving release evidence baselines one documentation module without making any fresh release-readiness claim. The merged shape indexes pinned evidence commits, raw artifact paths, summary docs, stale triggers, and exact-candidate refresh rules while keeping lane-specific evidence narratives in their existing docs.
+
+**Completed**
+
+- Added `docs/evidence-baseline.md` as the current pinned evidence baseline index.
+- Added the Evidence baseline term to `CONTEXT.md`.
+- Pointed README, release checklist, evidence README, dependency review, fuzz evidence, Capslock, security assessment, security/spec audit, project plan, and external review handoff docs at the baseline module.
+- Closed the PR #104 dev-journal loop inside PR #105 before merge.
+- Ran RAS review-fix `20260614T102743-79e2fd1d62dde450703daa02` on PR #105. RAS pushed `a6c62f4` to reconcile security/spec baseline headers, then a final manual follow-up `3f83f2a` removed duplicated exact evidence-baseline commit facts from `docs/security-assessment.md`'s dependency and fuzz sections.
+- Merged PR #105 at `6ff48372b02ab9a97ce39ced35110e4e123f3e76` from final head `3f83f2af24397c45b8d9ede736dc8b66d4bbb3b5`.
+
+**Validation**
+
+- Local validation before PR creation: `task docs:check` and `task check`.
+- RAS builder validation after the first review finding: `task docs:check` and `task check`.
+- Follow-up documentation fix validation: dependency/fuzz section grep confirmed no duplicated `933ece` baseline in those sections; `task docs:check` and `task check` passed.
+- GitHub checks on final head `3f83f2af24397c45b8d9ede736dc8b66d4bbb3b5` passed: Check, DCO, Dependency Gate, and SAST Gate; standalone gosec was neutral/skipping as expected.
+
+**Next**
+
+- Keep evidence discipline intact: PR #105 centralizes evidence-baseline facts but does not refresh dependency review, fuzz, Capslock, or security/spec evidence. Stronger release claims still require rerunning those lanes against the exact candidate commit.
+
+---
+
 ## Go fix release policy cleanup landed - 2026-06-14 07:27 EDT
 
 **Main:** `d5048eb5ac29`
