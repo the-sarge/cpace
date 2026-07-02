@@ -33,10 +33,7 @@ func (r *countingFailingReader) Read([]byte) (int, error) {
 }
 
 func TestInternalRandomHelpersDefaultNilRandomness(t *testing.T) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
+	initCfg, respCfg := defaultExchangeInputs()
 
 	initiator, msgA, err := startWithRandom(initCfg, nil)
 	if err != nil {
@@ -60,10 +57,7 @@ func TestInternalRandomHelpersDefaultNilRandomness(t *testing.T) {
 }
 
 func TestConfirmedExchangeAndExport(t *testing.T) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
+	initCfg, respCfg := defaultExchangeInputs()
 
 	initiator, msgA, err := startTestInitiator(initCfg)
 	if err != nil {
@@ -135,10 +129,7 @@ func TestExportLengthBoundaries(t *testing.T) {
 }
 
 func TestSessionPeerMetadata(t *testing.T) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
+	initCfg, respCfg := defaultExchangeInputs()
 
 	sI, sR := completeExchange(t, initCfg, respCfg)
 	if got := sI.PeerAssociatedData(); !bytes.Equal(got, respCfg.LocalAssociatedData) {
@@ -175,10 +166,7 @@ func TestSessionPeerMetadata(t *testing.T) {
 }
 
 func TestSessionClose(t *testing.T) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
+	initCfg, respCfg := defaultExchangeInputs()
 
 	sI, _ := completeExchange(t, initCfg, respCfg)
 	transcriptID := sI.TranscriptID()
@@ -380,10 +368,7 @@ func TestSessionCloseConcurrentClose(t *testing.T) {
 }
 
 func TestSessionMetadataConcurrentClose(t *testing.T) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
+	initCfg, respCfg := defaultExchangeInputs()
 	sI, _ := completeExchange(t, initCfg, respCfg)
 	transcriptID := sI.TranscriptID()
 	peerAD := sI.PeerAssociatedData()
@@ -446,8 +431,7 @@ func TestSessionMetadataConcurrentClose(t *testing.T) {
 }
 
 func TestMutableInputsAreCopied(t *testing.T) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
+	initCfg, respCfg := defaultExchangeInputs()
 	password := []byte("password")
 	initiatorSelfID := []byte("initiator")
 	initiatorPeerID := []byte("responder")
@@ -481,8 +465,6 @@ func TestMutableInputsAreCopied(t *testing.T) {
 		initiatorSessionID[i] ^= 0xff
 	}
 
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
 	responderSelfID := []byte("responder")
 	responderPeerID := []byte("initiator")
 	responderContext := []byte("context")
@@ -1274,14 +1256,11 @@ func TestProtocolAllowsEmptySessionIDWithCompatibilityFlag(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			initCfg := testInitiatorInput()
+			initCfg, respCfg := defaultExchangeInputs()
 			initCfg.SessionID = tc.initSID
 			initCfg.AllowEmptySessionID = true
-			initCfg.LocalAssociatedData = []byte("ADa")
-			respCfg := testResponderInput()
 			respCfg.SessionID = tc.respSID
 			respCfg.AllowEmptySessionID = true
-			respCfg.LocalAssociatedData = []byte("ADb")
 			sI, sR := completeExchange(t, initCfg, respCfg)
 			if !bytes.Equal(sI.TranscriptID(), sR.TranscriptID()) {
 				t.Fatalf("transcript IDs differ")
@@ -1459,10 +1438,7 @@ func TestTranscriptLockingMismatches(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			initCfg := testInitiatorInput()
-			initCfg.LocalAssociatedData = []byte("ADa")
-			respCfg := testResponderInput()
-			respCfg.LocalAssociatedData = []byte("ADb")
+			initCfg, respCfg := defaultExchangeInputs()
 			if tc.editResp != nil {
 				tc.editResp(&respCfg)
 			}
