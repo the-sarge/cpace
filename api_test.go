@@ -583,28 +583,14 @@ func assertInputBytesEqual(t *testing.T, got, want Input) {
 func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
 	initInput, respInput := defaultExchangeInputs()
 	exchange := newExchange(t, initInput, respInput)
-	initiatorScalar := exchange.initiator.state.core.scalar
-	responderISK := exchange.responder.state.core.isk
-	responderTranscript := exchange.responder.state.core.transcript.transcript
+	initiatorSecrets := snapshotInitiatorSecrets(t, exchange.initiator)
+	responderSecrets := snapshotResponderSecrets(t, exchange.responder)
 
 	msgC, sI := exchange.finishInitiator()
-	if exchange.initiator.state.core.scalar != nil {
-		t.Fatal("initiator scalar reference retained after Finish")
-	}
-	if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
-		t.Fatal("consumed initiator scalar was not cleared")
-	}
+	initiatorSecrets.assertCleared()
 
 	sR := exchange.finishResponder(msgC)
-	if exchange.responder.state.core.isk != nil || exchange.responder.state.core.transcript.bytes() != nil {
-		t.Fatal("responder retained cleared state references after Finish")
-	}
-	if !allZero(responderISK) {
-		t.Fatal("responder-owned ISK was not cleared")
-	}
-	if !allZero(responderTranscript) {
-		t.Fatal("responder-owned transcript was not cleared")
-	}
+	responderSecrets.assertCleared()
 	if allZero(sI.state.isk) || allZero(sR.state.isk) {
 		t.Fatal("returned session ISK was cleared through an alias")
 	}
@@ -627,16 +613,11 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		initiatorScalar := initiator.state.core.scalar
+		initiatorSecrets := snapshotInitiatorSecrets(t, initiator)
 		if _, _, err := initiator.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
 			t.Fatalf("initiator Finish garbage err=%v", err)
 		}
-		if initiator.state.core.scalar != nil {
-			t.Fatal("initiator retained scalar reference after parse failure")
-		}
-		if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
-			t.Fatal("initiator scalar was not cleared after parse failure")
-		}
+		initiatorSecrets.assertCleared()
 	})
 
 	t.Run("initiator confirmation failure", func(t *testing.T) {
@@ -645,35 +626,21 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		respCfg := testResponderInput()
 		respCfg.Password = []byte("password-b")
 		exchange := newExchange(t, initCfg, respCfg)
-		initiatorScalar := exchange.initiator.state.core.scalar
+		initiatorSecrets := snapshotInitiatorSecrets(t, exchange.initiator)
 		if _, _, err := exchange.initiator.Finish(exchange.msgB); !errors.Is(err, ErrConfirmationFailed) {
 			t.Fatalf("initiator Finish wrong-password err=%v", err)
 		}
-		if exchange.initiator.state.core.scalar != nil {
-			t.Fatal("initiator retained scalar reference after confirmation failure")
-		}
-		if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
-			t.Fatal("initiator scalar was not cleared after confirmation failure")
-		}
+		initiatorSecrets.assertCleared()
 	})
 
 	t.Run("responder parse failure", func(t *testing.T) {
 		initInput, respInput := defaultExchangeInputs()
 		exchange := newExchange(t, initInput, respInput)
-		responderISK := exchange.responder.state.core.isk
-		responderTranscript := exchange.responder.state.core.transcript.transcript
+		responderSecrets := snapshotResponderSecrets(t, exchange.responder)
 		if _, err := exchange.responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
 			t.Fatalf("responder Finish garbage err=%v", err)
 		}
-		if exchange.responder.state.core.isk != nil || exchange.responder.state.core.transcript.bytes() != nil {
-			t.Fatal("responder retained cleared state references after parse failure")
-		}
-		if !allZero(responderISK) {
-			t.Fatal("responder ISK was not cleared after parse failure")
-		}
-		if !allZero(responderTranscript) {
-			t.Fatal("responder transcript was not cleared after parse failure")
-		}
+		responderSecrets.assertCleared()
 	})
 
 	t.Run("responder confirmation failure", func(t *testing.T) {
@@ -681,20 +648,11 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		exchange := newExchange(t, initInput, respInput)
 		msgC, _ := exchange.finishInitiator()
 		msgC[len(msgC)-1] ^= 0xff
-		responderISK := exchange.responder.state.core.isk
-		responderTranscript := exchange.responder.state.core.transcript.transcript
+		responderSecrets := snapshotResponderSecrets(t, exchange.responder)
 		if _, err := exchange.responder.Finish(msgC); !errors.Is(err, ErrConfirmationFailed) {
 			t.Fatalf("responder Finish tampered tagA err=%v", err)
 		}
-		if exchange.responder.state.core.isk != nil || exchange.responder.state.core.transcript.bytes() != nil {
-			t.Fatal("responder retained cleared state references after confirmation failure")
-		}
-		if !allZero(responderISK) {
-			t.Fatal("responder ISK was not cleared after confirmation failure")
-		}
-		if !allZero(responderTranscript) {
-			t.Fatal("responder transcript was not cleared after confirmation failure")
-		}
+		responderSecrets.assertCleared()
 	})
 }
 
@@ -702,14 +660,9 @@ func TestSessionISKSurvivesCoreClear(t *testing.T) {
 	initInput, respInput := defaultExchangeInputs()
 	exchange := newExchange(t, initInput, respInput)
 	msgC, sI := exchange.finishInitiator()
-	responderISK := exchange.responder.state.core.isk
+	responderSecrets := snapshotResponderSecrets(t, exchange.responder)
 	sR := exchange.finishResponder(msgC)
-	if exchange.responder.state.core.isk != nil {
-		t.Fatal("responder retained ISK reference after Finish")
-	}
-	if !allZero(responderISK) {
-		t.Fatal("responder-owned ISK backing array was not cleared")
-	}
+	responderSecrets.assertCleared()
 	kI, err := sI.Export([]byte("label"), []byte("ctx"), 32)
 	if err != nil {
 		t.Fatal(err)
@@ -805,16 +758,11 @@ func TestSingleUseStateCloseCleansAbandonedState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	initiatorScalar := initiator.state.core.scalar
+	initiatorSecrets := snapshotInitiatorSecrets(t, initiator)
 	if err := initiator.Close(); err != nil {
 		t.Fatalf("Initiator.Close err=%v", err)
 	}
-	if initiator.state.core.scalar != nil {
-		t.Fatal("initiator core retained scalar reference after Close")
-	}
-	if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
-		t.Fatal("initiator scalar was not cleared by Close")
-	}
+	initiatorSecrets.assertCleared()
 	if err := initiator.Close(); err != nil {
 		t.Fatalf("second Initiator.Close err=%v", err)
 	}
@@ -826,20 +774,11 @@ func TestSingleUseStateCloseCleansAbandonedState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	responderISK := responder.state.core.isk
-	responderTranscript := responder.state.core.transcript.transcript
+	responderSecrets := snapshotResponderSecrets(t, responder)
 	if err := responder.Close(); err != nil {
 		t.Fatalf("Responder.Close err=%v", err)
 	}
-	if responder.state.core.isk != nil || responder.state.core.transcript.bytes() != nil {
-		t.Fatal("responder core retained cleared state references after Close")
-	}
-	if !allZero(responderISK) {
-		t.Fatal("responder ISK was not cleared by Close")
-	}
-	if !allZero(responderTranscript) {
-		t.Fatal("responder transcript was not cleared by Close")
-	}
+	responderSecrets.assertCleared()
 	if err := responder.Close(); err != nil {
 		t.Fatalf("second Responder.Close err=%v", err)
 	}
