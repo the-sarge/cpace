@@ -139,21 +139,40 @@ func TestIRTranscriptInitiatorAD(t *testing.T) {
 
 func TestIRTranscriptClear(t *testing.T) {
 	tr := newIRTranscript([]byte("ya"), []byte("ada"), []byte("yb"), []byte("adb"))
-	body := tr.transcript // alias the concatenated backing array before clearing
-	if allZero(body) {
-		t.Fatal("precondition: transcript bytes should be non-zero")
+	fields := []struct {
+		name string
+		body []byte
+	}{
+		{"transcript", tr.transcript},
+		{"ya", tr.ya},
+		{"ada", tr.ada},
+		{"yb", tr.yb},
+		{"adb", tr.adb},
+	}
+	for _, field := range fields {
+		if allZero(field.body) {
+			t.Fatalf("precondition: %s bytes should be non-zero", field.name)
+		}
 	}
 
 	tr.clear()
 
-	if !allZero(body) {
-		t.Fatalf("clear did not zero transcript backing bytes: %x", body)
+	for _, field := range fields {
+		if !allZero(field.body) {
+			t.Fatalf("clear did not zero %s backing bytes: %x", field.name, field.body)
+		}
 	}
 	if tr.bytes() != nil {
 		t.Fatalf("clear did not nil transcript: %x", tr.bytes())
 	}
+	if tr.ya != nil || tr.ada != nil || tr.yb != nil || tr.adb != nil {
+		t.Fatal("clear did not nil transcript component fields")
+	}
 
 	tr.clear() // second call must be a safe no-op
+
+	var tp *irTranscript
+	tp.clear()
 }
 
 func TestWireFormatPrefixByte(t *testing.T) {
