@@ -2337,3 +2337,31 @@ Closed two speculative cpace polish tasks after triage: public API expansion and
 ### Next
 
 - Revisit either decision only if new review feedback or concrete integration evidence reopens the public API or dependency/package-profile policy.
+
+---
+
+## Fuzz target registry drift check landed - 2026-07-02 12:46 EDT
+
+**Main:** `7fce89ff6a5f`
+**Actor:** Codex
+
+**Summary**
+
+PR #207 landed the fuzz-target registry drift check as the first approved architecture-plan PR. The change is test/tooling/docs-only: the root package now checks `.github/fuzz-targets.json` against defined `func FuzzXxx(f *testing.F)` targets and `ossfuzz/build.sh`, and the registry entries now carry explicit OSS-Fuzz binary names.
+
+**Completed**
+
+- Added the root-package drift tests and the `binary` field for all 14 registered fuzz targets.
+- Documented the **Fuzz-target registry** term, schema, drift check, and OSS-Fuzz delegate recommendation.
+- Squash-merged PR #207 at `7fce89ff6a5f96ec7c2ad1caa0760d4e6989c84d`.
+- Filed follow-up issue #208 for low/nit RAS review hardening suggestions that did not block the PR.
+
+**Validation**
+
+- Red-first proof: `go test -run 'TestFuzzTargetRegistry' ./...` failed before adding the registry `binary` field.
+- Green verification before merge: `go vet ./...`, `go test ./...`, `go test -race ./...`, `task check`, and `task fuzz FUZZTIME=5s`.
+- RAS review run `20260702T161657-1e0c4eb6fa59325c8e52da1a` found no merge-blocking issues; GitHub checks were green before merge.
+
+**Next**
+
+Start PR-B from updated `main`: capture the required exchange-fixture baselines, implement the test-only exchange fixture refactor, run the required verification, and take the PR through the same RAS review gate.
