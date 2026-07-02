@@ -37,8 +37,9 @@
   inputs (#52).
 - Reaffirm draft-21 scalar sampling behavior in `docs/security-assessment.md`
   and `docs/spec-matrix.md`: bit-masking is the draft §8.3 recommendation and
-  the package adds defense-in-depth retries for the (~2^-125) canonical-decode
-  rejection window and the zero scalar; no protocol-visible change.
+  the package adds a defense-in-depth retry loop whose only reachable retry is
+  the all-zero masked sample; the canonical-decode branch is unreachable
+  because masked samples stay below `2^252 < L`. No protocol-visible change.
 - Internal hardening: unify the deferred wipe of normalized caller-input fields so every cloned input byte slice is zeroized on every Start/Respond exit path, and mirror `Responder.Finish`'s deferred ISK wipe in `Initiator.Finish` so future early-returns cannot leak the session key. No public-API or wire-format change.
 - Pin protocol-identity strings (`DraftVersion`, `suiteName`, `currentSuite`) and the byte output of `buildCI` via
   `TestBuildCIWireStability`. Add password-mismatch, nil-receiver,
