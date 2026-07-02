@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"io"
 	"testing"
 )
 
@@ -24,55 +23,6 @@ type draftInvalidVector struct {
 	Valid     map[string][]byte
 	InvalidY1 []byte
 	InvalidY2 []byte
-}
-
-type repeatingReader struct {
-	buf []byte
-	off int
-}
-
-func (r *repeatingReader) Read(p []byte) (int, error) {
-	for i := range p {
-		if len(r.buf) == 0 {
-			p[i] = 1
-			continue
-		}
-		p[i] = r.buf[r.off%len(r.buf)]
-		r.off++
-	}
-	return len(p), nil
-}
-
-func testInitiatorInput() Input {
-	return Input{
-		Password:  []byte("password"),
-		SelfID:    []byte("initiator"),
-		PeerID:    []byte("responder"),
-		Context:   []byte("context"),
-		SessionID: []byte("sid"),
-	}
-}
-
-func testResponderInput() Input {
-	return Input{
-		Password:  []byte("password"),
-		SelfID:    []byte("responder"),
-		PeerID:    []byte("initiator"),
-		Context:   []byte("context"),
-		SessionID: []byte("sid"),
-	}
-}
-
-func repeatingRand(fill byte) io.Reader {
-	return &repeatingReader{buf: bytes.Repeat([]byte{fill}, scalarSize)}
-}
-
-func startTestInitiator(cfg Input) (*Initiator, []byte, error) {
-	return startWithRandom(cfg, repeatingRand(0x11))
-}
-
-func respondTestResponder(cfg Input, messageA []byte) (*Responder, []byte, error) {
-	return respondWithRandom(cfg, messageA, repeatingRand(0x22))
 }
 
 func loadDraftVectorJSON(in []byte) (draftVector, error) {
