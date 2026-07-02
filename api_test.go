@@ -599,39 +599,22 @@ func assertInputBytesEqual(t *testing.T, got, want Input) {
 }
 
 func TestFinishCleanupDoesNotAliasReturnedSessions(t *testing.T) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(t, initInput, respInput)
+	initiatorScalar := exchange.initiator.state.core.scalar
+	responderISK := exchange.responder.state.core.isk
+	responderTranscript := exchange.responder.state.core.transcript.transcript
 
-	initiator, msgA, err := startTestInitiator(initCfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	initiatorScalar := initiator.state.core.scalar
-	responder, msgB, err := respondTestResponder(respCfg, msgA)
-	if err != nil {
-		t.Fatal(err)
-	}
-	responderISK := responder.state.core.isk
-	responderTranscript := responder.state.core.transcript.transcript
-
-	msgC, sI, err := initiator.Finish(msgB)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if initiator.state.core.scalar != nil {
+	msgC, sI := exchange.finishInitiator()
+	if exchange.initiator.state.core.scalar != nil {
 		t.Fatal("initiator scalar reference retained after Finish")
 	}
 	if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
 		t.Fatal("consumed initiator scalar was not cleared")
 	}
 
-	sR, err := responder.Finish(msgC)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if responder.state.core.isk != nil || responder.state.core.transcript.bytes() != nil {
+	sR := exchange.finishResponder(msgC)
+	if exchange.responder.state.core.isk != nil || exchange.responder.state.core.transcript.bytes() != nil {
 		t.Fatal("responder retained cleared state references after Finish")
 	}
 	if !allZero(responderISK) {
@@ -679,19 +662,12 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		initCfg.Password = []byte("password-a")
 		respCfg := testResponderInput()
 		respCfg.Password = []byte("password-b")
-		initiator, msgA, err := startTestInitiator(initCfg)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, msgB, err := respondTestResponder(respCfg, msgA)
-		if err != nil {
-			t.Fatal(err)
-		}
-		initiatorScalar := initiator.state.core.scalar
-		if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrConfirmationFailed) {
+		exchange := newExchange(t, initCfg, respCfg)
+		initiatorScalar := exchange.initiator.state.core.scalar
+		if _, _, err := exchange.initiator.Finish(exchange.msgB); !errors.Is(err, ErrConfirmationFailed) {
 			t.Fatalf("initiator Finish wrong-password err=%v", err)
 		}
-		if initiator.state.core.scalar != nil {
+		if exchange.initiator.state.core.scalar != nil {
 			t.Fatal("initiator retained scalar reference after confirmation failure")
 		}
 		if initiatorScalar == nil || !allZero(initiatorScalar.Bytes()) {
@@ -700,20 +676,14 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 	})
 
 	t.Run("responder parse failure", func(t *testing.T) {
-		_, msgA, err := startTestInitiator(testInitiatorInput())
-		if err != nil {
-			t.Fatal(err)
-		}
-		responder, _, err := respondTestResponder(testResponderInput(), msgA)
-		if err != nil {
-			t.Fatal(err)
-		}
-		responderISK := responder.state.core.isk
-		responderTranscript := responder.state.core.transcript.transcript
-		if _, err := responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
+		initInput, respInput := defaultExchangeInputs()
+		exchange := newExchange(t, initInput, respInput)
+		responderISK := exchange.responder.state.core.isk
+		responderTranscript := exchange.responder.state.core.transcript.transcript
+		if _, err := exchange.responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
 			t.Fatalf("responder Finish garbage err=%v", err)
 		}
-		if responder.state.core.isk != nil || responder.state.core.transcript.bytes() != nil {
+		if exchange.responder.state.core.isk != nil || exchange.responder.state.core.transcript.bytes() != nil {
 			t.Fatal("responder retained cleared state references after parse failure")
 		}
 		if !allZero(responderISK) {
@@ -725,25 +695,16 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 	})
 
 	t.Run("responder confirmation failure", func(t *testing.T) {
-		initiator, msgA, err := startTestInitiator(testInitiatorInput())
-		if err != nil {
-			t.Fatal(err)
-		}
-		responder, msgB, err := respondTestResponder(testResponderInput(), msgA)
-		if err != nil {
-			t.Fatal(err)
-		}
-		msgC, _, err := initiator.Finish(msgB)
-		if err != nil {
-			t.Fatal(err)
-		}
+		initInput, respInput := defaultExchangeInputs()
+		exchange := newExchange(t, initInput, respInput)
+		msgC, _ := exchange.finishInitiator()
 		msgC[len(msgC)-1] ^= 0xff
-		responderISK := responder.state.core.isk
-		responderTranscript := responder.state.core.transcript.transcript
-		if _, err := responder.Finish(msgC); !errors.Is(err, ErrConfirmationFailed) {
+		responderISK := exchange.responder.state.core.isk
+		responderTranscript := exchange.responder.state.core.transcript.transcript
+		if _, err := exchange.responder.Finish(msgC); !errors.Is(err, ErrConfirmationFailed) {
 			t.Fatalf("responder Finish tampered tagA err=%v", err)
 		}
-		if responder.state.core.isk != nil || responder.state.core.transcript.bytes() != nil {
+		if exchange.responder.state.core.isk != nil || exchange.responder.state.core.transcript.bytes() != nil {
 			t.Fatal("responder retained cleared state references after confirmation failure")
 		}
 		if !allZero(responderISK) {
@@ -756,29 +717,12 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 }
 
 func TestSessionISKSurvivesCoreClear(t *testing.T) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
-
-	initiator, msgA, err := startTestInitiator(initCfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	responder, msgB, err := respondTestResponder(respCfg, msgA)
-	if err != nil {
-		t.Fatal(err)
-	}
-	msgC, sI, err := initiator.Finish(msgB)
-	if err != nil {
-		t.Fatal(err)
-	}
-	responderISK := responder.state.core.isk
-	sR, err := responder.Finish(msgC)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if responder.state.core.isk != nil {
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(t, initInput, respInput)
+	msgC, sI := exchange.finishInitiator()
+	responderISK := exchange.responder.state.core.isk
+	sR := exchange.finishResponder(msgC)
+	if exchange.responder.state.core.isk != nil {
 		t.Fatal("responder retained ISK reference after Finish")
 	}
 	if !allZero(responderISK) {
@@ -924,29 +868,17 @@ func TestSingleUseStateCloseCleansAbandonedState(t *testing.T) {
 
 func TestSingleUseStateCloseAfterFinish(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		initiator, msgA, err := startTestInitiator(testInitiatorInput())
-		if err != nil {
-			t.Fatal(err)
-		}
-		responder, msgB, err := respondTestResponder(testResponderInput(), msgA)
-		if err != nil {
-			t.Fatal(err)
-		}
-		msgC, initSession, err := initiator.Finish(msgB)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := initiator.Close(); err != nil {
+		initInput, respInput := defaultExchangeInputs()
+		exchange := newExchange(t, initInput, respInput)
+		msgC, initSession := exchange.finishInitiator()
+		if err := exchange.initiator.Close(); err != nil {
 			t.Fatalf("Initiator.Close after successful Finish err=%v", err)
 		}
 		if _, err := initSession.Export([]byte("label"), []byte("ctx"), 32); err != nil {
 			t.Fatalf("initiator Session.Export after Close-on-state err=%v", err)
 		}
-		respSession, err := responder.Finish(msgC)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := responder.Close(); err != nil {
+		respSession := exchange.finishResponder(msgC)
+		if err := exchange.responder.Close(); err != nil {
 			t.Fatalf("Responder.Close after successful Finish err=%v", err)
 		}
 		if _, err := respSession.Export([]byte("label"), []byte("ctx"), 32); err != nil {
@@ -955,45 +887,29 @@ func TestSingleUseStateCloseAfterFinish(t *testing.T) {
 	})
 
 	t.Run("failed finish", func(t *testing.T) {
-		initiator, msgA, err := startTestInitiator(testInitiatorInput())
-		if err != nil {
-			t.Fatal(err)
-		}
-		responder, _, err := respondTestResponder(testResponderInput(), msgA)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, _, err := initiator.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
+		initInput, respInput := defaultExchangeInputs()
+		exchange := newExchange(t, initInput, respInput)
+		if _, _, err := exchange.initiator.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
 			t.Fatalf("initiator Finish garbage err=%v", err)
 		}
-		if err := initiator.Close(); err != nil {
+		if err := exchange.initiator.Close(); err != nil {
 			t.Fatalf("Initiator.Close after failed Finish err=%v", err)
 		}
 
-		if _, err := responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
+		if _, err := exchange.responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
 			t.Fatalf("responder Finish garbage err=%v", err)
 		}
-		if err := responder.Close(); err != nil {
+		if err := exchange.responder.Close(); err != nil {
 			t.Fatalf("Responder.Close after failed Finish err=%v", err)
 		}
 
-		initiator2, msgA2, err := startTestInitiator(testInitiatorInput())
-		if err != nil {
-			t.Fatal(err)
-		}
-		responder2, msgB2, err := respondTestResponder(testResponderInput(), msgA2)
-		if err != nil {
-			t.Fatal(err)
-		}
-		msgC2, _, err := initiator2.Finish(msgB2)
-		if err != nil {
-			t.Fatal(err)
-		}
+		exchange2 := newExchange(t, initInput, respInput)
+		msgC2, _ := exchange2.finishInitiator()
 		msgC2[len(msgC2)-1] ^= 0xff
-		if _, err := responder2.Finish(msgC2); !errors.Is(err, ErrConfirmationFailed) {
+		if _, err := exchange2.responder.Finish(msgC2); !errors.Is(err, ErrConfirmationFailed) {
 			t.Fatalf("responder Finish tampered tagA err=%v", err)
 		}
-		if err := responder2.Close(); err != nil {
+		if err := exchange2.responder.Close(); err != nil {
 			t.Fatalf("Responder.Close after confirmation failure err=%v", err)
 		}
 	})
