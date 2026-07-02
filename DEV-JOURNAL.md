@@ -2484,3 +2484,33 @@ Closed the two stale development-journal PRs whose entries were missing from mai
 - Triage the failing required `Check` on dependabot PR #206 (GitHub Actions group bump).
 - Reviewer outreach for issues #29-#31 remains the standing next release-arc step; the packet at `docs/reviewer-outreach.md` is current against the `f7efa6a` evidence baseline.
 - Decide the fate of the flagged leftover branches listed above.
+
+---
+
+## Dependabot actions bump triaged and merged - 2026-07-02 15:06 EDT
+
+**Main:** `897cff51bb7b`
+**Actor:** Claude Code
+
+**Summary**
+
+Triaged, fixed, and merged dependabot PR #206, the GitHub Actions group bump: checkout v6.0.2 to v7.0.0, setup-go v6.4.0 to v6.5.0, codeql-action v4.35.3 to v4.36.2, dependency-review-action v4.9.0 to v5.0.0, and attest v4.1.0 to v4.1.1 across 15 workflow files. The failing required Check was the `tools/releasepolicy` anti-drift guard working as designed, not a CI breakage.
+
+**Completed**
+
+- Root-caused the red Check to `TestReleasePolicyRejectsInvalidWorkflows` and `TestReleasePolicyRejectsDuplicateWorkflowKeys`: the fixture mutations pin the exact checkout/setup-go `uses:` strings via `replaceOnce`, and dependabot bumped the workflow pins without updating the hard-coded needles in `tools/releasepolicy/main_test.go`.
+- Synced the four fixture pin strings (lines 486, 507, 637, 708) to the new checkout `9c091bb2` / setup-go `924ae3a1` SHAs, including the mutated `actions/cache@<SHA>` replacement strings that deliberately reuse the setup-go SHA; committed as `2ecdffc` with DCO sign-off on the PR branch.
+- Rebased the PR branch onto post-journal main for the strict branch-protection base; rebased head `7da28eb`.
+- Squash-merged PR #206 as `897cff51bb7be96108ebd0b44707ad303b38a153`.
+- No package code changed; the API/package-profile freeze and the `f7efa6a` evidence baseline are untouched, and no evidence refresh is claimed from this workflow-only change.
+
+**Validation**
+
+- Reproduced the failure locally only after bypassing the Go test cache: `tools/releasepolicy` reads workflow files outside its own module, so a cached `ok` survived the workflow edits; `go test -count=1 ./...` reproduced the exact CI failures.
+- After the fix: `go test -count=1 ./...` in `tools/releasepolicy`, plus the exact CI step commands `scripts/test-release-helpers.sh` and `scripts/test-ci-classifier.sh`, all passed; the policy checker itself validated the bumped workflows.
+- Full GitHub check matrix green twice, after the fix commit and again after the rebase: Actionlint, Analyze, Check, CodeQL, DCO, Dependency Gate, GolangCI-Lint, SAST Gate, Staticcheck, macos-latest, windows-latest; gosec neutral as expected. `mergeStateStatus` was `CLEAN` at merge time.
+
+**Next**
+
+- Confirm the GARM self-hosted arm64/amd64 fuzz pool runner images meet checkout v7's minimum runner requirements; `autoscaled-fuzz.yml` only runs scheduled or manual, so an incompatibility would surface after merge rather than on PR checks. The existing post-routing autoscaled-fuzz evidence capture task covers the first post-merge run.
+- Reviewer outreach for issues #29-#31 remains the standing next release-arc step.
