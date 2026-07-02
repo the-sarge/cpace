@@ -2365,3 +2365,35 @@ PR #207 landed the fuzz-target registry drift check as the first approved archit
 **Next**
 
 Start PR-B from updated `main`: capture the required exchange-fixture baselines, implement the test-only exchange fixture refactor, run the required verification, and take the PR through the same RAS review gate.
+
+---
+
+## Exchange fixture refactor landed - 2026-07-02 13:31 EDT
+
+**Main:** `43861d2236d0`
+**Actor:** Codex
+
+**Summary**
+
+PR #210 landed the second approved architecture-plan PR: a behavior-preserving, test-only exchange fixture refactor. The package's public API and production `.go` implementation were unchanged, so the release-readiness API/package-profile freeze stayed intact and no security-evidence refresh is claimed from this change.
+
+**Completed**
+
+- Added `exchangeFixture` in `exchange_fixture_test.go` to centralize role key setup, identities, expected transcript messages, and complete exchange driving.
+- Migrated the complete exchange, fuzz, API, framing catalogue, and benchmark tests to the shared fixture inputs without changing their public test/fuzz/benchmark entry points.
+- Removed duplicated deterministic key/input helpers from individual test files and documented the **Exchange fixture** term in `CONTEXT.md`.
+- Filed follow-up issue #211 for the low/nit RAS review hardening suggestions that did not block the PR.
+- Rebased PR #210 onto the post-#209 `origin/main` branch-protection base and squash-merged it at `43861d2236d0af799e2ca81ed2dff85be77309ff`.
+
+**Validation**
+
+- Baseline before the refactor: `go test ./...`, `go test -race ./...`, `go test -cover ./...` with `96.8% of statements`, `go test -bench . -benchtime=1x`, and deterministic `msgA` / `msgB` / `msgC` transcript capture.
+- Final reviewed head `d0702f11f013149161ffb20749146d7655e72e84`: `go vet ./...`, `go test ./...`, `go test -race ./...`, `go test -cover ./...` with `96.8% of statements`, `task check`, `go test -bench . -benchtime=1x`, `FUZZ_TEST_PARALLEL=1 task fuzz FUZZTIME=10s`, and `task fuzz FUZZTIME=10s`; deterministic transcript messages matched the baseline exactly.
+- RAS review run `20260702T170442-81ca5a9bf217307fb84ad701` found no merge-blocking issues; only low/nit follow-up work remained and was tracked in issue #211.
+- Branch-protection rebase head `56fca637a333094ea94ef9cb0eef9206a2355aaa`: `go vet ./...`, `go test ./...`, `go test -race ./...`, `task check`, `go test -cover ./...` with `96.8% of statements`, `go test -bench . -benchtime=1x`, and `task fuzz FUZZTIME=10s`.
+- GitHub checks on rebased PR head `56fca637a333094ea94ef9cb0eef9206a2355aaa` passed before merge: Check, Analyze, CodeQL, DCO, Dependency Gate, GolangCI-Lint, SAST Gate, Staticcheck, macos-latest, and windows-latest; the standalone `gosec` advisory child check remained neutral as expected.
+
+**Next**
+
+- Track follow-up issue #211, `Harden exchange fixture review nits`, outside the completed PR-B merge.
+- Refresh dependency-review, fuzz, and security-audit evidence only for a later security-relevant change or release claim against an exact candidate commit.
