@@ -70,9 +70,10 @@ func loadDraftInvalidVectorJSON(in []byte) (draftInvalidVector, error) {
 }
 
 func FuzzDecodeMessageA(f *testing.F) {
-	_, _, _, msgA, msgB, _ := makeFuzzExchange(f)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(f, initInput, respInput)
 	invalid := fuzzDraftInvalidVector(f)
-	for _, seed := range messageAFuzzSeeds(msgA, msgB, invalid.InvalidY1) {
+	for _, seed := range messageAFuzzSeeds(exchange.msgA, exchange.msgB, invalid.InvalidY1) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, in []byte) {
@@ -81,9 +82,11 @@ func FuzzDecodeMessageA(f *testing.F) {
 }
 
 func FuzzDecodeMessageB(f *testing.F) {
-	_, _, _, _, msgB, msgC := makeFuzzExchange(f)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(f, initInput, respInput)
+	msgC, _ := exchange.finishInitiator()
 	invalid := fuzzDraftInvalidVector(f)
-	for _, seed := range messageBFuzzSeeds(msgB, msgC, invalid.InvalidY1) {
+	for _, seed := range messageBFuzzSeeds(exchange.msgB, msgC, invalid.InvalidY1) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, in []byte) {
@@ -92,8 +95,10 @@ func FuzzDecodeMessageB(f *testing.F) {
 }
 
 func FuzzDecodeMessageC(f *testing.F) {
-	_, _, _, msgA, _, msgC := makeFuzzExchange(f)
-	for _, seed := range messageCFuzzSeeds(msgC, msgA) {
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(f, initInput, respInput)
+	msgC, _ := exchange.finishInitiator()
+	for _, seed := range messageCFuzzSeeds(msgC, exchange.msgA) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, in []byte) {
@@ -199,17 +204,18 @@ func FuzzProtocolMismatch(f *testing.F) {
 }
 
 func FuzzRespondWithFuzzedMessageA(f *testing.F) {
-	_, _, _, msgA, msgB, _ := makeFuzzExchange(f)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(f, initInput, respInput)
 	invalid := fuzzDraftInvalidVector(f)
-	for _, seed := range messageAProtocolFuzzSeeds(msgA, msgB, invalid.InvalidY1) {
+	for _, seed := range messageAProtocolFuzzSeeds(exchange.msgA, exchange.msgB, invalid.InvalidY1) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, messageA []byte) {
 		if len(messageA) > fuzzProtocolInputCap {
 			t.Skip()
 		}
-		cfg := fuzzResponderInput()
-		_, msgB, err := respondWithRandom(cfg, messageA, repeatingRand(0x22))
+		_, respInput := defaultExchangeInputs()
+		_, msgB, err := respondWithRandom(respInput, messageA, repeatingRand(0x22))
 		if err == nil {
 			if _, err := decodeMessageB(msgB); err != nil {
 				t.Fatalf("Respond returned malformed message B: %v", err)
@@ -219,16 +225,19 @@ func FuzzRespondWithFuzzedMessageA(f *testing.F) {
 }
 
 func FuzzInitiatorFinishWithFuzzedMessageB(f *testing.F) {
-	_, _, _, _, msgB, msgC := makeFuzzExchange(f)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(f, initInput, respInput)
+	msgC, _ := exchange.finishInitiator()
 	invalid := fuzzDraftInvalidVector(f)
-	for _, seed := range messageBFuzzSeeds(msgB, msgC, invalid.InvalidY1) {
+	for _, seed := range messageBFuzzSeeds(exchange.msgB, msgC, invalid.InvalidY1) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, messageB []byte) {
 		if len(messageB) > fuzzProtocolInputCap {
 			t.Skip()
 		}
-		initiator, _, err := startTestInitiator(fuzzInitiatorInput())
+		initInput, _ := defaultExchangeInputs()
+		initiator, _, err := startTestInitiator(initInput)
 		if err != nil {
 			t.Fatalf("Start failed for fixed fuzz config: %v", err)
 		}
@@ -245,16 +254,19 @@ func FuzzInitiatorFinishWithFuzzedMessageB(f *testing.F) {
 }
 
 func FuzzResponderFinishWithFuzzedMessageC(f *testing.F) {
-	_, _, _, msgA, _, msgC := makeFuzzExchange(f)
-	for _, seed := range messageCFuzzSeeds(msgC, msgA) {
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(f, initInput, respInput)
+	msgC, _ := exchange.finishInitiator()
+	for _, seed := range messageCFuzzSeeds(msgC, exchange.msgA) {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, messageC []byte) {
 		if len(messageC) > fuzzProtocolInputCap {
 			t.Skip()
 		}
-		_, responder, _, _, _, _ := makeFuzzExchange(t)
-		sess, err := responder.Finish(messageC)
+		initInput, respInput := defaultExchangeInputs()
+		exchange := newExchange(t, initInput, respInput)
+		sess, err := exchange.responder.Finish(messageC)
 		if err == nil && sess == nil {
 			t.Fatalf("Finish returned nil session without error")
 		}
@@ -400,51 +412,8 @@ func FuzzMessageCRoundTrip(f *testing.F) {
 	})
 }
 
-type fuzzFataler interface {
-	Fatalf(string, ...any)
-}
-
-type fuzzHelper interface {
-	Helper()
-}
-
-func markFuzzHelper(tb fuzzFataler) {
-	if h, ok := tb.(fuzzHelper); ok {
-		h.Helper()
-	}
-}
-
-func makeFuzzExchange(tb fuzzFataler) (*Initiator, *Responder, *Session, []byte, []byte, []byte) {
-	markFuzzHelper(tb)
-	initiator, msgA, err := startTestInitiator(fuzzInitiatorInput())
-	if err != nil {
-		tb.Fatalf("Start failed for fixed fuzz config: %v", err)
-	}
-	responder, msgB, err := respondTestResponder(fuzzResponderInput(), msgA)
-	if err != nil {
-		tb.Fatalf("Respond failed for fixed fuzz config: %v", err)
-	}
-	msgC, sess, err := initiator.Finish(msgB)
-	if err != nil {
-		tb.Fatalf("initiator Finish failed for fixed fuzz config: %v", err)
-	}
-	return initiator, responder, sess, msgA, msgB, msgC
-}
-
-func fuzzInitiatorInput() Input {
-	cfg := testInitiatorInput()
-	cfg.LocalAssociatedData = []byte("ADa")
-	return cfg
-}
-
-func fuzzResponderInput() Input {
-	cfg := testResponderInput()
-	cfg.LocalAssociatedData = []byte("ADb")
-	return cfg
-}
-
-func fuzzDraftInvalidVector(tb fuzzFataler) draftInvalidVector {
-	markFuzzHelper(tb)
+func fuzzDraftInvalidVector(tb testing.TB) draftInvalidVector {
+	tb.Helper()
 	v, err := loadDraftInvalidVectorJSON(draft21RistrettoInvalidJSON)
 	if err != nil {
 		tb.Fatalf("invalid vector fixture failed to load: %v", err)

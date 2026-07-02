@@ -329,14 +329,15 @@ func messageFuzzSeeds(spec messageSpec, valid, crossRole, invalidY []byte) [][]b
 }
 
 func TestMessageAProtocolFuzzSeedsPreserveValidFields(t *testing.T) {
-	_, _, _, msgA, msgB, _ := makeFuzzExchange(t)
-	baseA, err := decodeMessageA(msgA)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(t, initInput, respInput)
+	baseA, err := decodeMessageA(exchange.msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
 	invalid := fuzzDraftInvalidVector(t)
 	var decoded messageAProtocolFuzzSeedCounts
-	for _, seed := range messageAProtocolFuzzSeeds(msgA, msgB, invalid.InvalidY1) {
+	for _, seed := range messageAProtocolFuzzSeeds(exchange.msgA, exchange.msgB, invalid.InvalidY1) {
 		got, err := decodeMessageA(seed)
 		if err != nil {
 			continue
@@ -353,8 +354,9 @@ func TestMessageAProtocolFuzzSeedsPreserveValidFields(t *testing.T) {
 }
 
 func TestMessageAProtocolFuzzSeedPreservationRejectsUnclassifiedDecode(t *testing.T) {
-	_, _, _, msgA, _, _ := makeFuzzExchange(t)
-	baseA, err := decodeMessageA(msgA)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(t, initInput, respInput)
+	baseA, err := decodeMessageA(exchange.msgA)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -418,18 +420,20 @@ func classifyMessageAProtocolFuzzSeed(got, base messageA, invalidY []byte) messa
 }
 
 func TestMessageBFuzzSeedsPreserveValidFields(t *testing.T) {
-	_, _, _, _, msgB, msgC := makeFuzzExchange(t)
-	baseB, err := decodeMessageB(msgB)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(t, initInput, respInput)
+	msgC, _ := exchange.finishInitiator()
+	baseB, err := decodeMessageB(exchange.msgB)
 	if err != nil {
 		t.Fatal(err)
 	}
-	tamperedB, err := decodeMessageB(withMessageTamperedLastByte(msgB))
+	tamperedB, err := decodeMessageB(withMessageTamperedLastByte(exchange.msgB))
 	if err != nil {
 		t.Fatal(err)
 	}
 	invalid := fuzzDraftInvalidVector(t)
 	var decoded messageBFuzzSeedCounts
-	for _, seed := range messageBFuzzSeeds(msgB, msgC, invalid.InvalidY1) {
+	for _, seed := range messageBFuzzSeeds(exchange.msgB, msgC, invalid.InvalidY1) {
 		got, err := decodeMessageB(seed)
 		if err != nil {
 			continue
@@ -446,12 +450,13 @@ func TestMessageBFuzzSeedsPreserveValidFields(t *testing.T) {
 }
 
 func TestMessageBFuzzSeedPreservationRejectsUnclassifiedDecode(t *testing.T) {
-	_, _, _, _, msgB, _ := makeFuzzExchange(t)
-	baseB, err := decodeMessageB(msgB)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(t, initInput, respInput)
+	baseB, err := decodeMessageB(exchange.msgB)
 	if err != nil {
 		t.Fatal(err)
 	}
-	tamperedB, err := decodeMessageB(withMessageTamperedLastByte(msgB))
+	tamperedB, err := decodeMessageB(withMessageTamperedLastByte(exchange.msgB))
 	if err != nil {
 		t.Fatal(err)
 	}

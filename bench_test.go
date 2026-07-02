@@ -184,12 +184,14 @@ func BenchmarkSessionExport(b *testing.B) {
 }
 
 func BenchmarkEncodeMessage(b *testing.B) {
-	_, _, _, msgA, msgB, msgC := makeFuzzExchange(b)
-	a, err := decodeMessageA(msgA)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(b, initInput, respInput)
+	msgC, _ := exchange.finishInitiator()
+	a, err := decodeMessageA(exchange.msgA)
 	if err != nil {
 		b.Fatal(err)
 	}
-	msgBDecoded, err := decodeMessageB(msgB)
+	msgBDecoded, err := decodeMessageB(exchange.msgB)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -230,7 +232,9 @@ func BenchmarkEncodeMessage(b *testing.B) {
 }
 
 func BenchmarkDecodeMessage(b *testing.B) {
-	_, _, _, msgA, msgB, msgC := makeFuzzExchange(b)
+	initInput, respInput := defaultExchangeInputs()
+	exchange := newExchange(b, initInput, respInput)
+	msgC, _ := exchange.finishInitiator()
 	for _, tc := range []struct {
 		name string
 		size int
@@ -238,10 +242,10 @@ func BenchmarkDecodeMessage(b *testing.B) {
 	}{
 		{
 			name: "A",
-			size: len(msgA),
+			size: len(exchange.msgA),
 			fn: func() {
 				var err error
-				benchmarkMessageASink, err = decodeMessageA(msgA)
+				benchmarkMessageASink, err = decodeMessageA(exchange.msgA)
 				if err != nil {
 					b.Fatal(err)
 				}
@@ -249,10 +253,10 @@ func BenchmarkDecodeMessage(b *testing.B) {
 		},
 		{
 			name: "B",
-			size: len(msgB),
+			size: len(exchange.msgB),
 			fn: func() {
 				var err error
-				benchmarkMessageBSink, err = decodeMessageB(msgB)
+				benchmarkMessageBSink, err = decodeMessageB(exchange.msgB)
 				if err != nil {
 					b.Fatal(err)
 				}
