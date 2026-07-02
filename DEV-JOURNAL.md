@@ -2586,3 +2586,27 @@ Ran an architecture review of the package at `2dad6cf` using the deep-module voc
 
 - Evidence discipline: PR #219 changed production files on the zeroization path (`terminal_state.go`, `api.go`) in an intended behavior-preserving refactor. Assess whether the pinned `f7efa6a` evidence bundle remains applicable at `7557b30` or needs a refresh before further release claims.
 - Candidates 3, 4, and 6 from the review remain available, unscheduled.
+
+---
+
+## IR transcript clear coverage hardened - 2026-07-02 19:50 EDT
+
+**Main:** `41750c383249`
+**Actor:** Codex
+
+**Summary**
+
+Landed PR #221 for issue #197, a test-only hardening pass on `irTranscript.clear()` coverage. `TestIRTranscriptClear` now checks every transcript backing array owned by `newIRTranscript` and exercises nil-receiver safety; no production code, public API, package-profile policy, dependency, or release-evidence claim changed.
+
+**Completed**
+
+- Squash-merged PR #221 as `41750c3`, closing issue #197.
+- Updated `TestIRTranscriptClear` to alias `tr.transcript`, `tr.ya`, `tr.ada`, `tr.yb`, and `tr.adb`, assert each backing array starts non-zero, assert each is zeroed after `clear()`, assert component headers are nil, and call `(*irTranscript)(nil).clear()`.
+- RAS review `20260702T234207-e2218351a9cc9fb4d220a82c` reported no actionable findings and no low/nit queue. Two reviewer agents failed due local tool limits/errors, but synthesis completed with zero finding clusters/adjudications from the available review data.
+
+**Validation**
+
+- `go test -run '^TestIRTranscriptClear$' .`
+- Mutation sanity: temporarily removed `clearBytes(t.ya)` and confirmed the focused test failed on non-zero `ya` backing bytes.
+- `go test ./... && go vet ./...`
+- GitHub checks were green on PR #221 before merge: CI Check, CodeQL Analyze, DCO, Dependency Gate, GolangCI-Lint Advisory, SAST Gate, Staticcheck Advisory, macOS/windows smoke; gosec was neutral as expected.
