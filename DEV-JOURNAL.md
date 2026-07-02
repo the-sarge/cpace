@@ -2514,3 +2514,37 @@ Triaged, fixed, and merged dependabot PR #206, the GitHub Actions group bump: ch
 
 - Confirm the GARM self-hosted arm64/amd64 fuzz pool runner images meet checkout v7's minimum runner requirements; `autoscaled-fuzz.yml` only runs scheduled or manual, so an incompatibility would surface after merge rather than on PR checks. The existing post-routing autoscaled-fuzz evidence capture task covers the first post-merge run.
 - Reviewer outreach for issues #29-#31 remains the standing next release-arc step.
+
+---
+
+## Pre-outreach dry-run review landed - 2026-07-02 18:02 EDT
+
+**Main:** `651ec99a7e0c`
+**Actor:** Claude Code
+
+**Summary**
+
+Ran a maintainer-directed pre-outreach dry run of the external-review packet: six fresh-context AI reviewer passes answered the issue #29/#30/#31 questions and the handoff's evidence-sufficiency question before any human reviewer sees the packet. The dry run is recorded as internal pre-review hygiene, not external review; issues #29-#33 remain open and the Release Bar is unchanged. All resulting fixes landed as PR #215, itself gated through a RAS review.
+
+**Completed**
+
+- Ran six fresh-context reviewer passes (two on wire framing #31, two on protocol claims #30, one on context-info/identity orientation #29, one on evidence sufficiency plus a cold-reader packet audit). Every pass returned ACCEPT or ACCEPT-WITH-CHANGES; no security defects and no behavior changes were required. Framing injectivity and parser-rejection completeness survived two independent adversarial passes; the `f7efa6a-20260619` evidence bundle verified 25/25 SHA-256 `OK`.
+- Confirmed the dry run's central finding by independent arithmetic: the scalar-sampling analysis in `docs/security-assessment.md`, `docs/spec-matrix.md`, and the `crypto.go` sampling comment claimed a reachable `~2^-125` canonical-decode rejection window `[L, 2^252)`; masking bounds every sample below `2^252 < L`, so the interval is empty, the branch is unreachable defense-in-depth, and the only reachable retry is the all-zero sample at `~2^-252` per attempt.
+- Adjudicated a direct contradiction between the two #29 reviewers with a runnable probe against the real package: an exchange whose sides bind different `LocalAssociatedData` values completes with equal exported keys, so associated-data commitments protect outer negotiation only if the application verifies `Session.PeerAssociatedData`; automatic fail-closed values belong in `Context` or `SessionID`.
+- Landed all fixes as PR #215 (docs plus one `crypto.go` comment; no behavior, API, or dependency change): corrected the `2^-125` analysis in all three locations with a dated correction note in `docs/security-spec-audit.md`, reconciled the four divergent scalar-sampling descriptions (handoff, project plan, spec matrix, assessment), documented `LocalAssociatedData` failure semantics and scoped the `PeerAssociatedData` claim, removed session ID from the threat model's CI enumeration, replaced the stale `TestMessageParserFieldSizeLimits` reference, bumped the handoff date, and stated that reviewers read `main` with the pinned `f7efa6a` evidence still applicable.
+- Ran RAS review `20260702T214749-1d9a34a5ddba927a4408d31b` on PR #215: two low-severity docs-only findings, both fixed in `dd31bbc` — the shared-input failure mechanism now distinguishes `Respond`-time session-id rejection from confirmation-time password/context failure, and the Unreleased changelog entry no longer asserts the stale `~2^-125` window. A RAS re-run was intentionally skipped per the low/nit docs-only policy.
+- Squash-merged PR #215 as `651ec99a7e0c601863512f5c9e4da16df88427ea`.
+- Filed follow-up issues for deferred low/nit findings: #216 (integrator-guidance additions: online-guessing throttling, cleartext AD/sid visibility, sid establishment, identity distinctness, confirmation-failure triage, outer-binding example, CI layout pointer) and #217 (hardening: wire-versioning paragraph, `readLEB128` guard, encoder-side cap assertions, `confirmationTag` concatenation note, 64 KiB AD posture, README backstop wording, confirmation-tag golden provenance).
+
+**Validation**
+
+- AD-mismatch probe: initiator binding `negotiation-hash-DOWNGRADED` and responder binding `negotiation-hash-ORIGINAL` completed both `Finish` calls with equal exported keys; each side observed the peer value via `PeerAssociatedData`.
+- Post-fix sweep: the only remaining `2^-125` match in tracked files is the dated correction note describing the old claim as erroneous.
+- `go test -run TestProtocolRejectsAsymmetricSessionID ./...`, `task check`, `task docs:check`, `scripts/check-evidence-baseline.sh`, and `gosec -tests ./...` all passed at the final head.
+- GitHub checks green on both PR #215 heads (`55d3502`, `dd31bbc`): Actionlint, Analyze, Check, CodeQL, DCO, Dependency Gate, GolangCI-Lint, SAST Gate, Staticcheck, macos-latest, windows-latest; gosec advisory neutral as expected.
+
+**Next**
+
+- The reviewer packet is send-ready: send the external-review outreach for issues #29-#31 per `docs/reviewer-outreach.md` (recipient and time expectations still need filling in before sending).
+- Consider an equivalent internal dry run shaped around issue #32 (protocol-attack, dependency-arithmetic, and timing briefs) before engaging the independent cryptographic reviewer.
+- Track #216/#217 as non-blocking follow-ups; fold them into the eventual review-driven doc work.
