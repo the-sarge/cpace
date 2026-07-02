@@ -93,8 +93,7 @@ Do not mark a release production-ready until:
 - official draft-21 Ristretto255/SHA-512 vectors pass
 - `go test ./...` and `go test -race ./...` pass
 - parser and protocol fuzz targets have completed a meaningful run
-- every target in `.github/fuzz-targets.json` has run for more than five
-  minutes on release hardware or the manual long-fuzz workflow
+- every target in the fuzz-target registry (`.github/fuzz-targets.json`, with target function, package, and OSS-Fuzz binary name) has run for more than five minutes on release hardware or the manual long-fuzz workflow after the `go test ./...` drift check has passed
 - `govulncheck -test ./...`, advisory `gosec`, and `staticcheck ./...` pass
 - this assessment and `docs/spec-matrix.md` are reviewed
 - no critical or high independent review findings remain

@@ -55,9 +55,7 @@ Before each release, capture the active `refs/tags/v*` tag-authority ruleset JSO
 
 ## 4. Long Fuzz Evidence
 
-Run every registered fuzz target from `.github/fuzz-targets.json` against the
-exact candidate commit. Use maintainer-controlled machines or trusted
-main-only/manual workflows.
+Run every target from the fuzz-target registry (`.github/fuzz-targets.json`, with target function, package, and OSS-Fuzz binary name) against the exact candidate commit after the `go test ./...` drift check has confirmed the registry, defined fuzz functions, and OSS-Fuzz build lines agree. Use maintainer-controlled machines or trusted main-only/manual workflows.
 
 Recommended shape for stable evidence runs:
 
