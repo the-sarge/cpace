@@ -483,7 +483,7 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 		{
 			name: "unpinned action",
 			mutate: func(t *testing.T, in string) string {
-				return replaceOnce(t, in, "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2", "actions/checkout@v6")
+				return replaceOnce(t, in, "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0", "actions/checkout@v6")
 			},
 			want: "action must be pinned",
 		},
@@ -504,7 +504,7 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 		{
 			name: "setup go action changed",
 			mutate: func(t *testing.T, in string) string {
-				return replaceOnce(t, in, "uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0", "uses: actions/cache@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0")
+				return replaceOnce(t, in, "uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0", "uses: actions/cache@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0")
 			},
 			want: "uses must start with actions/setup-go@",
 		},
@@ -634,7 +634,7 @@ func TestReleasePolicyRejectsDuplicateWorkflowKeys(t *testing.T) {
 		{
 			name: "duplicate setup-go uses",
 			mutate: func(t *testing.T, in string) string {
-				return replaceOnce(t, in, "        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0\n        with:", "        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0\n        uses: actions/cache@4a3601121dd01d1626a1e23e37211e3254c1c06c\n        with:")
+				return replaceOnce(t, in, "        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0\n        with:", "        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0\n        uses: actions/cache@924ae3a1cded613372ab5595356fb5720e22ba16\n        with:")
 			},
 			wantPath: "release.yml:jobs.check.steps[1].uses",
 		},
@@ -705,7 +705,7 @@ func TestReleasePolicyReportsMissingSBOMOutputOnce(t *testing.T) {
 
 func TestReleasePolicyStillChecksCheckoutHardeningForUnexpectedJobs(t *testing.T) {
 	base := currentWorkflow(t)
-	workflow := replaceOnce(t, base, "\n  release:\n", "\n  rogue:\n    name: Rogue\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2\n        with: {}\n\n  release:\n")
+	workflow := replaceOnce(t, base, "\n  release:\n", "\n  rogue:\n    name: Rogue\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0\n        with: {}\n\n  release:\n")
 
 	findings := findingsForWorkflow(t, workflow)
 	requireFinding(t, findings, "jobs.rogue.steps[0].with.persist-credentials")
