@@ -2439,23 +2439,7 @@ func mustLoadDraftInvalidVector(t *testing.T) draftInvalidVector {
 
 func completeExchange(t *testing.T, initCfg, respCfg Input) (*Session, *Session) {
 	t.Helper()
-	initiator, msgA, err := startTestInitiator(initCfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	responder, msgB, err := respondTestResponder(respCfg, msgA)
-	if err != nil {
-		t.Fatal(err)
-	}
-	msgC, sI, err := initiator.Finish(msgB)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sR, err := responder.Finish(msgC)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return sI, sR
+	return newExchange(t, initCfg, respCfg).complete()
 }
 
 func allZero(in []byte) bool {
