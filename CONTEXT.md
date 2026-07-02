@@ -43,6 +43,9 @@ _Avoid_: workflow template, release spec, generated CI.
 The documentation module that indexes pinned release-evidence claims: exact evidence commit or workflow, toolchain, raw artifact paths, summary docs, stale reasons, and refresh triggers. It does not refresh evidence and does not make a production-readiness claim; it makes current evidence freshness and gaps visible from one place.
 _Avoid_: evidence summary, release claim, checklist.
 
+**Fuzz-target registry**: The package-owned catalogue (`.github/fuzz-targets.json`) of fuzz targets that every fuzz harness consumes — the local Task runner, the nightly and autoscaled CI campaigns, and the OSS-Fuzz staging build. Each entry names the target function, its package, and its OSS-Fuzz binary name. A root-package drift test makes the registry authoritative: the defined fuzz functions, the registry, and the OSS-Fuzz build lines must agree or `go test` fails.
+_Avoid_: fuzz list, target matrix, build manifest.
+
 **ISK**:
 The Intermediate Session Key — the shared secret CPace derives by hashing the sid, the Diffie-Hellman result, and the transcript. Ownership is role-asymmetric. The responder derives its ISK at construction and holds a working copy in `responderCore` until cleanup by `clear()`. The initiator's ISK exists only as a local inside the core's `finish`, cleared before `Finish` returns — it is never stored on the initiator or its core. A confirmed **Session** holds its own independent clone. Each owner clears its own copy.
 _Avoid_: session key, shared secret, master key.

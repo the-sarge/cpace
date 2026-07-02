@@ -12,9 +12,7 @@ Local validation uses `Taskfile.yml` as the command facade:
 - `task quick` runs Go formatting checks, docs validation, and `go test ./...`.
 - `task check` runs docs validation, release-helper smoke tests, evidence baseline validation, nested evidence-checker linting, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for CycloneDX SBOM JSON validation.
 - `task lint:golangci` runs a pinned, curated advisory `golangci-lint` analyzer set; it is not part of the required local gate.
-- `task fuzz` runs every fuzz target in `.github/fuzz-targets.json` with the
-  caller-provided `FUZZTIME`, `PARALLEL`, `FUZZ_RACE`, `GOMAXPROCS`, and
-  `FUZZ_TEST_PARALLEL` settings.
+- `task fuzz` runs every target from the fuzz-target registry (`.github/fuzz-targets.json`, with target function, package, and OSS-Fuzz binary name) using the caller-provided `FUZZTIME`, `PARALLEL`, `FUZZ_RACE`, `GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` settings; `go test ./...` fails if the registry drifts from the defined fuzz functions or OSS-Fuzz build lines.
 
 Repository CI runs on these events:
 

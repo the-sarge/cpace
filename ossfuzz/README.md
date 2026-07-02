@@ -1,9 +1,8 @@
 # OSS-Fuzz Staging
 
-This directory stages the files intended for a future
-`google/oss-fuzz/projects/cpace` upstream pull request. The active fuzz targets
-remain in this repository in `fuzz_test.go` and are registered locally in
-`.github/fuzz-targets.json`.
+This directory stages the files intended for a future `google/oss-fuzz/projects/cpace` upstream pull request. The active fuzz targets remain in this repository in `fuzz_test.go` and are registered locally in `.github/fuzz-targets.json`, where each entry names the target function, package, and OSS-Fuzz binary name; `go test ./...` checks those entries against this build script.
+
+For the eventual upstream OSS-Fuzz PR, prefer a small delegate `build.sh` in `google/oss-fuzz/projects/cpace` that executes this repository's `ossfuzz/build.sh` instead of duplicating the target list there.
 
 Before opening the upstream OSS-Fuzz PR:
 

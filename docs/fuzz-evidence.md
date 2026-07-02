@@ -11,7 +11,7 @@ Superseded candidate commit: `2e09774f171dde8c62763d6e35a258b0fef88801`
 Supplemental tag commit: `4e661bc1f925ebedf1f270668129d85bab73e468`
 (`v0.1.2`)
 
-Registered fuzz targets: 14 from `.github/fuzz-targets.json`
+Registered fuzz targets: 14 from `.github/fuzz-targets.json` (current registry entries name the target function, package, and OSS-Fuzz binary; `go test ./...` checks registry drift against defined fuzz functions and `ossfuzz/build.sh`)
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether these pinned fuzz runs are fresh for the latest release candidate.
 
