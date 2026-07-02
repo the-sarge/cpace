@@ -2,15 +2,6 @@ package cpace
 
 import "testing"
 
-type benchmarkRand byte
-
-func (r benchmarkRand) Read(p []byte) (int, error) {
-	for i := range p {
-		p[i] = byte(r)
-	}
-	return len(p), nil
-}
-
 var (
 	benchmarkBytesSink       []byte
 	benchmarkInitSessionSink *Session
@@ -20,18 +11,10 @@ var (
 	benchmarkMessageCSink    messageC
 )
 
-func benchmarkInputs() (Input, Input) {
-	initCfg := testInitiatorInput()
-	initCfg.LocalAssociatedData = []byte("ADa")
-	respCfg := testResponderInput()
-	respCfg.LocalAssociatedData = []byte("ADb")
-	return initCfg, respCfg
-}
-
 func BenchmarkRoundTrip(b *testing.B) {
-	initCfg, respCfg := benchmarkInputs()
-	initRand := benchmarkRand(0x11)
-	respRand := benchmarkRand(0x22)
+	initCfg, respCfg := defaultExchangeInputs()
+	initRand := repeatingRand(0x11)
+	respRand := repeatingRand(0x22)
 	b.ReportAllocs()
 	for b.Loop() {
 		initiator, msgA, err := startWithRandom(initCfg, initRand)
@@ -56,8 +39,8 @@ func BenchmarkRoundTrip(b *testing.B) {
 }
 
 func BenchmarkStart(b *testing.B) {
-	initCfg, _ := benchmarkInputs()
-	initRand := benchmarkRand(0x11)
+	initCfg, _ := defaultExchangeInputs()
+	initRand := repeatingRand(0x11)
 	b.ReportAllocs()
 	for b.Loop() {
 		initiator, msgA, err := startWithRandom(initCfg, initRand)
@@ -72,12 +55,12 @@ func BenchmarkStart(b *testing.B) {
 }
 
 func BenchmarkRespond(b *testing.B) {
-	initCfg, respCfg := benchmarkInputs()
-	_, msgA, err := startWithRandom(initCfg, benchmarkRand(0x11))
+	initCfg, respCfg := defaultExchangeInputs()
+	_, msgA, err := startWithRandom(initCfg, repeatingRand(0x11))
 	if err != nil {
 		b.Fatal(err)
 	}
-	respRand := benchmarkRand(0x22)
+	respRand := repeatingRand(0x22)
 	b.ReportAllocs()
 	b.ResetTimer()
 	for b.Loop() {
@@ -93,15 +76,15 @@ func BenchmarkRespond(b *testing.B) {
 }
 
 func BenchmarkInitiatorFinish(b *testing.B) {
-	initCfg, respCfg := benchmarkInputs()
+	initCfg, respCfg := defaultExchangeInputs()
 	b.ReportAllocs()
 	for b.Loop() {
 		b.StopTimer()
-		initiator, msgA, err := startWithRandom(initCfg, benchmarkRand(0x11))
+		initiator, msgA, err := startWithRandom(initCfg, repeatingRand(0x11))
 		if err != nil {
 			b.Fatal(err)
 		}
-		_, msgB, err := respondWithRandom(respCfg, msgA, benchmarkRand(0x22))
+		_, msgB, err := respondWithRandom(respCfg, msgA, repeatingRand(0x22))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -117,15 +100,15 @@ func BenchmarkInitiatorFinish(b *testing.B) {
 }
 
 func BenchmarkResponderFinish(b *testing.B) {
-	initCfg, respCfg := benchmarkInputs()
+	initCfg, respCfg := defaultExchangeInputs()
 	b.ReportAllocs()
 	for b.Loop() {
 		b.StopTimer()
-		initiator, msgA, err := startWithRandom(initCfg, benchmarkRand(0x11))
+		initiator, msgA, err := startWithRandom(initCfg, repeatingRand(0x11))
 		if err != nil {
 			b.Fatal(err)
 		}
-		responder, msgB, err := respondWithRandom(respCfg, msgA, benchmarkRand(0x22))
+		responder, msgB, err := respondWithRandom(respCfg, msgA, repeatingRand(0x22))
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -144,12 +127,12 @@ func BenchmarkResponderFinish(b *testing.B) {
 }
 
 func BenchmarkSessionExport(b *testing.B) {
-	initCfg, respCfg := benchmarkInputs()
-	initiator, msgA, err := startWithRandom(initCfg, benchmarkRand(0x11))
+	initCfg, respCfg := defaultExchangeInputs()
+	initiator, msgA, err := startWithRandom(initCfg, repeatingRand(0x11))
 	if err != nil {
 		b.Fatal(err)
 	}
-	responder, msgB, err := respondWithRandom(respCfg, msgA, benchmarkRand(0x22))
+	responder, msgB, err := respondWithRandom(respCfg, msgA, repeatingRand(0x22))
 	if err != nil {
 		b.Fatal(err)
 	}
