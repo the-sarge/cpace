@@ -2548,3 +2548,41 @@ Ran a maintainer-directed pre-outreach dry run of the external-review packet: si
 - The reviewer packet is send-ready: send the external-review outreach for issues #29-#31 per `docs/reviewer-outreach.md` (recipient and time expectations still need filling in before sending).
 - Consider an equivalent internal dry run shaped around issue #32 (protocol-attack, dependency-arithmetic, and timing briefs) before engaging the independent cryptographic reviewer.
 - Track #216/#217 as non-blocking follow-ups; fold them into the eventual review-driven doc work.
+
+---
+
+## Architecture deepening: close protocol and fixture snapshots - 2026-07-02 19:22 EDT
+
+**Main:** `7557b3030257`
+**Actor:** Claude Code
+
+**Summary**
+
+Ran an architecture review of the package at `2dad6cf` using the deep-module vocabulary (depth, seams, locality, deletion test). The review found the package architecturally healthy — every production module passes the deletion test — and surfaced six internal/test-surface candidates. Candidates 1 (exchange-fixture secret snapshots) and 2 (generic close protocol) were adopted and landed as PR #219, gated through a RAS review; squash-merged as `7557b30`. No public API or observable-behavior change; the release-readiness freeze is untouched.
+
+**Completed**
+
+- Architecture review report (six candidates, before/after diagrams, healthy-module acknowledgements): candidate 5 explicitly concluded the hypothetical `crypto.go` Suite seam should not be built (one adapter, affirms ADR-0002); candidates 3 (constructor spine), 4 (transcript KDF bare-bytes back door, tension with ADR-0001), and 6 (doc-only convention naming) surfaced but not adopted.
+- PR #219 commit `f5c93a9`: widened the `singleUseCore` constraint with a `clear()` method term and concentrated claim + idempotency + clear in `singleUseState.closeCore()`; the public `Close` methods keep only the nil-receiver/nil-state checks whose role diagnostics they own. ADR-0006 and ADR-0008 semantics unchanged, pinned by the pre-existing `TestSingleUseState*` tests, which pass unmodified.
+- PR #219 commit `568035b`: added per-role secret snapshots to the exchange fixture — taken while a core's persistent secrets are live, asserting after a terminal operation that references were dropped and backing arrays zeroed. The 22 `state.core` reach-ins across eight hygiene tests are gone. The responder snapshot tracks all five transcript byte fields rather than only the concatenation. CONTEXT.md gained the **Secret snapshot** term and the **Exchange fixture** entry names it.
+- RAS review `20260702T230442-e6a1da80b5dbee0bb205475f` on PR #219: single low-severity, docs-only finding (C-001: the new glossary term overclaimed "only test-surface module allowed to know the cores' field layout", contradicted by `TestClearIdempotent`'s direct core construction). Fixed in `7310bf0` by scoping the claim to cores reached through the public single-use state. A RAS re-run was intentionally skipped per the low/nit docs-only policy.
+- Squash-merged PR #219 as `7557b30`.
+
+**Decisions**
+
+- Snapshot helper shape: the snapshot value owns the testing handle, the role handle, and the secret aliases; `assertCleared()` is the single assertion entry point. Scope is exactly the persistent secrets each core's `clear()` owns.
+- Close-protocol shape: constraint method term (union + `clear()`) rather than continued per-role wrapper duplication; `finishCore` twins left as-is (already minimal).
+- Candidates 3, 4, and 6 remain unadopted options; candidate 5 is a recorded do-not-build.
+- Process note: the design decisions were adopted on agent recommendation after a design-interview question went unanswered, without interactive ratification; the maintainer directed that the RAS-gated PR review serve as the ratification pass. Standing guidance recorded that an unanswered question never authorizes proceeding.
+
+**Validation**
+
+- `gofmt`, `go vet`, `go test ./...`, and `go test -race ./...` clean at each stage.
+- Mutation checks against `clear()`: a retained scalar reference and a skipped transcript wipe both fail the suite; the transcript-wipe mutation is newly catchable (`TestSessionISKSurvivesCoreClear` could not detect it before this PR).
+- Post-docs-fix verification per the RAS synthesis: `rg` wording sweep, `go test -run TestClearIdempotent`, full `go test ./...` — all clean.
+- GitHub checks green on final head `7310bf0`: Analyze, Check, CodeQL, DCO, Dependency Gate, GolangCI-Lint, SAST Gate, Staticcheck, macos-latest, windows-latest; the gosec sub-check reported skipping as observed on prior PRs.
+
+**Next**
+
+- Evidence discipline: PR #219 changed production files on the zeroization path (`terminal_state.go`, `api.go`) in an intended behavior-preserving refactor. Assess whether the pinned `f7efa6a` evidence bundle remains applicable at `7557b30` or needs a refresh before further release claims.
+- Candidates 3, 4, and 6 from the review remain available, unscheduled.
