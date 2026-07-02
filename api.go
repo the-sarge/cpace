@@ -127,15 +127,7 @@ func (i *Initiator) Close() error {
 	if i.state == nil {
 		return fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
 	}
-	core, err := i.state.claimClose()
-	if err != nil {
-		return err
-	}
-	if core == nil {
-		return nil
-	}
-	core.clear()
-	return nil
+	return i.state.closeCore()
 }
 
 // Finish consumes message C, verifies the initiator confirmation tag, and
@@ -165,15 +157,7 @@ func (r *Responder) Close() error {
 	if r.state == nil {
 		return fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
 	}
-	core, err := r.state.claimClose()
-	if err != nil {
-		return err
-	}
-	if core == nil {
-		return nil
-	}
-	core.clear()
-	return nil
+	return r.state.closeCore()
 }
 
 func (i *Initiator) finishCore() (*initiatorCore, error) {

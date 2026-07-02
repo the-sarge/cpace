@@ -7,6 +7,7 @@ import (
 
 type singleUseCore interface {
 	*initiatorCore | *responderCore
+	clear()
 }
 
 type singleUseState[C singleUseCore] struct {
@@ -51,6 +52,21 @@ func (s *singleUseState[C]) claimClose() (C, error) {
 	}
 	s.used = true
 	return s.core, nil
+}
+
+// closeCore claims the state for Close and clears the claimed core's
+// persistent secrets. Idempotent: a claim lost to an earlier terminal
+// operation returns nil with no core to clear.
+func (s *singleUseState[C]) closeCore() error {
+	core, err := s.claimClose()
+	if err != nil {
+		return err
+	}
+	if core == nil {
+		return nil
+	}
+	core.clear()
+	return nil
 }
 
 func (s *singleUseState[C]) uninitializedError() error {
