@@ -85,3 +85,17 @@ claim.
 Repeat this audit if protocol code, parser/framing code, package-profile docs,
 dependencies, toolchain, or the targeted CPace draft revision changes before a
 release tag.
+
+## Post-baseline correction note - 2026-07-02
+
+A documentation-accuracy review found that the scalar-sampling analysis in
+`docs/security-assessment.md`, `docs/spec-matrix.md`, and the `crypto.go`
+sampling comment described a reachable `~2^-125` canonical-decode rejection
+window `[L, 2^252)`. That interval is empty: masking bounds every sample below
+`2^252 < L`, so `SetCanonicalBytes` cannot reject a masked sample, the
+canonical-decode retry branch is unreachable defense-in-depth, and the only
+reachable retry is the all-zero masked sample at `~2^-252` per attempt. The
+audited code behavior is unchanged and remains correct; this baseline's
+no-drift conclusion stands for behavior, but its endorsement of the erroneous
+probability description is corrected as of this note. No package behavior,
+public API, or dependency changed.

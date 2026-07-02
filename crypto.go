@@ -62,10 +62,11 @@ func sampleScalar(r io.Reader) (*ristretto255.Scalar, error) {
 		b[31] &= 0x0f
 		s, err := ristretto255.NewScalar().SetCanonicalBytes(b[:])
 		if err != nil {
-			// After masking the top four bits the value is below 2^252, but the
-			// Ristretto255 scalar order L is only slightly above 2^252, so
-			// SetCanonicalBytes can reject in the (~2^-125) window [L, 2^252).
-			// Treat that as an unusable sample and retry rather than aborting.
+			// Masking the top four bits bounds the value below 2^252, and the
+			// Ristretto255 scalar order L = 2^252 + 27742... is above 2^252, so
+			// SetCanonicalBytes cannot reject a masked sample: this branch is
+			// unreachable defense-in-depth, kept like the post-multiply
+			// neutral-element check rather than as a reachable event.
 			continue
 		}
 		if s.Equal(ristretto255.NewScalar().Zero()) == 1 {

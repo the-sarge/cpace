@@ -1,6 +1,6 @@
 # External Review Handoff
 
-Date: 2026-05-09
+Date: 2026-07-02
 
 Target module: `github.com/the-sarge/cpace`
 
@@ -11,6 +11,8 @@ Last released commit: `4e661bc1f925ebedf1f270668129d85bab73e468`
 Current evidence baseline: see `docs/evidence-baseline.md`. The original `v0.1.2` external-review packet remains historical prerelease evidence; the current exact-candidate evidence bundle is `docs/evidence/f7efa6a-20260619/`.
 
 Evidence status: refreshed for the exact package-code candidate `f7efa6a963a954952b1ecad3f46530f13799fe89` in `docs/evidence/f7efa6a-20260619/`. The signed `v0.1.2` prerelease remains historical prerelease context. The current bundle is still unaudited prerelease evidence, not a production-readiness claim.
+
+Review the package code at `main`. Between the pinned evidence commit `f7efa6a963a954952b1ecad3f46530f13799fe89` and the head of this packet, the only package-source change is a comment-accuracy correction in `crypto.go` with no executable-code, API, or dependency change; every other commit touches tests, CI, tooling, or documentation only, so the pinned evidence applies to the package code as read at `main`.
 
 Status: auditable draft implementation. This package has not had independent
 cryptographic review and is not production-ready.
@@ -73,7 +75,8 @@ outer negotiation that happens before CPace inputs are fixed.
   for draft-21 compatibility or deliberately compatible profiles.
 - Draft-compatible confirmation tag inputs, with no package-added role labels
   in the confirmation MACs.
-- Scalar sampling profile: masked canonical 32-byte sampling with zero retry,
+- Scalar sampling profile: masked canonical 32-byte sampling with a bounded
+  defensive retry loop whose only reachable retry is an all-zero masked sample,
   following the draft-21 Ristretto255 recommendation rather than the allowed
   64-byte uniform-sampling alternative.
 - `Session.Export` as HKDF-SHA512 over the confirmed ISK, and

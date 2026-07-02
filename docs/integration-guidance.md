@@ -15,9 +15,11 @@ A typical integration should bind the agreed outer protocol state into CPace:
 - include stable party identities in role-local `SelfID` and `PeerID`;
 - include a versioned application/domain label and the negotiated CPace package
   profile in `Context`;
-- include transcript hashes, negotiation hashes, channel identifiers, or other outer-protocol commitments in `LocalAssociatedData`;
+- include transcript hashes, negotiation hashes, channel identifiers, or other outer-protocol commitments in `LocalAssociatedData`, and verify the peer's view after the exchange (below);
 - use a fresh, parties-agree-on `SessionID` for each exchange;
-- reject the connection unless both `Finish` calls complete successfully.
+- reject the connection unless both `Finish` calls complete successfully and any expected `Session.PeerAssociatedData` check passes.
+
+These bindings have different failure semantics. `Password`, `Context`, and `SessionID` are shared inputs: any divergence between the two sides changes the derived keys and fails confirmation automatically. `LocalAssociatedData` is role-local and transmitted in the clear: confirmation proves both sides saw the same transmitted `ADa`/`ADb` values, not that either value matches what the other side expected, so an exchange in which the two sides bound different outer commitments still completes. Commitments placed in `LocalAssociatedData` therefore protect the outer negotiation only if the application compares `Session.PeerAssociatedData` against the value the peer was expected to bind and rejects the session on mismatch; shared values that must fail the exchange automatically belong in `Context` or `SessionID`.
 
 The exact binding format is application-owned. It should be deterministic,
 versioned, and identical on both sides for the same session. Large artifacts

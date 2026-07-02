@@ -33,7 +33,7 @@ All rows below are closed and preserved as the policy/API decision record.
 | Peer metadata | `PeerAssociatedData` and `PeerID` expose copied metadata bound into the confirmed exchange. | Done. Local AD/ID accessors are deferred until a concrete caller need appears. |
 | Confirmation tag role separation | Draft-compatible tag input is unchanged. | Done. Keep draft-compatible tags; no package-added role labels. |
 | Field size limits | Package-owned per-field caps: password and IDs 4 KiB, context and session ID 1 KiB, AD 64 KiB, public shares/tags exact-sized; malformed framed inputs also have a 128 KiB aggregate decoder backstop. | Done. Valid message shapes remain governed by non-configurable per-field caps; the aggregate cap is an invalid-message throttle. |
-| Scalar sampling | Masked canonical 32-byte sampling with zero retry. | Done. Keep the draft-21 Ristretto255 recommendation; `SetUniformBytes` plus zero rejection/retry is an allowed alternative but would use 64-byte modulo reduction and define a different package profile. |
+| Scalar sampling | Masked canonical 32-byte sampling with an all-zero-sample retry. | Done. Keep the draft-21 Ristretto255 recommendation; `SetUniformBytes` plus zero rejection/retry is an allowed alternative but would use 64-byte modulo reduction and define a different package profile. |
 
 ## Recommended PR Order
 

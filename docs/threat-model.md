@@ -94,7 +94,7 @@ fuzzing remains maintainer-controlled evidence rather than a required PR gate.
 Critical code paths and interactions:
 
 - Public API and input validation: `Start`, `Respond`, `Initiator.Finish`, `Responder.Finish`, and `Session.Export` are the primary caller entry points. Validation rejects missing passwords, missing role-local identities, empty session IDs unless explicitly allowed, oversized fields, closed sessions, and malformed protocol messages.
-- Context and identity binding: package-owned context-info construction binds the draft version, suite, protocol roles, caller-provided party identities, caller context, and session ID. Integration mistakes here can produce authentication failure or weak outer-channel binding, so docs require stable application identities and outer downgrade protection.
+- Context and identity binding: package-owned context-info construction binds the draft version, suite, protocol roles, caller-provided party identities, and caller context; the session ID is bound separately into the generator string, the ISK derivation, and the confirmation tags. Integration mistakes here can produce authentication failure or weak outer-channel binding, so docs require stable application identities and outer downgrade protection.
 - Wire decoding and framing: message parsers handle attacker-controlled bytes.
   The framing layer uses a package format byte, suite byte, role byte,
   canonical length-value fields, exact public-share and tag lengths, per-field
