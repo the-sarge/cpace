@@ -104,6 +104,8 @@ Capslock capability-analysis evidence is recorded in `docs/capslock-report.md`; 
 
 OSS-Fuzz onboarding is not currently available. Upstream PR `google/oss-fuzz#15480` had passed the PR helper build, header check, and Google CLA check, but it was closed on 2026-05-11 after OSS-Fuzz maintainers declined the project for current project-size/user-base reasons and suggested ClusterFuzzLite instead.
 
+Current compensating fuzz signal remains maintainer-controlled long fuzzing, scheduled hosted fuzzing, and autoscaled trusted-runner fuzzing; possible ClusterFuzzLite integration would be future additional CI signal rather than a replacement release claim.
+
 ## Review Questions
 
 - Is the package-owned CI construction appropriate for a Go package profile over draft-21, and are the role-local identity-input requirements clear enough for real integrations?
