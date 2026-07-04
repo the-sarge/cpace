@@ -1,15 +1,15 @@
-# OSS-Fuzz Staging
+# OSS-Fuzz-Compatible Staging
 
-This directory stages the files intended for a future `google/oss-fuzz/projects/cpace` upstream pull request. The active fuzz targets remain in this repository in `fuzz_test.go` and are registered locally in `.github/fuzz-targets.json`, where each entry names the target function, package, and OSS-Fuzz binary name; `go test ./...` checks those entries against this build script.
+This directory keeps the OSS-Fuzz-compatible build files for local helper validation, ClusterFuzzLite experiments, or a future OSS-Fuzz resubmission if project eligibility changes. The upstream submission `google/oss-fuzz#15480` was closed on 2026-05-11 after OSS-Fuzz maintainers declined the project for current project-size/user-base reasons and suggested ClusterFuzzLite instead.
 
-For the eventual upstream OSS-Fuzz PR, prefer a small delegate `build.sh` in `google/oss-fuzz/projects/cpace` that executes this repository's `ossfuzz/build.sh` instead of duplicating the target list there.
+The active fuzz targets remain in this repository in `fuzz_test.go` and are registered locally in `.github/fuzz-targets.json`, where each entry names the target function, package, and OSS-Fuzz-compatible binary name; `go test ./...` checks those entries against this build script.
 
-Before opening the upstream OSS-Fuzz PR:
+If an upstream OSS-Fuzz resubmission becomes appropriate later, prefer a small delegate `build.sh` in `google/oss-fuzz/projects/cpace` that executes this repository's `ossfuzz/build.sh` instead of duplicating the target list there.
 
-1. Copy these files into a fork of `google/oss-fuzz` under `projects/cpace`.
-2. Confirm `primary_contact` in `project.yaml` is the maintainer
-   Google-account-associated email that should receive ClusterFuzz access and
-   private bug notifications.
+For local OSS-Fuzz helper validation:
+
+1. Copy these files into a temporary `google/oss-fuzz` checkout under `projects/cpace`.
+2. Confirm `primary_contact` in `project.yaml` is the maintainer Google-account-associated email that should receive ClusterFuzz access and private bug notifications if this is used for an upstream resubmission.
 3. Build and check locally from the OSS-Fuzz checkout:
 
 ```sh
