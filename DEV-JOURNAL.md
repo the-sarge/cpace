@@ -2610,3 +2610,26 @@ Landed PR #221 for issue #197, a test-only hardening pass on `irTranscript.clear
 - Mutation sanity: temporarily removed `clearBytes(t.ya)` and confirmed the focused test failed on non-zero `ya` backing bytes.
 - `go test ./... && go vet ./...`
 - GitHub checks were green on PR #221 before merge: CI Check, CodeQL Analyze, DCO, Dependency Gate, GolangCI-Lint Advisory, SAST Gate, Staticcheck Advisory, macOS/windows smoke; gosec was neutral as expected.
+
+---
+
+## OSS-Fuzz decline recorded - 2026-07-04 15:06 EDT
+
+**Main:** `982374b9c73b`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR #223, a docs-only posture update after upstream OSS-Fuzz declined onboarding for `google/oss-fuzz#15480` on 2026-05-11. The change stops treating upstream OSS-Fuzz as pending release evidence, keeps `ossfuzz/` as OSS-Fuzz-compatible staging for local helper validation, possible ClusterFuzzLite experiments, or future resubmission, and leaves API, runtime behavior, dependencies, and package-profile policy unchanged.
+
+**Completed**
+
+- Updated `ossfuzz/README.md`, `docs/fuzz-evidence.md`, `docs/project-plan.md`, and `docs/external-review-handoff.md` to record the closed upstream PR and current fuzz posture.
+- Ran RAS review `20260704T183651-9eb92b4678de822b53a2b1f9` on PR #223. The synthesis reported no blocking findings and three low-severity docs consistency findings.
+- Fixed the RAS docs-only findings in `f089c7b`: completed the OSS-Fuzz-compatible terminology sweep across README, CONTEXT, CI policy, release checklist, and security assessment; added the Unreleased changelog note; and mirrored the compensating fuzz signal in the external-review handoff. Per the low/nit docs-only policy, no second RAS run was started.
+- Merge commit: `982374b9c73be1550e198c3e2e62efc038be74f1`.
+
+**Validation**
+
+- Local: `task docs:check`, `task evidence:baseline`, `git diff --check`, and the targeted RAS `rg` sweeps all passed.
+- GitHub required checks were green before merge on head `f089c7b`: Check, DCO, Dependency Gate, and SAST Gate; the advisory gosec sub-check was neutral as expected.
