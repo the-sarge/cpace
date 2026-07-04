@@ -102,9 +102,9 @@ The current pinned package-code evidence baseline and freshness caveats are inde
 
 Capslock capability-analysis evidence is recorded in `docs/capslock-report.md`; its pinned baseline and freshness caveat are indexed in `docs/evidence-baseline.md`.
 
-OSS-Fuzz onboarding is open upstream in `google/oss-fuzz#15480`. The upstream
-PR helper build, header check, and Google CLA check passed; merge is waiting on
-upstream review.
+OSS-Fuzz onboarding is not currently available. Upstream PR `google/oss-fuzz#15480` had passed the PR helper build, header check, and Google CLA check, but it was closed on 2026-05-11 after OSS-Fuzz maintainers declined the project for current project-size/user-base reasons and suggested ClusterFuzzLite instead.
+
+Current compensating fuzz signal remains maintainer-controlled long fuzzing, scheduled hosted fuzzing, and autoscaled trusted-runner fuzzing; possible ClusterFuzzLite integration would be future additional CI signal rather than a replacement release claim.
 
 ## Review Questions
 

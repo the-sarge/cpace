@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Document that upstream OSS-Fuzz PR `google/oss-fuzz#15480` was closed on 2026-05-11 and is not current release-readiness evidence; keep `ossfuzz/` as OSS-Fuzz-compatible staging for local helper validation, possible ClusterFuzzLite experiments, or future resubmission.
 - CI hardening: split Autoscaled Fuzz across arm64 and amd64 GARM runner labels,
   cap scheduled fuzz defaults with `GOMAXPROCS` and `FUZZ_TEST_PARALLEL`
   tuning, and add a pinned GolangCI-Lint advisory lane for curated analyzers.
