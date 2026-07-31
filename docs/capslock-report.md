@@ -15,6 +15,8 @@ Transcript: `docs/evidence/f7efa6a-20260619/local-analysis.log`
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether this pinned Capslock report is fresh for the latest release candidate.
 
+Evidence status: historical Go 1.26.4 signal only. The Go 1.26.5 pin requires Capslock to be rerun against the exact clean `v0.1.3` candidate before a current-candidate capability claim.
+
 ## Tool
 
 ```sh

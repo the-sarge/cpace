@@ -41,10 +41,7 @@ The public tracking issues for those review areas are:
 - `https://github.com/the-sarge/cpace/issues/30`
 - `https://github.com/the-sarge/cpace/issues/31`
 
-The latest public prerelease remains `v0.1.2`, an SSH-signed annotated tag and
-historical prerelease context. The current exact-candidate evidence bundle is
-indexed in `docs/evidence-baseline.md` and captured under Go 1.26.4 at package
-code commit `f7efa6a963a954952b1ecad3f46530f13799fe89`:
+The latest public prerelease remains `v0.1.2`, an SSH-signed annotated tag and historical prerelease context. The latest complete evidence bundle is indexed in `docs/evidence-baseline.md` and was captured under Go 1.26.4 at package code commit `f7efa6a963a954952b1ecad3f46530f13799fe89`; it is historical and does not cover the Go 1.26.5 `v0.1.3` candidate:
 
 `https://github.com/the-sarge/cpace/tree/main/docs/evidence/f7efa6a-20260619`
 

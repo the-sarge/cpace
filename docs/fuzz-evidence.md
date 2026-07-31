@@ -15,14 +15,16 @@ Registered fuzz targets: 14 from `.github/fuzz-targets.json` (current registry e
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether these pinned fuzz runs are fresh for the latest release candidate.
 
+Evidence status: historical Go 1.26.4 signal only. The Go 1.26.5 pin and post-baseline production changes require new paired long campaigns against the exact clean `v0.1.3` candidate before a current-candidate fuzz claim.
+
 ## Command
 
-- `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=1 task fuzz` (current Go 1.26.4 baseline runs)
+- `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=1 task fuzz` (historical Go 1.26.4 baseline runs)
 - `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=2 task fuzz` (earlier campaigns below)
 
 ## Go 1.26.4 Exact-Candidate Paired Long Runs
 
-These paired maintainer-machine runs refresh all 14 registered targets under Go 1.26.4 at commit `f7efa6a963a954952b1ecad3f46530f13799fe89`, covering the accepted-ADR implementation sequence, issue #80, PR #199's Go fix modernization, and PR #200's development-journal merge. Raw logs, final status captures, setup/preflight files, and SHA-256 digests are committed under `docs/evidence/f7efa6a-20260619/`.
+These paired maintainer-machine runs historically refreshed all 14 registered targets under Go 1.26.4 at commit `f7efa6a963a954952b1ecad3f46530f13799fe89`, covering the accepted-ADR implementation sequence, issue #80, PR #199's Go fix modernization, and PR #200's development-journal merge. They do not cover the Go 1.26.5 `v0.1.3` candidate. Raw logs, final status captures, setup/preflight files, and SHA-256 digests are committed under `docs/evidence/f7efa6a-20260619/`.
 
 | Host | Platform | Toolchain | Started | Finished | Result |
 | --- | --- | --- | --- | --- | --- |
@@ -171,7 +173,7 @@ the later expansion to 14 targets.
 
 ## Residual Risk
 
-The 2026-06-19 Go 1.26.4 exact-candidate runs are the current paired ARM/Intel long-fuzz evidence, pinned to `f7efa6a963a954952b1ecad3f46530f13799fe89`. The 2026-06-11 Go 1.26.4 baseline runs cover the superseded PR #73-era baseline, the earlier Go 1.26.3 candidate runs cover the superseded candidate `2e09774f171dde8c62763d6e35a258b0fef88801`, and the 2026-05-09 through 2026-05-11 supplemental soak records stronger fuzz duration against the signed `v0.1.2` tag commit `4e661bc1f925ebedf1f270668129d85bab73e468`, with a clean ARM all-target soak, an Intel all-target soak that ended nonzero on `FuzzProtocolConsistency`, and a clean same-host targeted rerun of that target. These runs do not replace externally hosted continuous fuzzing; upstream OSS-Fuzz coverage is not currently available because `google/oss-fuzz#15480` was closed on 2026-05-11 after OSS-Fuzz maintainers declined the project for current project-size/user-base reasons and suggested ClusterFuzzLite instead. Repeat long fuzzing if parser, protocol, fuzz harness, dependency, or toolchain changes land before a future release tag. Production-readiness still requires completion of the remaining release blockers.
+The 2026-06-19 Go 1.26.4 exact-candidate runs are historical paired ARM/Intel long-fuzz evidence pinned to `f7efa6a963a954952b1ecad3f46530f13799fe89`; they do not cover the Go 1.26.5 `v0.1.3` candidate. The 2026-06-11 Go 1.26.4 baseline runs cover the superseded PR #73-era baseline, the earlier Go 1.26.3 candidate runs cover the superseded candidate `2e09774f171dde8c62763d6e35a258b0fef88801`, and the 2026-05-09 through 2026-05-11 supplemental soak records stronger fuzz duration against the signed `v0.1.2` tag commit `4e661bc1f925ebedf1f270668129d85bab73e468`, with a clean ARM all-target soak, an Intel all-target soak that ended nonzero on `FuzzProtocolConsistency`, and a clean same-host targeted rerun of that target. These runs do not replace externally hosted continuous fuzzing; upstream OSS-Fuzz coverage is not currently available because `google/oss-fuzz#15480` was closed on 2026-05-11 after OSS-Fuzz maintainers declined the project for current project-size/user-base reasons and suggested ClusterFuzzLite instead. Repeat paired long fuzzing against the exact clean candidate after any parser, protocol, fuzz harness, dependency, or toolchain change. Production-readiness still requires completion of the remaining release blockers.
 
 The 4-hour split campaign is strong historical signal for the seven-target registry at commit `07ff1e9265c2e003e6dc7d37754c8b2185f03286`, but it is not exact-candidate evidence for the current 14-target harness. Longer continuous fuzzing remains ongoing release-readiness work, now through maintainer-controlled long campaigns, scheduled hosted fuzzing, autoscaled trusted-runner fuzzing, and possible future ClusterFuzzLite integration rather than upstream OSS-Fuzz monitoring.
 

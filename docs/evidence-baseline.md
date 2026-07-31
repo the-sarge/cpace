@@ -12,11 +12,15 @@ This document is the module for pinned evidence baselines. It names the commit, 
 
 ## Current Release-Claim State
 
-The current strongest release evidence remains exact-candidate prerelease evidence plus historical external-review evidence, not a production-readiness claim. The current pinned package-code evidence baseline for dependency review, SAST/gosec, Capslock, security/spec audit, and paired long fuzzing is `f7efa6a963a954952b1ecad3f46530f13799fe89`, captured under Go 1.26.4 in `docs/evidence/f7efa6a-20260619/`.
+The frozen `v0.1.3` candidate source baseline is `1f19e278112fa037890848ed6c086addeffdca4e`, selected from a clean worktree under Go 1.26.5 after the PR #227 disposition and toolchain update. This SHA is the required input for the pending exact-candidate evidence lanes; naming it does not make those lanes fresh.
 
-No package-code changes are included after this baseline in the current evidence index. Do not describe any newer commit as release-current on dependency, fuzz, Capslock, or security/spec evidence until those evidence lanes are refreshed at the exact candidate commit.
+The strongest completed release evidence remains the historical exact-candidate prerelease packet at `f7efa6a963a954952b1ecad3f46530f13799fe89`, captured under Go 1.26.4 in `docs/evidence/f7efa6a-20260619/`. It is historical external-review signal, not current `v0.1.3` candidate evidence or a production-readiness claim.
 
-This baseline includes the accepted-ADR implementation sequence (ADR-0003, ADR-0001, ADR-0002, ADR-0009), issue #80's responder decoded-share reuse, PR #199's Go fix modernization, and PR #200's development-journal update. It also includes a fresh tag-ruleset capture, candidate GitHub status capture, fresh Scorecard run, and cross-toolchain vector-stability check in the same evidence bundle.
+The frozen `v0.1.3` candidate pins Go 1.26.5, and PR #219 changed production code on the Close/zeroization path after the pinned baseline. Both changes invalidate freshness. Do not describe the candidate as release-current on dependency, fuzz, Capslock, security/spec, or vector evidence until the full evidence packet is refreshed at the exact clean candidate commit.
+
+The historical `f7efa6a963a954952b1ecad3f46530f13799fe89` packet covers the accepted-ADR implementation sequence (ADR-0003, ADR-0001, ADR-0002, ADR-0009), issue #80's responder decoded-share reuse, PR #199's Go fix modernization, and PR #200's development-journal update. It also contains the tag-ruleset, candidate GitHub status, Scorecard, and cross-toolchain vector-stability captures made for that packet; all of those artifacts are historical for frozen `v0.1.3` candidate source `1f19e278112fa037890848ed6c086addeffdca4e`.
+
+Before the `v0.1.3` candidate gate, run and preserve the Go 1.26.4 to Go 1.26.5 vector comparison, recording whether outputs are bit-identical or explicitly recording that the older toolchain is unavailable. Then refresh dependency inventory and verification, govulncheck, gosec, Capslock, paired long fuzzing, security/spec audit, tag-ruleset state, GitHub alert state, Scorecard, and release-validation evidence against the same exact candidate commit.
 
 ## Baseline Index
 
