@@ -17,7 +17,7 @@ Current target: `v0.1.3`, a single-suite prerelease that remains explicitly non-
 
 ### v0.1.3 GitHub Actions disposition
 
-PR #227 was included through merge commit `6be725fe617b2ad47fd260f39382d000c438e292` before freezing the `v0.1.3` candidate. The update keeps every Action pinned to a full commit SHA and retains the release policy checker's supported-action enforcement; applying the available patch, minor, and major Action releases before evidence capture avoids beginning exact-candidate evidence against dependency state already selected for replacement. These CI and release dependencies are now part of the candidate, so exact-candidate validation and evidence capture can begin from a later clean candidate commit that includes this merge.
+PR #227 was included through merge commit `6be725fe617b2ad47fd260f39382d000c438e292` before freezing the `v0.1.3` candidate. The update keeps every Action pinned to a full commit SHA and retains the release policy checker's supported-action enforcement. Frozen candidate source `1f19e278112fa037890848ed6c086addeffdca4e` includes that merge, and issues #233-#237 must run their exact-candidate evidence lanes against this SHA.
 
 ### v0.1.3 candidate source freeze
 
