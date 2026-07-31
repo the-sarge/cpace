@@ -2666,3 +2666,35 @@ Merged PR [#239](https://github.com/the-sarge/cpace/pull/239), combining issues 
 **Next**
 
 - Parent release tracker [#229](https://github.com/the-sarge/cpace/issues/229) remains open. Begin the frozen-candidate evidence program with [#233](https://github.com/the-sarge/cpace/issues/233); issues #233-#237 must target source SHA `1f19e278112fa037890848ed6c086addeffdca4e`, and #238 owns publication.
+
+---
+
+## v0.1.3 dependency evidence landed - 2026-07-31 03:48 EDT
+
+**Main:** `c49ec6a0254a`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#241](https://github.com/the-sarge/cpace/pull/241), closing issue [#233](https://github.com/the-sarge/cpace/issues/233) and making the dependency, vulnerability, and test-inclusive gosec lane current for frozen `v0.1.3` candidate source `1f19e278112fa037890848ed6c086addeffdca4e`. This is exact-candidate prerelease evidence, not a production-readiness claim.
+
+**Completed**
+
+- Committed `docs/evidence/1f19e27-20260731/` with a candidate-pinned capture script, raw transcript, bundle README, and verified `SHA256SUMS`; the transcript records a clean candidate worktree before and after, Go 1.26.5, `go mod verify`, the root-module dependency graph and license texts, `govulncheck@v1.3.0`, and test-inclusive `gosec@v2.26.1`.
+- Recorded no vulnerabilities and zero gosec issues. The summaries now scope that disposition to the captured manual dependency/license review, govulncheck, and gosec; disclose that root `./...` excludes the two separate modules under `tools/`; and leave CodeQL, ast-grep, GitHub Dependency Review, Dependabot, and the other release-control lanes pending.
+- Initial RAS review `20260731T070556-c470b67256404900f370b018` produced four accepted documentation findings, resolved in `6c0f2b3841ec8ffb00ff5b8caa2cff64ecbecac0` and confirmed by exact-head verification `20260731T070556-c470b67256404900f370b018-verification-1785482546854600000`. Replacement review `20260731T072310-db4c669085cfbb064a3d98fa` found no `fix-now` or contract-blocking defect; its remaining navigation and wording polish stayed deferred under the bounded review budget.
+- Merge commit `c49ec6a0254ab61f931dafdc0e8025c93b45222c` preserves both signed implementation commits on `main`.
+
+**Decisions**
+
+- Kept the hash-covered capture script, transcript, and checksum manifest immutable after review; latent future capture-script hardening did not become a recursive verification-aid requirement. The complete finding dispositions and review history are recorded on PR #241.
+- Kept Capslock, paired long fuzzing, security/spec and vector stability, GitHub release-control state, Scorecard, and Release Validation outside this lane, as required by the frozen candidate contract.
+
+**Validation**
+
+- Final exact-head local certification passed: artifact checksums, ShellCheck, evidence-baseline validation, and `task check`, including unit and race tests, release-helper tests, formatting/import checks, vet, Staticcheck, ast-grep, and `govulncheck -test ./...`.
+- Hosted `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed on reviewed head `6c0f2b3841ec8ffb00ff5b8caa2cff64ecbecac0`; GitHub reported the PR `MERGEABLE` and `CLEAN` before the exact-head merge.
+
+**Next**
+
+- Continue the open [v0.1.3 release tracker #229](https://github.com/the-sarge/cpace/issues/229) with [#234](https://github.com/the-sarge/cpace/issues/234), which owns exact-candidate toolchain, vector, and protocol-stability evidence. Issues #235-#237 remain the subsequent fuzz, release-control, and assembled-packet gates.
