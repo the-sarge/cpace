@@ -13,6 +13,10 @@ does not make the current package production-ready.
   candidate.
 - Update `CHANGELOG.md`.
 
+### v0.1.3 GitHub Actions disposition
+
+Include PR #227 before freezing the `v0.1.3` candidate. The update keeps every Action pinned to a full commit SHA and retains the release policy checker's supported-action enforcement; applying the available patch, minor, and major Action releases now avoids beginning exact-candidate evidence against dependency state already selected for replacement. Because these CI and release dependencies are part of the candidate, exact-candidate validation and evidence capture begin only after the update reaches the candidate branch through the maintainer-controlled merge path.
+
 ## 2. Local Validation
 
 Run from the candidate commit:
