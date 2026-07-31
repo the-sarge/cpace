@@ -25,8 +25,8 @@ This bundle records the dependency inventory, module-integrity verification, tes
 - The runtime module graph contains only the expected direct dependency `github.com/gtank/ristretto255 v0.2.0` and indirect dependency `filippo.io/edwards25519 v1.2.0`; their module and `go.mod` sums match `go.sum`, and `go mod verify` reports `all modules verified`.
 - Both dependency license files are unchanged BSD-3-Clause texts with hashes preserved in the transcript. No unexpected dependency, unknown license, or incompatible license was found.
 - `govulncheck -test -show verbose ./...` scanned the package, its tests, both dependencies, and the Go 1.26.5 standard library and reported `No vulnerabilities found`.
-- `gosec@v2.26.1 -tests ./...` scanned package code and tests and reported 38 files, 8,266 lines, no suppressions, and zero issues.
-- The SCA and SAST scans produced no findings requiring a fix, suppression, or `docs/vex.md` entry under `docs/security-gates.md`.
+- `gosec@v2.26.1 -tests ./...` reported per-analysis-pass totals of 38 files and 8,266 lines, no suppressions, and zero issues. Because gosec analyzes the 13 non-test files twice under `-tests`, those totals represent 25 distinct root-module files and 6,787 distinct lines.
+- The captured manual dependency/license review, `govulncheck`, and test-inclusive gosec results produced no finding requiring a fix, suppression, or `docs/vex.md` entry under their applicable `docs/security-gates.md` thresholds. CodeQL, ast-grep, GitHub Dependency Review, Dependabot, and other GitHub-alert disposition remain pending in the release-control lane.
 
 ## Verification
 
@@ -44,14 +44,14 @@ cd docs/evidence/1f19e27-20260731
 sha256sum -c SHA256SUMS
 ```
 
-To reproduce the capture from a clean detached worktree at the candidate commit:
+To perform an equivalent procedural recapture, run the following command from the repository root. The new output will contain live timestamps, temporary paths, and vulnerability-database metadata, so it is not expected to be byte-identical to the committed transcript and must not overwrite that hash-covered artifact.
 
 ```sh
-docs/evidence/1f19e27-20260731/capture.sh /path/to/clean/candidate-worktree > local-analysis.log 2>&1
+docs/evidence/1f19e27-20260731/capture.sh /path/to/clean/candidate-worktree > /tmp/cpace-233-recapture.log 2>&1
 ```
 
 ## Residual Limitations
 
-This packet does not replace the still-pending exact-candidate Capslock, paired long-fuzz, security/spec and vector-stability, GitHub alert and release-control, Scorecard, or Release Validation lanes. A later dependency, toolchain, parser/framing, protocol, security-relevant code, or package-profile change invalidates this lane and requires recapture against the newly selected candidate.
+The captured `./...` inventory and scans cover the root `github.com/the-sarge/cpace` module and exclude the separate modules under `tools/`. This packet does not replace the still-pending exact-candidate Capslock, paired long-fuzz, security/spec and vector-stability, GitHub alert and release-control, Scorecard, or Release Validation lanes. A later dependency, toolchain, parser/framing, protocol, security-relevant code, or package-profile change invalidates this lane and requires recapture against the newly selected candidate.
 
 No `SHA256SUMS.sig` is included because no release-authorized signing key was used during branch implementation. The committed hashes provide tamper detection within repository history; the future signed release tag remains the release trust root.

@@ -72,10 +72,10 @@ Summary:
   Issues : 0
 ```
 
-The `Gosec : dev` value is the upstream binary's version banner. The transcript's embedded Go module metadata independently records `github.com/securego/gosec/v2 v2.26.1` and its module checksum. The file and line counts include package code and tests because this refresh uses the policy-required `-tests` flag.
+The `Gosec : dev` value is the upstream binary's version banner. The transcript's embedded Go module metadata independently records `github.com/securego/gosec/v2 v2.26.1` and its module checksum. The scanner-reported 38-file and 8,266-line totals are per-analysis-pass aggregates: under `-tests`, gosec analyzes the 13 non-test root-module files twice and the 12 root-module test files once, representing 25 distinct files and 6,787 distinct lines.
 
-No SCA or SAST finding requires a fix, suppression, or VEX record under `docs/security-gates.md`; `docs/vex.md` correctly remains empty. This refresh covers the exact frozen candidate, including PR #219's Close/zeroization-path changes and the Go 1.26.5 toolchain update. Dependency versions did not change from the previous review.
+The captured manual dependency/license review, `govulncheck`, and test-inclusive gosec results produced no finding requiring a fix, suppression, or VEX record under their applicable `docs/security-gates.md` thresholds; `docs/vex.md` correctly remains empty for these results. This claim does not disposition CodeQL, ast-grep, GitHub Dependency Review, Dependabot, or other GitHub-alert results, which remain part of the pending release-control lane. This refresh covers the exact frozen candidate, including PR #219's Close/zeroization-path changes and the Go 1.26.5 toolchain update. Dependency versions did not change from the previous review.
 
 ## Residual Risk
 
-This lane does not replace the still-pending exact-candidate Capslock, paired long-fuzz, security/spec and vector-stability, GitHub alert and release-control, Scorecard, or Release Validation lanes. Repeat this review against a newly selected exact candidate if any dependency, toolchain, parser/framing, protocol, security-relevant code, or package-profile change lands before release.
+The captured `./...` inventory and scans cover the root `github.com/the-sarge/cpace` module and exclude the separate modules under `tools/`. This lane does not replace the still-pending exact-candidate Capslock, paired long-fuzz, security/spec and vector-stability, GitHub alert and release-control, Scorecard, or Release Validation lanes. Repeat this review against a newly selected exact candidate if any dependency, toolchain, parser/framing, protocol, security-relevant code, or package-profile change lands before release.
