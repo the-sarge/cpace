@@ -1,6 +1,6 @@
 # Security Assessment
 
-Status: maintained self-assessment for an auditable draft implementation. The original assessment was reviewed against commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08. The current evidence status is indexed in `docs/evidence-baseline.md`; `docs/security-spec-audit.md` records the latest completed historical audit at `f7efa6a963a954952b1ecad3f46530f13799fe89` under Go 1.26.4, which does not cover the planned `v0.1.3` candidate.
+Status: maintained self-assessment for an auditable draft implementation. The original assessment was reviewed against commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08. The current evidence status is indexed in `docs/evidence-baseline.md`; `docs/security-spec-audit.md` records the latest completed exact-candidate audit at frozen `v0.1.3` source commit `1f19e278112fa037890848ed6c086addeffdca4e` under Go 1.26.5, including the Go 1.26.4 to Go 1.26.5 vector comparison.
 
 ## Cryptographic Scope
 
@@ -37,14 +37,9 @@ Scalar randomness always comes from Go's `crypto/rand.Reader`; callers cannot in
 
 ## Memory Handling
 
-All mutable public inputs and received message fields are copied. The
-implementation clears selected owned byte-slice temporaries, consumed scalar
-state, derived generator elements, consumed responder state, and session key
-material on a best-effort basis. `Session.Close` clears the session-owned ISK
-and makes future `Export` calls fail with `ErrSessionClosed`. The Go runtime
-does not guarantee secure zeroization, pinning, or avoidance of copies made by
-the compiler or garbage collector. This package does not claim resistance to a
-local memory disclosure adversary.
+All mutable public inputs and received message fields are copied. The implementation clears selected owned byte-slice temporaries, derived generator elements, consumed scalar state, responder state, and Session key material on a best-effort basis.
+
+`Initiator.Finish`/`Close` and `Responder.Finish`/`Close` are terminal operations over shared constructed state. `Finish` clears the core's persistent secret on success and every consuming failure; `Close` provides deterministic cleanup when an exchange is abandoned, is idempotent and nil-safe, and spends every constructed value copy because copies share terminal state. `Session.Close` clears the Session-owned ISK, is idempotent and nil-safe while caller-fabricated zero-value Sessions remain invalid, and makes future `Export` calls fail with `ErrSessionClosed`. The Go runtime does not guarantee secure zeroization, pinning, or avoidance of copies made by the compiler or garbage collector. This package does not claim resistance to a local memory disclosure adversary.
 
 ## Key Access
 

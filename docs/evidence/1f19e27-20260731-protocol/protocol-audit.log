@@ -1,0 +1,1082 @@
+# cpace v0.1.3 toolchain, vector, capability, and protocol evidence
+# candidate=1f19e278112fa037890848ed6c086addeffdca4e
+# historical_audit=f7efa6a963a954952b1ecad3f46530f13799fe89
+# candidate_worktree=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T/cpace-234-candidate.XSspIe/repo
+# transcript_start_utc=2026-07-31T08:15:24Z
+# tool_bin=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-234-tools.IdjS0R/bin
+# capture_script=docs/evidence/1f19e27-20260731-protocol/capture.sh
+
+$ hostname
+# start_utc=2026-07-31T08:15:24Z
+mbp128.local
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ sw_vers
+# start_utc=2026-07-31T08:15:24Z
+ProductName:		macOS
+ProductVersion:		26.6
+BuildVersion:		25G72
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ uname -a
+# start_utc=2026-07-31T08:15:24Z
+Darwin mbp128.local 25.6.0 Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:27 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6041 arm64
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ git --version
+# start_utc=2026-07-31T08:15:24Z
+git version 2.50.1 (Apple Git-155)
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ jq --version
+# start_utc=2026-07-31T08:15:24Z
+jq-1.7.1-apple
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ git rev-parse HEAD
+# start_utc=2026-07-31T08:15:24Z
+1f19e278112fa037890848ed6c086addeffdca4e
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ git status --porcelain=v1
+# start_utc=2026-07-31T08:15:24Z
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ git diff --exit-code --no-ext-diff
+# start_utc=2026-07-31T08:15:24Z
+# end_utc=2026-07-31T08:15:24Z exit=0
+# candidate_worktree_clean=true
+
+$ go version
+# start_utc=2026-07-31T08:15:24Z
+go version go1.26.5 darwin/arm64
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ go env GOOS GOARCH GOVERSION GOTOOLCHAIN
+# start_utc=2026-07-31T08:15:24Z
+darwin
+arm64
+go1.26.5
+auto
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.4 go version
+# start_utc=2026-07-31T08:15:24Z
+go version go1.26.4 darwin/arm64
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.4 go env GOOS GOARCH GOVERSION GOTOOLCHAIN
+# start_utc=2026-07-31T08:15:24Z
+darwin
+arm64
+go1.26.4
+go1.26.4
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.5 go version
+# start_utc=2026-07-31T08:15:24Z
+go version go1.26.5 darwin/arm64
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.5 go env GOOS GOARCH GOVERSION GOTOOLCHAIN
+# start_utc=2026-07-31T08:15:24Z
+darwin
+arm64
+go1.26.5
+go1.26.5
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ git log --oneline --no-decorate f7efa6a963a954952b1ecad3f46530f13799fe89..1f19e278112fa037890848ed6c086addeffdca4e
+# start_utc=2026-07-31T08:15:24Z
+1f19e27 chore: adopt Go 1.26.5 toolchain (#231)
+6be725f Merge pull request #227 from the-sarge/dependabot/github_actions/github-actions-bc344235c5
+6bff1e8 test: update release policy fixtures (#230)
+6f583dc chore(deps): bump the github-actions group across 1 directory with 8 updates
+741be4a Merge pull request #224 from the-sarge/docs/dev-journal-oss-fuzz-decline-recorded
+d77a51b docs: update development journal
+982374b Merge pull request #223 from the-sarge/docs/oss-fuzz-declined
+f089c7b docs: address oss-fuzz review findings
+5258d5b docs: record oss-fuzz decline
+f563a59 docs: update development journal
+41750c3 test: harden ir transcript clear coverage
+dadb87e docs: update development journal (#220)
+7557b30 refactor: concentrate close protocol and secret-hygiene assertions (#219)
+2dad6cf docs: update development journal (#218)
+651ec99 docs: correct scalar-sampling analysis and review-packet accuracy (#215)
+ec1ac89 docs: update development journal (#214)
+897cff5 chore(deps): bump the github-actions group across 1 directory with 8 updates (#206)
+602a0b3 docs: update development journal (#213)
+e0ef65d docs: update development journal (#106)
+534c9f6 docs: update development journal (#85)
+3019986 docs: update development journal
+43861d2 test: introduce exchange fixture
+2a11659 docs: update development journal
+7fce89f test: check fuzz target registry drift
+fb3be3c Merge pull request #205 from the-sarge/docs/reviewer-outreach-evidence-baseline-20260622
+449ef01 docs: refresh reviewer outreach evidence baseline
+60339d7 Merge pull request #204 from the-sarge/docs/journal-api-backend-triage-20260622
+3ef84a7 docs: update development journal
+84ed2f1 Merge pull request #203 from the-sarge/docs/journal-autoscaled-fuzz-ci-20260622
+44260c1 docs: update development journal
+a401e32 Merge pull request #57 from the-sarge/garm/fuzz-arch-matrix
+96f3f5c ci: resolve fuzz lint review findings
+df105d0 ci: add curated golangci-lint advisory lane
+e00ed3c ci: cap autoscaled fuzz resource defaults
+ace23e7 ci: run autoscaled fuzz on arm64 and amd64 GARM pools
+27ad884 Merge pull request #202 from the-sarge/docs/journal-evidence-refresh-20260619
+2b8b692 docs: update development journal
+f31709e Merge pull request #201 from the-sarge/docs/evidence-refresh-f7efa6a-20260619
+b869a67 docs: refresh release evidence for f7efa6a
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ git diff --name-status f7efa6a963a954952b1ecad3f46530f13799fe89..1f19e278112fa037890848ed6c086addeffdca4e -- '*.go' go.mod go.sum
+# start_utc=2026-07-31T08:15:24Z
+M	api.go
+M	api_test.go
+M	bench_test.go
+M	crypto.go
+A	exchange_fixture_test.go
+M	framing_catalogue_test.go
+A	fuzz_registry_test.go
+M	fuzz_test.go
+M	go.mod
+M	strings_test.go
+M	terminal_state.go
+M	tools/releasepolicy/main_test.go
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ go doc -all .
+# start_utc=2026-07-31T08:15:24Z
+package cpace // import "github.com/the-sarge/cpace"
+
+Package cpace implements an auditable draft-irtf-cfrg-cpace-21
+CPACE-RISTR255-SHA512 initiator-responder flow.
+
+This module is an Internet-Draft implementation. It is not independently audited
+and must not be treated as production-ready cryptographic software.
+
+The public API intentionally exposes only an initiator-responder flow with
+mandatory explicit key confirmation. A session is returned only after both sides
+have confirmed possession of the same intermediate session key. Respond success
+alone is not authentication.
+
+Scalar randomness always comes from crypto/rand.Reader; the package does not
+accept caller-supplied randomness through the public API. Input and wire fields
+have package-owned per-field size caps; associated data is capped at 64 KiB and
+smaller identity/context fields are capped more tightly.
+
+Input.SessionID must be non-empty by default. Input.AllowEmptySessionID is only
+for draft-21 compatibility tests or deliberately compatible profiles that accept
+weaker replay and transcript separation.
+
+Initiator and Responder are single-use state. Finish consumes them on success
+and failure; Close releases their local persistent secret material when an
+exchange is abandoned before Finish. Close is nil-safe and idempotent, and value
+copies share terminal state.
+
+Session.Close performs best-effort cleanup of session key material and
+makes future Export calls fail. PeerAssociatedData and PeerID expose copied,
+non-secret metadata bound into the confirmed exchange.
+
+Callers provide role-local Input: Start maps SelfID to the initiator identity
+and PeerID to the responder identity, while Respond maps SelfID to the responder
+identity and PeerID to the initiator identity. Applications that negotiate PAKE
+versions, suites, or protocol modes outside this package must provide their own
+downgrade protection for that outer negotiation.
+
+CONSTANTS
+
+const (
+	// DraftVersion identifies the CPace Internet-Draft revision implemented by
+	// this package.
+	DraftVersion = "draft-irtf-cfrg-cpace-21"
+)
+
+VARIABLES
+
+var (
+	// ErrInvalidInput reports invalid local configuration or parameters.
+	ErrInvalidInput = errors.New("cpace: invalid input")
+
+	// ErrEmptySessionID reports an empty Input.SessionID without the explicit
+	// AllowEmptySessionID compatibility opt-in. The returned error also wraps
+	// ErrInvalidInput.
+	ErrEmptySessionID = errors.New("cpace: empty session id")
+
+	// ErrRandomness reports randomness-related failures, including random
+	// source read failures and repeated unusable scalar samples.
+	ErrRandomness = errors.New("cpace: randomness failure")
+
+	// ErrMessage reports malformed or unexpected wire messages.
+	ErrMessage = errors.New("cpace: invalid message")
+
+	// ErrStateUsed reports an attempt to reuse a single-use protocol state.
+	ErrStateUsed = errors.New("cpace: state already used")
+
+	// ErrSessionClosed reports an attempt to export key material from a closed
+	// Session.
+	ErrSessionClosed = errors.New("cpace: session closed")
+
+	// ErrAbort reports a draft abort condition such as an invalid point or
+	// neutral-element Diffie-Hellman result.
+	ErrAbort = errors.New("cpace: protocol abort")
+
+	// ErrPeerShareEncoding reports a peer public share that is not a
+	// canonical Ristretto255 encoding. The returned error also wraps
+	// ErrAbort.
+	ErrPeerShareEncoding = errors.New("cpace: peer share encoding")
+
+	// ErrPeerShareIdentity reports a peer public share that decoded to the
+	// Ristretto255 identity element. The returned error also wraps ErrAbort.
+	ErrPeerShareIdentity = errors.New("cpace: peer share identity")
+
+	// ErrConfirmationFailed reports failed explicit key confirmation.
+	ErrConfirmationFailed = errors.New("cpace: key confirmation failed")
+)
+
+FUNCTIONS
+
+func Respond(input Input, messageA []byte) (*Responder, []byte, error)
+    Respond consumes message A, creates responder state, and returns message B.
+    Message B includes the responder's explicit key-confirmation tag. A nil
+    error from Respond does not authenticate the initiator; authentication is
+    established only by successful Finish calls.
+
+func Start(input Input) (*Initiator, []byte, error)
+    Start creates initiator state and message A.
+
+
+TYPES
+
+type Initiator struct {
+	// Has unexported fields.
+}
+    Initiator is a single-use initiator state returned by Start.
+
+func (i *Initiator) Close() error
+    Close releases the persistent secret material held by the initiator state
+    when an exchange is abandoned before Finish. Close is idempotent and
+    nil-safe; calling Close on a nil *Initiator returns nil. Copies of an
+    Initiator share the same terminal state, so closing one copy closes them
+    all.
+
+func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error)
+    Finish consumes message B, verifies the responder confirmation tag,
+    and returns message C plus an authenticated session. The initiator state is
+    consumed even when message parsing or confirmation fails.
+
+type Input struct {
+	Password            []byte
+	SelfID              []byte
+	PeerID              []byte
+	Context             []byte
+	SessionID           []byte
+	LocalAssociatedData []byte
+	AllowEmptySessionID bool
+}
+    Input contains the local inputs for one CPace role.
+
+    Password, SelfID, and PeerID must be non-empty. Context and
+    LocalAssociatedData may be empty. Password, Context, and SessionID are
+    shared session values both parties supply identically. SelfID, PeerID,
+    and LocalAssociatedData are role-local values: Start treats SelfID as the
+    initiator identity and PeerID as the responder identity; Respond treats
+    SelfID as the responder identity and PeerID as the initiator identity.
+    SessionID must be a fresh, non-secret, parties-agree-on value for every
+    session. Empty SessionID values are rejected by default because they weaken
+    replay and transcript separation properties. Set AllowEmptySessionID
+    only for draft-21 compatibility tests or profiles that have deliberately
+    accepted the weaker empty-sid behavior. Scalar randomness always comes from
+    crypto/rand.Reader. Field lengths are capped at 4 KiB for Password and IDs,
+    1 KiB for Context and SessionID, and 64 KiB for LocalAssociatedData. Inputs
+    exceeding these caps are rejected before copying; accepted byte slices are
+    copied by Start and Respond before use.
+
+type Responder struct {
+	// Has unexported fields.
+}
+    Responder is a single-use responder state returned by Respond.
+
+func (r *Responder) Close() error
+    Close releases the persistent secret material held by the responder
+    state when an exchange is abandoned before Finish. Close is idempotent
+    and nil-safe; calling Close on a nil *Responder returns nil. Copies of a
+    Responder share the same terminal state, so closing one copy closes them
+    all.
+
+func (r *Responder) Finish(messageC []byte) (*Session, error)
+    Finish consumes message C, verifies the initiator confirmation tag,
+    and returns an authenticated session. The responder state is consumed even
+    when message parsing or confirmation fails.
+
+type Session struct {
+	// Has unexported fields.
+}
+    Session is an explicitly confirmed CPace session. Copies of a Session share
+    the same close state and secret key material.
+
+func (s *Session) Close() error
+    Close releases the secret key material held by the Session. Close is
+    idempotent and nil-safe; calling Close on a nil *Session returns nil.
+    It performs best-effort in-memory key cleanup, but Go does not provide
+    guaranteed secure memory erasure and the runtime or compiler may
+    make additional copies. Non-secret metadata such as TranscriptID,
+    PeerAssociatedData, and PeerID remains available after Close.
+
+func (s *Session) Export(label, context []byte, length int) ([]byte, error)
+    Export derives deterministic application key material from the confirmed
+    ISK using HKDF-SHA512. The label and context are prefix-free encoded into
+    HKDF info. Export output is not fresh randomness or a randomness pool; use
+    separate, domain-specific labels and contexts for each application purpose.
+    length must be in the range [0, 16320] (255 * 64, the HKDF-SHA512 maximum).
+    A length of zero returns a result with length 0; callers must not
+    distinguish nil from empty output for this case. Negative values and values
+    exceeding the maximum are rejected with a wrapped ErrInvalidInput.
+
+func (s *Session) PeerAssociatedData() []byte
+    PeerAssociatedData returns the peer associated data that was bound into the
+    confirmed exchange. The returned slice is a copy and remains available after
+    Close.
+
+func (s *Session) PeerID() []byte
+    PeerID returns the caller-configured peer identity that was bound into CI
+    and confirmed by the completed exchange. The value is copied from Input;
+    it is not parsed from peer-controlled wire data. The returned slice is a
+    copy and remains available after Close.
+
+func (s *Session) TranscriptID() []byte
+    TranscriptID returns the draft CPaceSidOutput value for the confirmed
+    initiator-responder CPace transcript. It is not a complete channel
+    binding for any outer version, suite, or application-protocol negotiation.
+    TranscriptID remains available after Close.
+
+# end_utc=2026-07-31T08:15:24Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.4 go test -json -v -run 'Test(StringUtilitiesDraftVectors|IRTranscriptDraftVectorFlow|EmbeddedDraft.*|RistrettoDraft21Vectors|CoreDraft21Vectors|ScalarMultVFYDraftInvalidVectors|BuildCIWireStability|WireFormatPrefixByte)$' -count=1 ./...
+# start_utc=2026-07-31T08:15:24Z
+{"Time":"2026-07-31T04:15:24.943897-04:00","Action":"start","Package":"github.com/the-sarge/cpace"}
+{"Time":"2026-07-31T04:15:25.183261-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestBuildCIWireStability"}
+{"Time":"2026-07-31T04:15:25.183408-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestBuildCIWireStability","Output":"=== RUN   TestBuildCIWireStability\n"}
+{"Time":"2026-07-31T04:15:25.18344-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestBuildCIWireStability","Output":"--- PASS: TestBuildCIWireStability (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.183454-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestBuildCIWireStability","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.183479-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors"}
+{"Time":"2026-07-31T04:15:25.18349-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors","Output":"=== RUN   TestStringUtilitiesDraftVectors\n"}
+{"Time":"2026-07-31T04:15:25.183509-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_empty"}
+{"Time":"2026-07-31T04:15:25.183524-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_empty","Output":"=== RUN   TestStringUtilitiesDraftVectors/prepend_empty\n"}
+{"Time":"2026-07-31T04:15:25.18394-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_1234"}
+{"Time":"2026-07-31T04:15:25.183963-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_1234","Output":"=== RUN   TestStringUtilitiesDraftVectors/prepend_1234\n"}
+{"Time":"2026-07-31T04:15:25.184051-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/lv_cat"}
+{"Time":"2026-07-31T04:15:25.184063-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/lv_cat","Output":"=== RUN   TestStringUtilitiesDraftVectors/lv_cat\n"}
+{"Time":"2026-07-31T04:15:25.184071-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_first"}
+{"Time":"2026-07-31T04:15:25.184078-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_first","Output":"=== RUN   TestStringUtilitiesDraftVectors/o_cat_first\n"}
+{"Time":"2026-07-31T04:15:25.184086-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_second"}
+{"Time":"2026-07-31T04:15:25.184093-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_second","Output":"=== RUN   TestStringUtilitiesDraftVectors/o_cat_second\n"}
+{"Time":"2026-07-31T04:15:25.184105-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_ir"}
+{"Time":"2026-07-31T04:15:25.184116-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_ir","Output":"=== RUN   TestStringUtilitiesDraftVectors/transcript_ir\n"}
+{"Time":"2026-07-31T04:15:25.184125-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_oc"}
+{"Time":"2026-07-31T04:15:25.184132-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_oc","Output":"=== RUN   TestStringUtilitiesDraftVectors/transcript_oc\n"}
+{"Time":"2026-07-31T04:15:25.18414-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors","Output":"--- PASS: TestStringUtilitiesDraftVectors (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184149-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_empty","Output":"    --- PASS: TestStringUtilitiesDraftVectors/prepend_empty (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184199-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_empty","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.18421-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_1234","Output":"    --- PASS: TestStringUtilitiesDraftVectors/prepend_1234 (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184217-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_1234","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184223-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/lv_cat","Output":"    --- PASS: TestStringUtilitiesDraftVectors/lv_cat (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184229-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/lv_cat","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184239-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_first","Output":"    --- PASS: TestStringUtilitiesDraftVectors/o_cat_first (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184246-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_first","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184253-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_second","Output":"    --- PASS: TestStringUtilitiesDraftVectors/o_cat_second (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184259-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_second","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184265-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_ir","Output":"    --- PASS: TestStringUtilitiesDraftVectors/transcript_ir (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184272-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_ir","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184277-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_oc","Output":"    --- PASS: TestStringUtilitiesDraftVectors/transcript_oc (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184283-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_oc","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184289-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184294-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestIRTranscriptDraftVectorFlow"}
+{"Time":"2026-07-31T04:15:25.1843-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestIRTranscriptDraftVectorFlow","Output":"=== RUN   TestIRTranscriptDraftVectorFlow\n"}
+{"Time":"2026-07-31T04:15:25.184307-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestIRTranscriptDraftVectorFlow","Output":"--- PASS: TestIRTranscriptDraftVectorFlow (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184313-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestIRTranscriptDraftVectorFlow","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184321-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte"}
+{"Time":"2026-07-31T04:15:25.184327-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte","Output":"=== RUN   TestWireFormatPrefixByte\n"}
+{"Time":"2026-07-31T04:15:25.184333-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/A"}
+{"Time":"2026-07-31T04:15:25.184339-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/A","Output":"=== RUN   TestWireFormatPrefixByte/A\n"}
+{"Time":"2026-07-31T04:15:25.184346-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/B"}
+{"Time":"2026-07-31T04:15:25.184362-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/B","Output":"=== RUN   TestWireFormatPrefixByte/B\n"}
+{"Time":"2026-07-31T04:15:25.184369-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/C"}
+{"Time":"2026-07-31T04:15:25.184376-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/C","Output":"=== RUN   TestWireFormatPrefixByte/C\n"}
+{"Time":"2026-07-31T04:15:25.184385-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte","Output":"--- PASS: TestWireFormatPrefixByte (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184391-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/A","Output":"    --- PASS: TestWireFormatPrefixByte/A (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184398-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/A","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184404-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/B","Output":"    --- PASS: TestWireFormatPrefixByte/B (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.18441-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/B","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.18443-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/C","Output":"    --- PASS: TestWireFormatPrefixByte/C (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184437-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/C","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184443-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184449-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftVectorJSON"}
+{"Time":"2026-07-31T04:15:25.184455-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftVectorJSON","Output":"=== RUN   TestEmbeddedDraftVectorJSON\n"}
+{"Time":"2026-07-31T04:15:25.184461-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftVectorJSON","Output":"--- PASS: TestEmbeddedDraftVectorJSON (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184467-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftVectorJSON","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184472-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftGeneratorJSON"}
+{"Time":"2026-07-31T04:15:25.184488-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftGeneratorJSON","Output":"=== RUN   TestEmbeddedDraftGeneratorJSON\n"}
+{"Time":"2026-07-31T04:15:25.184496-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftGeneratorJSON","Output":"--- PASS: TestEmbeddedDraftGeneratorJSON (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184502-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftGeneratorJSON","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184508-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftConfirmationTagGoldens"}
+{"Time":"2026-07-31T04:15:25.184514-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftConfirmationTagGoldens","Output":"=== RUN   TestEmbeddedDraftConfirmationTagGoldens\n"}
+{"Time":"2026-07-31T04:15:25.18452-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftConfirmationTagGoldens","Output":"--- PASS: TestEmbeddedDraftConfirmationTagGoldens (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184527-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftConfirmationTagGoldens","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184532-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftInvalidVectorJSON"}
+{"Time":"2026-07-31T04:15:25.184545-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftInvalidVectorJSON","Output":"=== RUN   TestEmbeddedDraftInvalidVectorJSON\n"}
+{"Time":"2026-07-31T04:15:25.184584-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftInvalidVectorJSON","Output":"--- PASS: TestEmbeddedDraftInvalidVectorJSON (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184591-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftInvalidVectorJSON","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184596-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors"}
+{"Time":"2026-07-31T04:15:25.184602-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors","Output":"=== RUN   TestRistrettoDraft21Vectors\n"}
+{"Time":"2026-07-31T04:15:25.18461-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte"}
+{"Time":"2026-07-31T04:15:25.184616-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte\n"}
+{"Time":"2026-07-31T04:15:25.184627-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte"}
+{"Time":"2026-07-31T04:15:25.184633-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte\n"}
+{"Time":"2026-07-31T04:15:25.184638-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_nil"}
+{"Time":"2026-07-31T04:15:25.184644-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_nil","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_nil\n"}
+{"Time":"2026-07-31T04:15:25.18465-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_empty"}
+{"Time":"2026-07-31T04:15:25.184656-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_empty","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_empty\n"}
+{"Time":"2026-07-31T04:15:25.184662-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_appended"}
+{"Time":"2026-07-31T04:15:25.184668-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_appended","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_appended\n"}
+{"Time":"2026-07-31T04:15:25.184674-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_truncated"}
+{"Time":"2026-07-31T04:15:25.184679-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_truncated","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_truncated\n"}
+{"Time":"2026-07-31T04:15:25.184686-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors","Output":"--- PASS: TestRistrettoDraft21Vectors (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184906-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184931-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184962-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184971-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184979-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_nil","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_nil (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.184985-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_nil","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.184991-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_empty","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_empty (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.185008-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_empty","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.185017-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_appended","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_appended (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.185024-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_appended","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.18503-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_truncated","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_truncated (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.185037-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_truncated","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.185042-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.185048-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestCoreDraft21Vectors"}
+{"Time":"2026-07-31T04:15:25.185054-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestCoreDraft21Vectors","Output":"=== RUN   TestCoreDraft21Vectors\n"}
+{"Time":"2026-07-31T04:15:25.185077-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestCoreDraft21Vectors","Output":"--- PASS: TestCoreDraft21Vectors (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.185085-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestCoreDraft21Vectors","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.185091-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestScalarMultVFYDraftInvalidVectors"}
+{"Time":"2026-07-31T04:15:25.185097-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestScalarMultVFYDraftInvalidVectors","Output":"=== RUN   TestScalarMultVFYDraftInvalidVectors\n"}
+{"Time":"2026-07-31T04:15:25.185103-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestScalarMultVFYDraftInvalidVectors","Output":"--- PASS: TestScalarMultVFYDraftInvalidVectors (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.185109-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestScalarMultVFYDraftInvalidVectors","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.185115-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Output":"PASS\n"}
+{"Time":"2026-07-31T04:15:25.187064-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Output":"ok  \tgithub.com/the-sarge/cpace\t0.243s\n"}
+{"Time":"2026-07-31T04:15:25.18711-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Elapsed":0.243}
+# end_utc=2026-07-31T08:15:25Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.5 go test -json -v -run 'Test(StringUtilitiesDraftVectors|IRTranscriptDraftVectorFlow|EmbeddedDraft.*|RistrettoDraft21Vectors|CoreDraft21Vectors|ScalarMultVFYDraftInvalidVectors|BuildCIWireStability|WireFormatPrefixByte)$' -count=1 ./...
+# start_utc=2026-07-31T08:15:25Z
+{"Time":"2026-07-31T04:15:25.401146-04:00","Action":"start","Package":"github.com/the-sarge/cpace"}
+{"Time":"2026-07-31T04:15:25.561633-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestBuildCIWireStability"}
+{"Time":"2026-07-31T04:15:25.56177-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestBuildCIWireStability","Output":"=== RUN   TestBuildCIWireStability\n"}
+{"Time":"2026-07-31T04:15:25.5618-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestBuildCIWireStability","Output":"--- PASS: TestBuildCIWireStability (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.561812-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestBuildCIWireStability","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.56183-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors"}
+{"Time":"2026-07-31T04:15:25.561848-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors","Output":"=== RUN   TestStringUtilitiesDraftVectors\n"}
+{"Time":"2026-07-31T04:15:25.561861-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_empty"}
+{"Time":"2026-07-31T04:15:25.561877-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_empty","Output":"=== RUN   TestStringUtilitiesDraftVectors/prepend_empty\n"}
+{"Time":"2026-07-31T04:15:25.561892-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_1234"}
+{"Time":"2026-07-31T04:15:25.5619-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_1234","Output":"=== RUN   TestStringUtilitiesDraftVectors/prepend_1234\n"}
+{"Time":"2026-07-31T04:15:25.561908-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/lv_cat"}
+{"Time":"2026-07-31T04:15:25.561924-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/lv_cat","Output":"=== RUN   TestStringUtilitiesDraftVectors/lv_cat\n"}
+{"Time":"2026-07-31T04:15:25.561966-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_first"}
+{"Time":"2026-07-31T04:15:25.561984-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_first","Output":"=== RUN   TestStringUtilitiesDraftVectors/o_cat_first\n"}
+{"Time":"2026-07-31T04:15:25.561994-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_second"}
+{"Time":"2026-07-31T04:15:25.562002-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_second","Output":"=== RUN   TestStringUtilitiesDraftVectors/o_cat_second\n"}
+{"Time":"2026-07-31T04:15:25.562027-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_ir"}
+{"Time":"2026-07-31T04:15:25.562036-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_ir","Output":"=== RUN   TestStringUtilitiesDraftVectors/transcript_ir\n"}
+{"Time":"2026-07-31T04:15:25.562046-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_oc"}
+{"Time":"2026-07-31T04:15:25.562054-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_oc","Output":"=== RUN   TestStringUtilitiesDraftVectors/transcript_oc\n"}
+{"Time":"2026-07-31T04:15:25.562063-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors","Output":"--- PASS: TestStringUtilitiesDraftVectors (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.56208-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_empty","Output":"    --- PASS: TestStringUtilitiesDraftVectors/prepend_empty (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562125-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_empty","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562136-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_1234","Output":"    --- PASS: TestStringUtilitiesDraftVectors/prepend_1234 (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562143-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/prepend_1234","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.56215-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/lv_cat","Output":"    --- PASS: TestStringUtilitiesDraftVectors/lv_cat (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562155-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/lv_cat","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562161-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_first","Output":"    --- PASS: TestStringUtilitiesDraftVectors/o_cat_first (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562177-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_first","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562187-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_second","Output":"    --- PASS: TestStringUtilitiesDraftVectors/o_cat_second (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562193-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/o_cat_second","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.5622-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_ir","Output":"    --- PASS: TestStringUtilitiesDraftVectors/transcript_ir (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562209-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_ir","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562215-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_oc","Output":"    --- PASS: TestStringUtilitiesDraftVectors/transcript_oc (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562222-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors/transcript_oc","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562227-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestStringUtilitiesDraftVectors","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562234-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestIRTranscriptDraftVectorFlow"}
+{"Time":"2026-07-31T04:15:25.562239-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestIRTranscriptDraftVectorFlow","Output":"=== RUN   TestIRTranscriptDraftVectorFlow\n"}
+{"Time":"2026-07-31T04:15:25.562255-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestIRTranscriptDraftVectorFlow","Output":"--- PASS: TestIRTranscriptDraftVectorFlow (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562262-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestIRTranscriptDraftVectorFlow","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.56227-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte"}
+{"Time":"2026-07-31T04:15:25.562286-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte","Output":"=== RUN   TestWireFormatPrefixByte\n"}
+{"Time":"2026-07-31T04:15:25.562293-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/A"}
+{"Time":"2026-07-31T04:15:25.562315-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/A","Output":"=== RUN   TestWireFormatPrefixByte/A\n"}
+{"Time":"2026-07-31T04:15:25.562326-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/B"}
+{"Time":"2026-07-31T04:15:25.562343-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/B","Output":"=== RUN   TestWireFormatPrefixByte/B\n"}
+{"Time":"2026-07-31T04:15:25.56235-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/C"}
+{"Time":"2026-07-31T04:15:25.562355-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/C","Output":"=== RUN   TestWireFormatPrefixByte/C\n"}
+{"Time":"2026-07-31T04:15:25.562361-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte","Output":"--- PASS: TestWireFormatPrefixByte (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562382-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/A","Output":"    --- PASS: TestWireFormatPrefixByte/A (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562391-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/A","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562397-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/B","Output":"    --- PASS: TestWireFormatPrefixByte/B (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562402-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/B","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562409-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/C","Output":"    --- PASS: TestWireFormatPrefixByte/C (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562416-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte/C","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562423-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestWireFormatPrefixByte","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562428-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftVectorJSON"}
+{"Time":"2026-07-31T04:15:25.562433-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftVectorJSON","Output":"=== RUN   TestEmbeddedDraftVectorJSON\n"}
+{"Time":"2026-07-31T04:15:25.562439-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftVectorJSON","Output":"--- PASS: TestEmbeddedDraftVectorJSON (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562465-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftVectorJSON","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562475-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftGeneratorJSON"}
+{"Time":"2026-07-31T04:15:25.562482-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftGeneratorJSON","Output":"=== RUN   TestEmbeddedDraftGeneratorJSON\n"}
+{"Time":"2026-07-31T04:15:25.562502-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftGeneratorJSON","Output":"--- PASS: TestEmbeddedDraftGeneratorJSON (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562511-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftGeneratorJSON","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562517-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftConfirmationTagGoldens"}
+{"Time":"2026-07-31T04:15:25.562522-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftConfirmationTagGoldens","Output":"=== RUN   TestEmbeddedDraftConfirmationTagGoldens\n"}
+{"Time":"2026-07-31T04:15:25.562536-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftConfirmationTagGoldens","Output":"--- PASS: TestEmbeddedDraftConfirmationTagGoldens (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562547-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftConfirmationTagGoldens","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562554-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftInvalidVectorJSON"}
+{"Time":"2026-07-31T04:15:25.562567-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftInvalidVectorJSON","Output":"=== RUN   TestEmbeddedDraftInvalidVectorJSON\n"}
+{"Time":"2026-07-31T04:15:25.562575-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftInvalidVectorJSON","Output":"--- PASS: TestEmbeddedDraftInvalidVectorJSON (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.562581-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestEmbeddedDraftInvalidVectorJSON","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.562586-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors"}
+{"Time":"2026-07-31T04:15:25.562592-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors","Output":"=== RUN   TestRistrettoDraft21Vectors\n"}
+{"Time":"2026-07-31T04:15:25.562643-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte"}
+{"Time":"2026-07-31T04:15:25.56265-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte\n"}
+{"Time":"2026-07-31T04:15:25.562655-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte"}
+{"Time":"2026-07-31T04:15:25.562657-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte\n"}
+{"Time":"2026-07-31T04:15:25.56266-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_nil"}
+{"Time":"2026-07-31T04:15:25.562668-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_nil","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_nil\n"}
+{"Time":"2026-07-31T04:15:25.56267-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_empty"}
+{"Time":"2026-07-31T04:15:25.562673-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_empty","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_empty\n"}
+{"Time":"2026-07-31T04:15:25.562676-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_appended"}
+{"Time":"2026-07-31T04:15:25.562679-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_appended","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_appended\n"}
+{"Time":"2026-07-31T04:15:25.56282-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_truncated"}
+{"Time":"2026-07-31T04:15:25.562841-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_truncated","Output":"=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_truncated\n"}
+{"Time":"2026-07-31T04:15:25.562986-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors","Output":"--- PASS: TestRistrettoDraft21Vectors (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563014-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563024-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563044-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563051-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563056-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_nil","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_nil (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563119-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_nil","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563127-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_empty","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_empty (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563132-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_empty","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563143-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_appended","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_appended (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563147-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_appended","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563151-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_truncated","Output":"    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_truncated (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563155-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors/generator_sid_mutation_truncated","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563158-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestRistrettoDraft21Vectors","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563161-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestCoreDraft21Vectors"}
+{"Time":"2026-07-31T04:15:25.563163-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestCoreDraft21Vectors","Output":"=== RUN   TestCoreDraft21Vectors\n"}
+{"Time":"2026-07-31T04:15:25.563178-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestCoreDraft21Vectors","Output":"--- PASS: TestCoreDraft21Vectors (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563182-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestCoreDraft21Vectors","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563184-04:00","Action":"run","Package":"github.com/the-sarge/cpace","Test":"TestScalarMultVFYDraftInvalidVectors"}
+{"Time":"2026-07-31T04:15:25.563186-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestScalarMultVFYDraftInvalidVectors","Output":"=== RUN   TestScalarMultVFYDraftInvalidVectors\n"}
+{"Time":"2026-07-31T04:15:25.563219-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Test":"TestScalarMultVFYDraftInvalidVectors","Output":"--- PASS: TestScalarMultVFYDraftInvalidVectors (0.00s)\n"}
+{"Time":"2026-07-31T04:15:25.563267-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Test":"TestScalarMultVFYDraftInvalidVectors","Elapsed":0}
+{"Time":"2026-07-31T04:15:25.563278-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Output":"PASS\n"}
+{"Time":"2026-07-31T04:15:25.564244-04:00","Action":"output","Package":"github.com/the-sarge/cpace","Output":"ok  \tgithub.com/the-sarge/cpace\t0.163s\n"}
+{"Time":"2026-07-31T04:15:25.564261-04:00","Action":"pass","Package":"github.com/the-sarge/cpace","Elapsed":0.163}
+# end_utc=2026-07-31T08:15:25Z exit=0
+
+$ require_json_test_names go1.26.4 vectors
+# start_utc=2026-07-31T08:15:25Z
+# end_utc=2026-07-31T08:15:25Z exit=0
+
+$ require_json_test_names go1.26.5 vectors
+# start_utc=2026-07-31T08:15:25Z
+# end_utc=2026-07-31T08:15:25Z exit=0
+
+$ normalize_vector_json go1.26.4
+# start_utc=2026-07-31T08:15:25Z
+# end_utc=2026-07-31T08:15:25Z exit=0
+
+$ normalize_vector_json go1.26.5
+# start_utc=2026-07-31T08:15:25Z
+# end_utc=2026-07-31T08:15:25Z exit=0
+
+$ compare_vector_results
+# start_utc=2026-07-31T08:15:25Z
+go1.26.4 normalized_sha256=05e966e9b4cc8ea6883d5f8a750cc2d91098a3e59aee365ed852e717067efbd9 lines=112
+go1.26.5 normalized_sha256=05e966e9b4cc8ea6883d5f8a750cc2d91098a3e59aee365ed852e717067efbd9 lines=112
+vector_result=bit-identical
+# end_utc=2026-07-31T08:15:25Z exit=0
+
+$ GOBIN=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-234-tools.IdjS0R/bin go install github.com/google/capslock/cmd/capslock@v0.3.2
+# start_utc=2026-07-31T08:15:25Z
+# end_utc=2026-07-31T08:15:26Z exit=0
+
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-234-tools.IdjS0R/bin/capslock -version
+# start_utc=2026-07-31T08:15:26Z
+capslock version v0.3.2
+compiled with Go version go1.26.5
+includes Go tools version v0.43.0
+# end_utc=2026-07-31T08:15:27Z exit=0
+
+$ go version -m /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-234-tools.IdjS0R/bin/capslock
+# start_utc=2026-07-31T08:15:27Z
+/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-234-tools.IdjS0R/bin/capslock: go1.26.5
+	path	github.com/google/capslock/cmd/capslock
+	mod	github.com/google/capslock	v0.3.2	h1:0ZQa9YR8s9ewFu1g5w6Rgd/lW/4dga7qJew3K6Ql7aM=
+	dep	github.com/fatih/color	v1.19.0	h1:Zp3PiM21/9Ld6FzSKyL5c/BULoe/ONr9KlbYVOfG8+w=
+	dep	github.com/mattn/go-colorable	v0.1.14	h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE=
+	dep	github.com/mattn/go-isatty	v0.0.20	h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
+	dep	golang.org/x/mod	v0.34.0	h1:xIHgNUUnW6sYkcM5Jleh05DvLOtwc6RitGHbDk4akRI=
+	dep	golang.org/x/sync	v0.20.0	h1:e0PTpb7pjO8GAtTs2dQ6jYa5BWYlMuX047Dco/pItO4=
+	dep	golang.org/x/sys	v0.42.0	h1:omrd2nAlyT5ESRdCLYdm3+fMfNFE/+Rf4bDIQImRJeo=
+	dep	golang.org/x/tools	v0.43.0	h1:12BdW9CeB3Z+J/I/wj34VMl8X+fEXBxVR90JeMX5E7s=
+	dep	google.golang.org/protobuf	v1.36.11	h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	DefaultGODEBUG=cryptocustomrand=1,tlssecpmlkem=0,urlstrictcolons=0
+	build	CGO_ENABLED=1
+	build	CGO_CFLAGS=
+	build	CGO_CPPFLAGS=
+	build	CGO_CXXFLAGS=
+	build	CGO_LDFLAGS=
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+# end_utc=2026-07-31T08:15:27Z exit=0
+
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-234-tools.IdjS0R/bin/capslock -packages ./...
+# start_utc=2026-07-31T08:15:27Z
+Capslock is an experimental tool for static analysis of Go packages.
+Share feedback and file bugs at https://github.com/google/capslock.
+For additional debugging signals, use verbose mode with -output=verbose
+To get machine-readable full analysis output, use -output=json
+
+Analyzed packages:
+  filippo.io/edwards25519 v1.2.0
+  github.com/gtank/ristretto255 v0.2.0
+
+ARBITRARY_EXECUTION: 11 references
+UNANALYZED: 13 references
+
+# end_utc=2026-07-31T08:15:29Z exit=0
+
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-234-tools.IdjS0R/bin/capslock -packages ./... -output=verbose
+# start_utc=2026-07-31T08:15:29Z
+Capslock is an experimental tool for static analysis of Go packages.
+Share feedback and file bugs at https://github.com/google/capslock.
+To get machine-readable full analysis output, use -output=json
+
+Analyzed packages:
+  filippo.io/edwards25519 v1.2.0
+  github.com/gtank/ristretto255 v0.2.0
+
+ARBITRARY_EXECUTION: 11 references (11 direct, 0 transitive)
+Example callpath:
+  github.com/the-sarge/cpace.Respond
+  api.go:76:26:github.com/the-sarge/cpace.respondWithRandom
+  api.go:92:41:github.com/the-sarge/cpace.newResponderCore
+  core.go:103:37:(github.com/the-sarge/cpace.irTranscript).responderConfirmationTag
+  transcript.go:73:24:github.com/the-sarge/cpace.confirmationTag
+  crypto.go:132:15:crypto/hmac.New
+  hmac.go:48:25:crypto/internal/fips140only.Enforced
+  fips140only.go:20:25:crypto/fips140.Enforced
+  enforcement.go:37:31:crypto/fips140.isBypassed
+
+UNANALYZED: 13 references (13 direct, 0 transitive)
+Example callpath:
+  github.com/the-sarge/cpace.Respond
+  api.go:76:26:github.com/the-sarge/cpace.respondWithRandom
+  api.go:92:41:github.com/the-sarge/cpace.newResponderCore
+  core.go:90:24:github.com/the-sarge/cpace.sampleScalar
+  crypto.go:59:27:io.ReadFull
+
+# end_utc=2026-07-31T08:15:32Z exit=0
+
+$ env GOTOOLCHAIN=go1.26.5 go test -v -run 'Test(ConfirmedExchangeAndExport|SessionPeerMetadata|SessionClose.*|SessionValueCopiesShareCloseState|NilReceiverMethods|FinishCleanupDoesNotAliasReturnedSessions|ClearOnFinishFailurePaths|SessionISKSurvivesCoreClear|SingleUseState.*|InputValidation|InputFieldSizeLimits|ProtocolAllowsEmptyLocalAssociatedData|ProtocolAllowsEmptySessionIDWithCompatibilityFlag|ProtocolRejectsAsymmetricSessionID|RoleLocalIdentityReversalFailsConfirmation|TranscriptLockingMismatches|ProtocolAbortsOnInvalidRistrettoEncoding|InitiatorAbortsOnInvalidResponderShare|PeerShare.*|WireLengthRejectionIsMessageNotPeerShare|ScalarMultVFY.*|MessageFramingCatalogue.*|BuildCIWireStability|WireFormatPrefixByte)$' -count=1 ./...
+# start_utc=2026-07-31T08:15:32Z
+=== RUN   TestConfirmedExchangeAndExport
+--- PASS: TestConfirmedExchangeAndExport (0.00s)
+=== RUN   TestSessionPeerMetadata
+--- PASS: TestSessionPeerMetadata (0.00s)
+=== RUN   TestSessionClose
+--- PASS: TestSessionClose (0.00s)
+=== RUN   TestSessionValueCopiesShareCloseState
+--- PASS: TestSessionValueCopiesShareCloseState (0.00s)
+=== RUN   TestNilReceiverMethods
+--- PASS: TestNilReceiverMethods (0.00s)
+=== RUN   TestSessionCloseConcurrentExport
+--- PASS: TestSessionCloseConcurrentExport (0.00s)
+=== RUN   TestSessionCloseConcurrentClose
+--- PASS: TestSessionCloseConcurrentClose (0.00s)
+=== RUN   TestFinishCleanupDoesNotAliasReturnedSessions
+--- PASS: TestFinishCleanupDoesNotAliasReturnedSessions (0.00s)
+=== RUN   TestClearOnFinishFailurePaths
+=== RUN   TestClearOnFinishFailurePaths/initiator_parse_failure
+=== RUN   TestClearOnFinishFailurePaths/initiator_confirmation_failure
+=== RUN   TestClearOnFinishFailurePaths/responder_parse_failure
+=== RUN   TestClearOnFinishFailurePaths/responder_confirmation_failure
+--- PASS: TestClearOnFinishFailurePaths (0.00s)
+    --- PASS: TestClearOnFinishFailurePaths/initiator_parse_failure (0.00s)
+    --- PASS: TestClearOnFinishFailurePaths/initiator_confirmation_failure (0.00s)
+    --- PASS: TestClearOnFinishFailurePaths/responder_parse_failure (0.00s)
+    --- PASS: TestClearOnFinishFailurePaths/responder_confirmation_failure (0.00s)
+=== RUN   TestSessionISKSurvivesCoreClear
+--- PASS: TestSessionISKSurvivesCoreClear (0.00s)
+=== RUN   TestSingleUseStateCloseNilAndZeroValue
+--- PASS: TestSingleUseStateCloseNilAndZeroValue (0.00s)
+=== RUN   TestSingleUseStateCloseCleansAbandonedState
+--- PASS: TestSingleUseStateCloseCleansAbandonedState (0.00s)
+=== RUN   TestSingleUseStateCloseAfterFinish
+=== RUN   TestSingleUseStateCloseAfterFinish/success
+=== RUN   TestSingleUseStateCloseAfterFinish/failed_finish
+--- PASS: TestSingleUseStateCloseAfterFinish (0.00s)
+    --- PASS: TestSingleUseStateCloseAfterFinish/success (0.00s)
+    --- PASS: TestSingleUseStateCloseAfterFinish/failed_finish (0.00s)
+=== RUN   TestSingleUseStateCopiesShareTerminalState
+--- PASS: TestSingleUseStateCopiesShareTerminalState (0.00s)
+=== RUN   TestInputValidation
+=== RUN   TestInputValidation/password
+=== RUN   TestInputValidation/password/Start
+=== RUN   TestInputValidation/password/Respond
+=== RUN   TestInputValidation/self_id
+=== RUN   TestInputValidation/self_id/Start
+=== RUN   TestInputValidation/self_id/Respond
+=== RUN   TestInputValidation/peer_id
+=== RUN   TestInputValidation/peer_id/Start
+=== RUN   TestInputValidation/peer_id/Respond
+=== RUN   TestInputValidation/session_id
+=== RUN   TestInputValidation/session_id/Start
+=== RUN   TestInputValidation/session_id/Respond
+=== RUN   TestInputValidation/self_id_before_oversized_context
+=== RUN   TestInputValidation/self_id_before_oversized_context/Start
+=== RUN   TestInputValidation/self_id_before_oversized_context/Respond
+=== RUN   TestInputValidation/session_id_before_oversized_context
+=== RUN   TestInputValidation/session_id_before_oversized_context/Start
+=== RUN   TestInputValidation/session_id_before_oversized_context/Respond
+=== RUN   TestInputValidation/oversized_context_before_oversized_session_id
+=== RUN   TestInputValidation/oversized_context_before_oversized_session_id/Start
+=== RUN   TestInputValidation/oversized_context_before_oversized_session_id/Respond
+=== RUN   TestInputValidation/oversized_context_before_oversized_local_associated_data
+=== RUN   TestInputValidation/oversized_context_before_oversized_local_associated_data/Start
+=== RUN   TestInputValidation/oversized_context_before_oversized_local_associated_data/Respond
+=== RUN   TestInputValidation/oversized_session_id_before_oversized_local_associated_data
+=== RUN   TestInputValidation/oversized_session_id_before_oversized_local_associated_data/Start
+=== RUN   TestInputValidation/oversized_session_id_before_oversized_local_associated_data/Respond
+--- PASS: TestInputValidation (0.00s)
+    --- PASS: TestInputValidation/password (0.00s)
+        --- PASS: TestInputValidation/password/Start (0.00s)
+        --- PASS: TestInputValidation/password/Respond (0.00s)
+    --- PASS: TestInputValidation/self_id (0.00s)
+        --- PASS: TestInputValidation/self_id/Start (0.00s)
+        --- PASS: TestInputValidation/self_id/Respond (0.00s)
+    --- PASS: TestInputValidation/peer_id (0.00s)
+        --- PASS: TestInputValidation/peer_id/Start (0.00s)
+        --- PASS: TestInputValidation/peer_id/Respond (0.00s)
+    --- PASS: TestInputValidation/session_id (0.00s)
+        --- PASS: TestInputValidation/session_id/Start (0.00s)
+        --- PASS: TestInputValidation/session_id/Respond (0.00s)
+    --- PASS: TestInputValidation/self_id_before_oversized_context (0.00s)
+        --- PASS: TestInputValidation/self_id_before_oversized_context/Start (0.00s)
+        --- PASS: TestInputValidation/self_id_before_oversized_context/Respond (0.00s)
+    --- PASS: TestInputValidation/session_id_before_oversized_context (0.00s)
+        --- PASS: TestInputValidation/session_id_before_oversized_context/Start (0.00s)
+        --- PASS: TestInputValidation/session_id_before_oversized_context/Respond (0.00s)
+    --- PASS: TestInputValidation/oversized_context_before_oversized_session_id (0.00s)
+        --- PASS: TestInputValidation/oversized_context_before_oversized_session_id/Start (0.00s)
+        --- PASS: TestInputValidation/oversized_context_before_oversized_session_id/Respond (0.00s)
+    --- PASS: TestInputValidation/oversized_context_before_oversized_local_associated_data (0.00s)
+        --- PASS: TestInputValidation/oversized_context_before_oversized_local_associated_data/Start (0.00s)
+        --- PASS: TestInputValidation/oversized_context_before_oversized_local_associated_data/Respond (0.00s)
+    --- PASS: TestInputValidation/oversized_session_id_before_oversized_local_associated_data (0.00s)
+        --- PASS: TestInputValidation/oversized_session_id_before_oversized_local_associated_data/Start (0.00s)
+        --- PASS: TestInputValidation/oversized_session_id_before_oversized_local_associated_data/Respond (0.00s)
+=== RUN   TestInputFieldSizeLimits
+=== RUN   TestInputFieldSizeLimits/password_max
+=== RUN   TestInputFieldSizeLimits/password_oversized
+=== RUN   TestInputFieldSizeLimits/self_id_max
+=== RUN   TestInputFieldSizeLimits/self_id_oversized
+=== RUN   TestInputFieldSizeLimits/peer_id_max
+=== RUN   TestInputFieldSizeLimits/peer_id_oversized
+=== RUN   TestInputFieldSizeLimits/context_max
+=== RUN   TestInputFieldSizeLimits/context_oversized
+=== RUN   TestInputFieldSizeLimits/session_id_max
+=== RUN   TestInputFieldSizeLimits/session_id_oversized
+=== RUN   TestInputFieldSizeLimits/local_associated_data_max
+=== RUN   TestInputFieldSizeLimits/local_associated_data_oversized
+--- PASS: TestInputFieldSizeLimits (0.00s)
+    --- PASS: TestInputFieldSizeLimits/password_max (0.00s)
+    --- PASS: TestInputFieldSizeLimits/password_oversized (0.00s)
+    --- PASS: TestInputFieldSizeLimits/self_id_max (0.00s)
+    --- PASS: TestInputFieldSizeLimits/self_id_oversized (0.00s)
+    --- PASS: TestInputFieldSizeLimits/peer_id_max (0.00s)
+    --- PASS: TestInputFieldSizeLimits/peer_id_oversized (0.00s)
+    --- PASS: TestInputFieldSizeLimits/context_max (0.00s)
+    --- PASS: TestInputFieldSizeLimits/context_oversized (0.00s)
+    --- PASS: TestInputFieldSizeLimits/session_id_max (0.00s)
+    --- PASS: TestInputFieldSizeLimits/session_id_oversized (0.00s)
+    --- PASS: TestInputFieldSizeLimits/local_associated_data_max (0.00s)
+    --- PASS: TestInputFieldSizeLimits/local_associated_data_oversized (0.00s)
+=== RUN   TestProtocolAllowsEmptyLocalAssociatedData
+=== RUN   TestProtocolAllowsEmptyLocalAssociatedData/nil_nil
+=== RUN   TestProtocolAllowsEmptyLocalAssociatedData/empty_empty
+=== RUN   TestProtocolAllowsEmptyLocalAssociatedData/nil_empty
+=== RUN   TestProtocolAllowsEmptyLocalAssociatedData/empty_nil
+--- PASS: TestProtocolAllowsEmptyLocalAssociatedData (0.00s)
+    --- PASS: TestProtocolAllowsEmptyLocalAssociatedData/nil_nil (0.00s)
+    --- PASS: TestProtocolAllowsEmptyLocalAssociatedData/empty_empty (0.00s)
+    --- PASS: TestProtocolAllowsEmptyLocalAssociatedData/nil_empty (0.00s)
+    --- PASS: TestProtocolAllowsEmptyLocalAssociatedData/empty_nil (0.00s)
+=== RUN   TestProtocolAllowsEmptySessionIDWithCompatibilityFlag
+=== RUN   TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/nil_nil
+=== RUN   TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/empty_empty
+=== RUN   TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/nil_empty
+=== RUN   TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/empty_nil
+=== RUN   TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/non-empty_flag_enabled
+--- PASS: TestProtocolAllowsEmptySessionIDWithCompatibilityFlag (0.00s)
+    --- PASS: TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/nil_nil (0.00s)
+    --- PASS: TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/empty_empty (0.00s)
+    --- PASS: TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/nil_empty (0.00s)
+    --- PASS: TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/empty_nil (0.00s)
+    --- PASS: TestProtocolAllowsEmptySessionIDWithCompatibilityFlag/non-empty_flag_enabled (0.00s)
+=== RUN   TestProtocolRejectsAsymmetricSessionID
+=== RUN   TestProtocolRejectsAsymmetricSessionID/different_non-empty
+=== RUN   TestProtocolRejectsAsymmetricSessionID/initiator_empty_compatibility_responder_non-empty
+=== RUN   TestProtocolRejectsAsymmetricSessionID/initiator_non-empty_responder_empty_compatibility
+--- PASS: TestProtocolRejectsAsymmetricSessionID (0.00s)
+    --- PASS: TestProtocolRejectsAsymmetricSessionID/different_non-empty (0.00s)
+    --- PASS: TestProtocolRejectsAsymmetricSessionID/initiator_empty_compatibility_responder_non-empty (0.00s)
+    --- PASS: TestProtocolRejectsAsymmetricSessionID/initiator_non-empty_responder_empty_compatibility (0.00s)
+=== RUN   TestRoleLocalIdentityReversalFailsConfirmation
+--- PASS: TestRoleLocalIdentityReversalFailsConfirmation (0.00s)
+=== RUN   TestTranscriptLockingMismatches
+=== RUN   TestTranscriptLockingMismatches/initiator_identity
+=== RUN   TestTranscriptLockingMismatches/responder_identity
+=== RUN   TestTranscriptLockingMismatches/context
+=== RUN   TestTranscriptLockingMismatches/session_id
+=== RUN   TestTranscriptLockingMismatches/ADa
+=== RUN   TestTranscriptLockingMismatches/ADb
+--- PASS: TestTranscriptLockingMismatches (0.00s)
+    --- PASS: TestTranscriptLockingMismatches/initiator_identity (0.00s)
+    --- PASS: TestTranscriptLockingMismatches/responder_identity (0.00s)
+    --- PASS: TestTranscriptLockingMismatches/context (0.00s)
+    --- PASS: TestTranscriptLockingMismatches/session_id (0.00s)
+    --- PASS: TestTranscriptLockingMismatches/ADa (0.00s)
+    --- PASS: TestTranscriptLockingMismatches/ADb (0.00s)
+=== RUN   TestSingleUseStateConcurrentFinishClose
+=== RUN   TestSingleUseStateConcurrentFinishClose/initiator_original_finish_versus_copied_close
+=== RUN   TestSingleUseStateConcurrentFinishClose/responder_copied_finish_versus_original_close
+--- PASS: TestSingleUseStateConcurrentFinishClose (0.00s)
+    --- PASS: TestSingleUseStateConcurrentFinishClose/initiator_original_finish_versus_copied_close (0.00s)
+    --- PASS: TestSingleUseStateConcurrentFinishClose/responder_copied_finish_versus_original_close (0.00s)
+=== RUN   TestProtocolAbortsOnInvalidRistrettoEncoding
+--- PASS: TestProtocolAbortsOnInvalidRistrettoEncoding (0.00s)
+=== RUN   TestInitiatorAbortsOnInvalidResponderShare
+=== RUN   TestInitiatorAbortsOnInvalidResponderShare/non-canonical
+=== RUN   TestInitiatorAbortsOnInvalidResponderShare/identity
+--- PASS: TestInitiatorAbortsOnInvalidResponderShare (0.00s)
+    --- PASS: TestInitiatorAbortsOnInvalidResponderShare/non-canonical (0.00s)
+    --- PASS: TestInitiatorAbortsOnInvalidResponderShare/identity (0.00s)
+=== RUN   TestPeerShareErrorsWrapErrAbort
+=== RUN   TestPeerShareErrorsWrapErrAbort/respond_non-canonical
+=== RUN   TestPeerShareErrorsWrapErrAbort/respond_identity
+=== RUN   TestPeerShareErrorsWrapErrAbort/finish_non-canonical
+=== RUN   TestPeerShareErrorsWrapErrAbort/finish_identity
+--- PASS: TestPeerShareErrorsWrapErrAbort (0.00s)
+    --- PASS: TestPeerShareErrorsWrapErrAbort/respond_non-canonical (0.00s)
+    --- PASS: TestPeerShareErrorsWrapErrAbort/respond_identity (0.00s)
+    --- PASS: TestPeerShareErrorsWrapErrAbort/finish_non-canonical (0.00s)
+    --- PASS: TestPeerShareErrorsWrapErrAbort/finish_identity (0.00s)
+=== RUN   TestPeerShareEncodingRejection
+--- PASS: TestPeerShareEncodingRejection (0.00s)
+=== RUN   TestPeerShareIdentityRejection
+--- PASS: TestPeerShareIdentityRejection (0.00s)
+=== RUN   TestPeerShareLengthDefenseInternal
+--- PASS: TestPeerShareLengthDefenseInternal (0.00s)
+=== RUN   TestPeerShareRolePassesThroughNonSentinelErrors
+--- PASS: TestPeerShareRolePassesThroughNonSentinelErrors (0.00s)
+=== RUN   TestPeerShareRoleSharedSecretAddsRoleContext
+--- PASS: TestPeerShareRoleSharedSecretAddsRoleContext (0.00s)
+=== RUN   TestScalarMultVFYElementMatchesEncodedPeerShare
+--- PASS: TestScalarMultVFYElementMatchesEncodedPeerShare (0.00s)
+=== RUN   TestPeerShareRoleDecodeSharedSecretAddsRoleContext
+--- PASS: TestPeerShareRoleDecodeSharedSecretAddsRoleContext (0.00s)
+=== RUN   TestWireLengthRejectionIsMessageNotPeerShare
+--- PASS: TestWireLengthRejectionIsMessageNotPeerShare (0.00s)
+=== RUN   TestScalarMultVFYPostMultiplyIdentityDefense
+--- PASS: TestScalarMultVFYPostMultiplyIdentityDefense (0.00s)
+=== RUN   TestBuildCIWireStability
+--- PASS: TestBuildCIWireStability (0.00s)
+=== RUN   TestMessageFramingCatalogueRejectsMalformed
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/truncated_field
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/trailing_data
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/wrong_format
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/wrong_suite
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/wrong_role
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/swapped_format_suite
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/missing_length_prefix
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/truncated_LEB128_continuation
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/non-canonical_zero_LEB128
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/non-canonical_value_LEB128
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/A/malformed_LEB128
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/truncated_field
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/trailing_data
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/wrong_format
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/wrong_suite
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/wrong_role
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/swapped_format_suite
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/missing_length_prefix
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/truncated_LEB128_continuation
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/non-canonical_zero_LEB128
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/non-canonical_value_LEB128
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/B/malformed_LEB128
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/truncated_field
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/trailing_data
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/wrong_format
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/wrong_suite
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/wrong_role
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/swapped_format_suite
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/missing_length_prefix
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/truncated_LEB128_continuation
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/non-canonical_zero_LEB128
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/non-canonical_value_LEB128
+=== RUN   TestMessageFramingCatalogueRejectsMalformed/C/malformed_LEB128
+--- PASS: TestMessageFramingCatalogueRejectsMalformed (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsMalformed/A (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/truncated_field (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/trailing_data (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/wrong_format (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/wrong_suite (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/wrong_role (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/swapped_format_suite (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/missing_length_prefix (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/truncated_LEB128_continuation (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/non-canonical_zero_LEB128 (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/non-canonical_value_LEB128 (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/A/malformed_LEB128 (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsMalformed/B (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/truncated_field (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/trailing_data (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/wrong_format (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/wrong_suite (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/wrong_role (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/swapped_format_suite (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/missing_length_prefix (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/truncated_LEB128_continuation (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/non-canonical_zero_LEB128 (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/non-canonical_value_LEB128 (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/B/malformed_LEB128 (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsMalformed/C (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/truncated_field (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/trailing_data (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/wrong_format (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/wrong_suite (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/wrong_role (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/swapped_format_suite (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/missing_length_prefix (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/truncated_LEB128_continuation (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/non-canonical_zero_LEB128 (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/non-canonical_value_LEB128 (0.00s)
+        --- PASS: TestMessageFramingCatalogueRejectsMalformed/C/malformed_LEB128 (0.00s)
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/A
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/A/too_large
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/A/wrong_suite_before_size
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/A/wrong_role_before_size
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/B
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/B/too_large
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/B/wrong_suite_before_size
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/B/wrong_role_before_size
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/C
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/C/too_large
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/C/wrong_suite_before_size
+=== RUN   TestMessageFramingCataloguePinsAggregateSizePrecedence/C/wrong_role_before_size
+--- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence (0.00s)
+    --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/A (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/A/too_large (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/A/wrong_suite_before_size (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/A/wrong_role_before_size (0.00s)
+    --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/B (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/B/too_large (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/B/wrong_suite_before_size (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/B/wrong_role_before_size (0.00s)
+    --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/C (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/C/too_large (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/C/wrong_suite_before_size (0.00s)
+        --- PASS: TestMessageFramingCataloguePinsAggregateSizePrecedence/C/wrong_role_before_size (0.00s)
+=== RUN   TestMessageFramingCatalogueAcceptsMaxFields
+=== RUN   TestMessageFramingCatalogueAcceptsMaxFields/A_max_fields
+=== RUN   TestMessageFramingCatalogueAcceptsMaxFields/B_max_fields
+=== RUN   TestMessageFramingCatalogueAcceptsMaxFields/C_max_fields
+--- PASS: TestMessageFramingCatalogueAcceptsMaxFields (0.00s)
+    --- PASS: TestMessageFramingCatalogueAcceptsMaxFields/A_max_fields (0.00s)
+    --- PASS: TestMessageFramingCatalogueAcceptsMaxFields/B_max_fields (0.00s)
+    --- PASS: TestMessageFramingCatalogueAcceptsMaxFields/C_max_fields (0.00s)
+=== RUN   TestMessageFramingCatalogueOwnsFieldLengthAcceptance
+=== RUN   TestMessageFramingCatalogueOwnsFieldLengthAcceptance/A
+=== RUN   TestMessageFramingCatalogueOwnsFieldLengthAcceptance/B
+=== RUN   TestMessageFramingCatalogueOwnsFieldLengthAcceptance/C
+--- PASS: TestMessageFramingCatalogueOwnsFieldLengthAcceptance (0.00s)
+    --- PASS: TestMessageFramingCatalogueOwnsFieldLengthAcceptance/A (0.00s)
+    --- PASS: TestMessageFramingCatalogueOwnsFieldLengthAcceptance/B (0.00s)
+    --- PASS: TestMessageFramingCatalogueOwnsFieldLengthAcceptance/C (0.00s)
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_session_id_oversized
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_session_id_over-declared_absent_bytes
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_point_short
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_point_long
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_associated_data_oversized
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_associated_data_over-declared_absent_bytes
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_point_short
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_point_long
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_associated_data_oversized
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_associated_data_over-declared_absent_bytes
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_tag_short
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_tag_long
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/C_message_C_tag_short
+=== RUN   TestMessageFramingCatalogueRejectsFieldLimits/C_message_C_tag_long
+--- PASS: TestMessageFramingCatalogueRejectsFieldLimits (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_session_id_oversized (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_session_id_over-declared_absent_bytes (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_point_short (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_point_long (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_associated_data_oversized (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/A_message_A_associated_data_over-declared_absent_bytes (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_point_short (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_point_long (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_associated_data_oversized (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_associated_data_over-declared_absent_bytes (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_tag_short (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/B_message_B_tag_long (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/C_message_C_tag_short (0.00s)
+    --- PASS: TestMessageFramingCatalogueRejectsFieldLimits/C_message_C_tag_long (0.00s)
+=== RUN   TestWireFormatPrefixByte
+=== RUN   TestWireFormatPrefixByte/A
+=== RUN   TestWireFormatPrefixByte/B
+=== RUN   TestWireFormatPrefixByte/C
+--- PASS: TestWireFormatPrefixByte (0.00s)
+    --- PASS: TestWireFormatPrefixByte/A (0.00s)
+    --- PASS: TestWireFormatPrefixByte/B (0.00s)
+    --- PASS: TestWireFormatPrefixByte/C (0.00s)
+=== RUN   TestScalarMultVFYDraftInvalidVectors
+--- PASS: TestScalarMultVFYDraftInvalidVectors (0.00s)
+PASS
+ok  	github.com/the-sarge/cpace	0.189s
+# end_utc=2026-07-31T08:15:32Z exit=0
+
+$ require_text_test_names protocol audit
+# start_utc=2026-07-31T08:15:32Z
+# end_utc=2026-07-31T08:15:32Z exit=0
+
+$ git status --porcelain=v1
+# start_utc=2026-07-31T08:15:32Z
+# end_utc=2026-07-31T08:15:32Z exit=0
+
+$ git diff --exit-code --no-ext-diff
+# start_utc=2026-07-31T08:15:32Z
+# end_utc=2026-07-31T08:15:32Z exit=0
+# candidate_worktree_clean_after=true
+# transcript_end_utc=2026-07-31T08:15:32Z
+# result=pass

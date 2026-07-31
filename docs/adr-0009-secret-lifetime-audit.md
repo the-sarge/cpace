@@ -31,4 +31,4 @@ Scope: manual audit for the ADR-0009 caller-input implementation. This is not a 
 
 - Go still does not guarantee secure zeroization, pinning, or avoidance of compiler/runtime copies. This audit is a best-effort lifetime review, not a claim of resistance to local memory disclosure.
 - `calculateGenerator`, `lvCat`, `prependLen`, SHA-512, HMAC, and HKDF internals can create heap or runtime-owned intermediates outside package control; this risk is unchanged in kind from the existing security assessment.
-- This branch changes security-relevant caller-input mapping and validation vocabulary. Dependency review, Capslock, security/spec audit, and paired long-fuzz evidence remain historical until refreshed at the exact release candidate.
+- This implementation changed security-relevant caller-input mapping and validation vocabulary, so its dependency, Capslock, security/spec, and paired long-fuzz evidence remained historical until exact-candidate refresh. Current freshness is indexed in `docs/evidence-baseline.md`; this implementation-time audit does not itself make any evidence lane current.

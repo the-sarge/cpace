@@ -1,40 +1,43 @@
 # Capslock Report
 
-Date: 2026-06-19
+Date: 2026-07-31
 
 Target module: `github.com/the-sarge/cpace`
 
-Package-code baseline: `f7efa6a963a954952b1ecad3f46530f13799fe89`
+Package-code baseline: `1f19e278112fa037890848ed6c086addeffdca4e`
 
-Status: external-review evidence. Capslock is experimental static capability
-analysis; this report is review signal, not a release gate.
+Status: exact-candidate external-review evidence. Capslock is experimental static capability analysis; this report is review signal, not a release gate.
 
-This report refreshes the Capslock evidence after the accepted-ADR implementation sequence and PR #199's Go fix modernization. The refresh was run from a clean worktree at the exact package-code baseline. The capability classes remain the same as the previous report, while reference counts increased with the internal core extraction and caller-input refactor.
+This report refreshes Capslock against the clean frozen `v0.1.3` candidate under Go 1.26.5. Compared with the historical Go 1.26.4 report at `f7efa6a963a954952b1ecad3f46530f13799fe89`, capability classes and reference counts are unchanged; only the reported `crypto.go` line number shifts after the scalar-sampling comment correction.
 
-Transcript: `docs/evidence/f7efa6a-20260619/local-analysis.log`
+Transcript: `docs/evidence/1f19e27-20260731-protocol/protocol-audit.log`
+
+Checksums: `docs/evidence/1f19e27-20260731-protocol/SHA256SUMS`
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether this pinned Capslock report is fresh for the latest release candidate.
-
-Evidence status: historical Go 1.26.4 signal only. The Go 1.26.5 pin requires Capslock to be rerun against the exact clean `v0.1.3` candidate before a current-candidate capability claim.
 
 ## Tool
 
 ```sh
-go run github.com/google/capslock/cmd/capslock@v0.3.2 -version
+go install github.com/google/capslock/cmd/capslock@v0.3.2
+capslock -version
 ```
 
 Result:
 
 ```text
 capslock version v0.3.2
-compiled with Go version go1.26.4
+compiled with Go version go1.26.5
 includes Go tools version v0.43.0
 ```
 
-## Command
+The transcript also preserves `go version -m` output for the built binary, including `github.com/google/capslock v0.3.2` and its module checksum.
+
+## Commands
 
 ```sh
-go run github.com/google/capslock/cmd/capslock@v0.3.2 -packages ./...
+capslock -packages ./...
+capslock -packages ./... -output=verbose
 ```
 
 ## Summary
@@ -48,7 +51,7 @@ ARBITRARY_EXECUTION: 11 references
 UNANALYZED: 13 references
 ```
 
-Verbose output preserved the same capability classes and example call paths:
+Verbose output preserves the same capability classes, counts, and example call paths:
 
 ```text
 ARBITRARY_EXECUTION: 11 references (11 direct, 0 transitive)
@@ -58,7 +61,7 @@ Example callpath:
   api.go:92:41:github.com/the-sarge/cpace.newResponderCore
   core.go:103:37:(github.com/the-sarge/cpace.irTranscript).responderConfirmationTag
   transcript.go:73:24:github.com/the-sarge/cpace.confirmationTag
-  crypto.go:131:15:crypto/hmac.New
+  crypto.go:132:15:crypto/hmac.New
   hmac.go:48:25:crypto/internal/fips140only.Enforced
   fips140only.go:20:25:crypto/fips140.Enforced
   enforcement.go:37:31:crypto/fips140.isBypassed
@@ -72,22 +75,17 @@ Example callpath:
   crypto.go:59:27:io.ReadFull
 ```
 
-Line numbers and reference counts shifted with the accepted-ADR refactor sequence; the broad capability classes are unchanged.
-
-The package does not directly expose filesystem, network, subprocess, dynamic
-loading, environment mutation, or other broad operating-system capabilities in
-the default Capslock summary.
+The package does not directly expose filesystem, network, subprocess, dynamic-loading, environment-mutation, plugin, or unsafe capabilities in the default Capslock summary.
 
 ## Finding Triage
 
-| Capability | Count | Paths | Triage |
-| --- | ---: | --- | --- |
-| `ARBITRARY_EXECUTION` | 11 | Public exchange and export paths through `crypto/hmac.New` or `crypto/hkdf.Key` into Go's `crypto/fips140.isBypassed` path. | Tool classification from Go standard-library FIPS enforcement internals, not an application subprocess or dynamic-code execution path in this module. Keep under review when Go toolchains change. |
-| `UNANALYZED` | 13 | Public exchange paths and internal core constructors through `sampleScalar` and `io.ReadFull`. | Expected for scalar-randomness reads. Public `Start` and `Respond` use `crypto/rand.Reader`; tests and fuzzing use package-internal deterministic readers. |
+| Capability | Count | Change from historical baseline | Paths | Triage |
+| --- | ---: | --- | --- | --- |
+| `ARBITRARY_EXECUTION` | 11 direct | None | Public exchange and export paths through `crypto/hmac.New` or `crypto/hkdf.Key` into Go's `crypto/fips140.isBypassed` path. | Tool classification from Go standard-library FIPS enforcement internals, not an application subprocess or dynamic-code execution path in this module. Keep under review when Go toolchains change. |
+| `UNANALYZED` | 13 direct | None | Public exchange paths and internal core constructors through `sampleScalar` and `io.ReadFull`. | Expected for scalar-randomness reads. Public `Start` and `Respond` use `crypto/rand.Reader`; tests and fuzzing use package-internal deterministic readers. |
+
+No changed or new capability required a release finding. The Go 1.26.5 toolchain change itself was security-relevant, so both existing classes were re-examined rather than carried forward from the historical report without rerunning the tool.
 
 ## Residual Risk
 
-Repeat this report when dependencies, Go toolchain, randomness handling,
-HKDF/HMAC usage, or package imports change. Treat new filesystem, network,
-process, plugin, environment, or unsafe capability classes as external-review
-findings before a release-readiness claim.
+Repeat this report when dependencies, Go toolchain, randomness handling, HKDF/HMAC usage, or package imports change. Treat new filesystem, network, process, plugin, environment, or unsafe capability classes as external-review findings before a release-readiness claim.
