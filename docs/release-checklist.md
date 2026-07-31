@@ -3,6 +3,8 @@
 This checklist is for future prerelease or production-readiness candidates. It
 does not make the current package production-ready.
 
+Current target: `v0.1.3`, a single-suite prerelease that remains explicitly non-production-ready. Its exact scope and execution order are in [`docs/v0.1.3-release-plan.md`](v0.1.3-release-plan.md). ADR-0010 consideration and monorepo work are excluded; any later accepted breaking migration would target `v0.2.0`.
+
 ## 1. Freeze Candidate Scope
 
 - Identify the exact candidate commit.
@@ -15,7 +17,11 @@ does not make the current package production-ready.
 
 ### v0.1.3 GitHub Actions disposition
 
-Include PR #227 before freezing the `v0.1.3` candidate. The update keeps every Action pinned to a full commit SHA and retains the release policy checker's supported-action enforcement; applying the available patch, minor, and major Action releases now avoids beginning exact-candidate evidence against dependency state already selected for replacement. Because these CI and release dependencies are part of the candidate, exact-candidate validation and evidence capture begin only after the update reaches the candidate branch through the maintainer-controlled merge path.
+PR #227 was included through merge commit `6be725fe617b2ad47fd260f39382d000c438e292` before freezing the `v0.1.3` candidate. The update keeps every Action pinned to a full commit SHA and retains the release policy checker's supported-action enforcement; applying the available patch, minor, and major Action releases before evidence capture avoids beginning exact-candidate evidence against dependency state already selected for replacement. These CI and release dependencies are now part of the candidate, so exact-candidate validation and evidence capture can begin from a later clean candidate commit that includes this merge.
+
+### v0.1.3 candidate source freeze
+
+The exact clean candidate source commit is `1f19e278112fa037890848ed6c086addeffdca4e`. Issues #233-#237 must run their evidence lanes against this source baseline. Evidence artifacts and release documentation may be committed afterward, but any change to security-relevant state selects a new exact clean candidate and restarts every affected lane before tagging.
 
 ## 2. Local Validation
 

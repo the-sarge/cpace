@@ -1,14 +1,13 @@
 # Project Plan
 
-Status: living release-readiness plan after the policy/API decisions landed in
-PRs #13-#17 and the public `v0.1.2` external-review/evidence snapshot.
+Status: living release-readiness plan after the policy/API decisions landed in PRs #13-#17 and the public `v0.1.2` external-review/evidence snapshot. The current delivery target is the single-suite `v0.1.3` prerelease.
 
 This document tracks current work. Historical review triage remains in
 `docs/interview-results-triage.md`.
 
 ## Current Phase
 
-The current phase is release readiness. Public API and package-profile policy decisions are closed unless a new review finding reopens one. ADR-0008 records the narrow public-lifecycle thaw for `Initiator.Close` and `Responder.Close`; ADR-0009 records a broad Caller input replacement whose authorization is narrowly limited to its follow-up `Input` implementation. Do not describe the package as production-ready until the release bar below is satisfied and independent cryptographic review is complete.
+The current phase is exact-candidate evidence capture for the single-suite `v0.1.3` prerelease. The frozen clean candidate source commit is `1f19e278112fa037890848ed6c086addeffdca4e`; any security-relevant change selects a new candidate and restarts affected evidence lanes. Public API and package-profile policy decisions are closed unless a new review finding reopens one. ADR-0008 records the narrow public-lifecycle thaw for `Initiator.Close` and `Responder.Close`; ADR-0009 records a broad Caller input replacement whose authorization is narrowly limited to its completed follow-up `Input` implementation. ADR-0010 consideration and monorepo proposal work remain deferred outside this branch; any later accepted migration would target `v0.2.0`. `v0.1.3` remains explicitly non-production-ready; external review issues #29-#31 and independent cryptographic review issue #32 remain blockers for a future production-readiness claim, not blockers for this prerelease.
 
 ## Release-Readiness PR Shape
 
@@ -37,10 +36,11 @@ All rows below are closed and preserved as the policy/API decision record.
 
 ## Recommended PR Order
 
-1. Pin the local and CI toolchain to the Go 1.26.5 security release without changing the Go 1.26 language version.
-2. Freeze the exact `v0.1.3` candidate scope through issue #232 without admitting new API, behavior, dependency, protocol, parser/framing, or package-profile work.
-3. Refresh exact-candidate dependency/govulncheck, gosec, Capslock, paired long fuzz, security/spec audit, vector stability, tag-ruleset, GitHub alert, Scorecard, and release-validation evidence because PR #219 changed production code on the Close/zeroization path and Go 1.26.5 changes the toolchain.
-4. Cut and validate the signed, explicitly non-production-ready `v0.1.3` prerelease while retaining issues #29-#32 for the future production-readiness path.
+1. Keep the frozen `v0.1.3` candidate source at `1f19e278112fa037890848ed6c086addeffdca4e`. PR #227 is included through merge commit `6be725fe617b2ad47fd260f39382d000c438e292`, and issue #231 pins the local and CI toolchain to the Go 1.26.5 security release without changing the Go 1.26 language version. Admit no additional public API, observable behavior, dependency, protocol, parser/framing, or package-profile work without an explicit policy reopen; any security-relevant change selects a new candidate and restarts affected evidence lanes.
+2. Keep release-facing documentation led by the breaking pre-v1 `Config` → `Input` migration, exported `Suite` removal, and nil-safe `Session.Close` change, followed by the additive lifecycle and peer-share error APIs. State explicitly that the wire format and single draft-21 suite are unchanged.
+3. Refresh exact-candidate evidence for issue #33. PR #219 changed production code on the Close/zeroization path, and Go 1.26.5 changes the toolchain, so refresh dependency/govulncheck, gosec, Capslock, paired long fuzz, security/spec audit, vector stability, tag-ruleset, GitHub alert, Scorecard, and release-validation evidence against the exact candidate.
+4. Cut and validate the signed `v0.1.3` prerelease using `docs/v0.1.3-release-plan.md` and `docs/release-checklist.md`. Publish it as non-production-ready and retain issues #29-#32 for the future production-readiness path.
+5. Keep ADR-0010 consideration and monorepo work outside this branch and revisit them only after `v0.1.3` is complete.
 
 ## Completed Evidence
 
