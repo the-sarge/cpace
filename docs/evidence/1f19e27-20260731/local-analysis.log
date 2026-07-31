@@ -1,0 +1,345 @@
+# cpace v0.1.3 dependency, vulnerability, and SAST evidence
+# candidate=1f19e278112fa037890848ed6c086addeffdca4e
+# candidate_worktree=/tmp/cpace-233-candidate.80CDYb/repo
+# transcript_start_utc=2026-07-31T06:58:34Z
+# tool_bin=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin
+# capture_script=docs/evidence/1f19e27-20260731/capture.sh
+
+$ hostname
+# start_utc=2026-07-31T06:58:34Z
+mbp128.local
+# end_utc=2026-07-31T06:58:34Z exit=0
+
+$ sw_vers
+# start_utc=2026-07-31T06:58:34Z
+ProductName:		macOS
+ProductVersion:		26.6
+BuildVersion:		25G72
+# end_utc=2026-07-31T06:58:34Z exit=0
+
+$ uname -a
+# start_utc=2026-07-31T06:58:34Z
+Darwin mbp128.local 25.6.0 Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:27 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6041 arm64
+# end_utc=2026-07-31T06:58:34Z exit=0
+
+$ git --version
+# start_utc=2026-07-31T06:58:34Z
+git version 2.50.1 (Apple Git-155)
+# end_utc=2026-07-31T06:58:34Z exit=0
+
+$ git rev-parse HEAD
+# start_utc=2026-07-31T06:58:34Z
+1f19e278112fa037890848ed6c086addeffdca4e
+# end_utc=2026-07-31T06:58:34Z exit=0
+
+$ git status --porcelain=v1
+# start_utc=2026-07-31T06:58:34Z
+# end_utc=2026-07-31T06:58:34Z exit=0
+
+$ git diff --exit-code --no-ext-diff
+# start_utc=2026-07-31T06:58:34Z
+# end_utc=2026-07-31T06:58:34Z exit=0
+# candidate_worktree_clean=true
+
+$ go version
+# start_utc=2026-07-31T06:58:34Z
+go version go1.26.5 darwin/arm64
+# end_utc=2026-07-31T06:58:34Z exit=0
+
+$ go env GOOS GOARCH GOVERSION GOTOOLCHAIN
+# start_utc=2026-07-31T06:58:34Z
+darwin
+arm64
+go1.26.5
+auto
+# end_utc=2026-07-31T06:58:34Z exit=0
+
+$ GOBIN=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+# start_utc=2026-07-31T06:58:34Z
+# end_utc=2026-07-31T06:58:35Z exit=0
+
+$ GOBIN=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin go install github.com/securego/gosec/v2/cmd/gosec@v2.26.1
+# start_utc=2026-07-31T06:58:35Z
+# end_utc=2026-07-31T06:58:36Z exit=0
+
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin/govulncheck -version
+# start_utc=2026-07-31T06:58:36Z
+Go: go1.26.5
+Scanner: govulncheck@v1.3.0
+DB: https://vuln.go.dev
+DB updated: 2026-07-27 20:14:16 +0000 UTC
+
+# end_utc=2026-07-31T06:58:37Z exit=0
+
+$ go version -m /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin/govulncheck
+# start_utc=2026-07-31T06:58:37Z
+/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin/govulncheck: go1.26.5
+	path	golang.org/x/vuln/cmd/govulncheck
+	mod	golang.org/x/vuln	v1.3.0	h1:hZYzR8uRhYhDSX88d+40TWbKAVw7BIvRWm26rtEn8jw=
+	dep	golang.org/x/mod	v0.35.0	h1:Ww1D637e6Pg+Zb2KrWfHQUnH2dQRLBQyAtpr/haaJeM=
+	dep	golang.org/x/sync	v0.20.0	h1:e0PTpb7pjO8GAtTs2dQ6jYa5BWYlMuX047Dco/pItO4=
+	dep	golang.org/x/telemetry	v0.0.0-20260421165255-392afab6f40e	h1:OXgN37M6hqjaAvb7CJK9vJ+7Z/6lvIm5bXho5poo/Wk=
+	dep	golang.org/x/tools	v0.44.0	h1:UP4ajHPIcuMjT1GqzDWRlalUEoY+uzoZKnhOjbIPD2c=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	DefaultGODEBUG=cryptocustomrand=1,tlssecpmlkem=0,urlstrictcolons=0
+	build	CGO_ENABLED=1
+	build	CGO_CFLAGS=
+	build	CGO_CPPFLAGS=
+	build	CGO_CXXFLAGS=
+	build	CGO_LDFLAGS=
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+# end_utc=2026-07-31T06:58:37Z exit=0
+
+$ go version -m /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin/gosec
+# start_utc=2026-07-31T06:58:37Z
+/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin/gosec: go1.26.5
+	path	github.com/securego/gosec/v2/cmd/gosec
+	mod	github.com/securego/gosec/v2	v2.26.1	h1:gdkttGhQFVehqRJ8grKH4DrpqM/QlPKNHBnl8QgcEC4=
+	dep	cloud.google.com/go	v0.121.2	h1:v2qQpN6Dx9x2NmwrqlesOt3Ys4ol5/lFZ6Mg1B7OJCg=
+	dep	cloud.google.com/go/auth	v0.16.5	h1:mFWNQ2FEVWAliEQWpAdH80omXFokmrnbDhUS9cBywsI=
+	dep	cloud.google.com/go/compute/metadata	v0.9.0	h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdBtwLoEkH9Zs=
+	dep	github.com/anthropics/anthropic-sdk-go	v1.38.0	h1:bA4DcK+91gorIX+5VTONnynyt9LRU4nnN6rRQ+j/NIg=
+	dep	github.com/bahlo/generic-list-go	v0.2.0	h1:5sz/EEAK+ls5wF+NeqDpk5+iNdMDXrh3z3nPnH1Wvgk=
+	dep	github.com/buger/jsonparser	v1.1.2	h1:frqHqw7otoVbk5M8LlE/L7HTnIq2v9RX6EJ48i9AxJk=
+	dep	github.com/ccojocar/zxcvbn-go	v1.0.4	h1:FWnCIRMXPj43ukfX000kvBZvV6raSxakYr1nzyNrUcc=
+	dep	github.com/cespare/xxhash/v2	v2.3.0	h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
+	dep	github.com/felixge/httpsnoop	v1.0.4	h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
+	dep	github.com/go-logr/logr	v1.4.3	h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
+	dep	github.com/go-logr/stdr	v1.2.2	h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
+	dep	github.com/google/go-cmp	v0.7.0	h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+	dep	github.com/google/s2a-go	v0.1.9	h1:LGD7gtMgezd8a/Xak7mEWL0PjoTQFvpRudN895yqKW0=
+	dep	github.com/google/uuid	v1.6.0	h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+	dep	github.com/googleapis/enterprise-certificate-proxy	v0.3.6	h1:GW/XbdyBFQ8Qe+YAmFU9uHLo7OnF5tL52HFAgMmyrf4=
+	dep	github.com/googleapis/gax-go/v2	v2.15.0	h1:SyjDc1mGgZU5LncH8gimWo9lW1DtIfPibOG81vgd/bo=
+	dep	github.com/gookit/color	v1.6.0	h1:JjJXBTk1ETNyqyilJhkTXJYYigHG24TM9Xa2M1xAhRA=
+	dep	github.com/gorilla/websocket	v1.5.3	h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
+	dep	github.com/invopop/jsonschema	v0.13.0	h1:KvpoAJWEjR3uD9Kbm2HWJmqsEaHt8lBUpd0qHcIi21E=
+	dep	github.com/mailru/easyjson	v0.7.7	h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0=
+	dep	github.com/openai/openai-go/v3	v3.32.0	h1:aHp/3wkX1W6jB8zTtf9xV0aK0qPFSVDqS7AHmlJ4hXs=
+	dep	github.com/tidwall/gjson	v1.18.0	h1:FIDeeyB800efLX89e5a8Y0BNH+LOngJyGrIWxG2FKQY=
+	dep	github.com/tidwall/match	v1.1.1	h1:+Ho715JplO36QYgwN9PGYNhgZvoUSc9X2c80KVTi+GA=
+	dep	github.com/tidwall/pretty	v1.2.1	h1:qjsOFOWWQl+N3RsoF5/ssm1pHmJJwhjlSbZ51I6wMl4=
+	dep	github.com/tidwall/sjson	v1.2.5	h1:kLy8mja+1c9jlljvWTlSazM7cKDRfJuR/bOJhcY5NcY=
+	dep	github.com/wk8/go-ordered-map/v2	v2.1.8	h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=
+	dep	github.com/xo/terminfo	v0.0.0-20220910002029-abceb7e1c41e	h1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=
+	dep	go.opentelemetry.io/auto/sdk	v1.2.1	h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
+	dep	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp	v0.61.0	h1:F7Jx+6hwnZ41NSFTO5q4LYDtJRXBf2PD0rNBkeB/lus=
+	dep	go.opentelemetry.io/otel	v1.41.0	h1:YlEwVsGAlCvczDILpUXpIpPSL/VPugt7zHThEMLce1c=
+	dep	go.opentelemetry.io/otel/metric	v1.41.0	h1:rFnDcs4gRzBcsO9tS8LCpgR0dxg4aaxWlJxCno7JlTQ=
+	dep	go.opentelemetry.io/otel/trace	v1.41.0	h1:Vbk2co6bhj8L59ZJ6/xFTskY+tGAbOnCtQGVVa9TIN0=
+	dep	go.yaml.in/yaml/v3	v3.0.4	h1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=
+	dep	golang.org/x/crypto	v0.50.0	h1:zO47/JPrL6vsNkINmLoo/PH1gcxpls50DNogFvB5ZGI=
+	dep	golang.org/x/mod	v0.35.0	h1:Ww1D637e6Pg+Zb2KrWfHQUnH2dQRLBQyAtpr/haaJeM=
+	dep	golang.org/x/net	v0.53.0	h1:d+qAbo5L0orcWAr0a9JweQpjXF19LMXJE8Ey7hwOdUA=
+	dep	golang.org/x/sync	v0.20.0	h1:e0PTpb7pjO8GAtTs2dQ6jYa5BWYlMuX047Dco/pItO4=
+	dep	golang.org/x/sys	v0.43.0	h1:Rlag2XtaFTxp19wS8MXlJwTvoh8ArU6ezoyFsMyCTNI=
+	dep	golang.org/x/text	v0.36.0	h1:JfKh3XmcRPqZPKevfXVpI1wXPTqbkE5f7JA92a55Yxg=
+	dep	golang.org/x/tools	v0.44.0	h1:UP4ajHPIcuMjT1GqzDWRlalUEoY+uzoZKnhOjbIPD2c=
+	dep	google.golang.org/genai	v1.54.0	h1:ZQCa70WMTJDI11FdqWCzGvZ5PanpcpfoO6jl/lrSnGU=
+	dep	google.golang.org/genproto/googleapis/rpc	v0.0.0-20251202230838-ff82c1b0f217	h1:gRkg/vSppuSQoDjxyiGfN4Upv/h/DQmIR10ZU8dh4Ww=
+	dep	google.golang.org/grpc	v1.79.3	h1:sybAEdRIEtvcD68Gx7dmnwjZKlyfuc61Dyo9pGXXkKE=
+	dep	google.golang.org/protobuf	v1.36.10	h1:AYd7cD/uASjIL6Q9LiTjz8JLcrh/88q5UObnmY3aOOE=
+	dep	gopkg.in/yaml.v3	v3.0.1	h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+	build	-buildmode=exe
+	build	-compiler=gc
+	build	DefaultGODEBUG=cryptocustomrand=1,tlssecpmlkem=0,urlstrictcolons=0
+	build	CGO_ENABLED=1
+	build	CGO_CFLAGS=
+	build	CGO_CPPFLAGS=
+	build	CGO_CXXFLAGS=
+	build	CGO_LDFLAGS=
+	build	GOARCH=arm64
+	build	GOOS=darwin
+	build	GOARM64=v8.0
+# end_utc=2026-07-31T06:58:37Z exit=0
+
+$ go mod verify
+# start_utc=2026-07-31T06:58:37Z
+all modules verified
+# end_utc=2026-07-31T06:58:37Z exit=0
+
+$ go list -m all
+# start_utc=2026-07-31T06:58:37Z
+github.com/the-sarge/cpace
+filippo.io/edwards25519 v1.2.0
+github.com/gtank/ristretto255 v0.2.0
+# end_utc=2026-07-31T06:58:37Z exit=0
+
+$ module_inventory
+# start_utc=2026-07-31T06:58:37Z
+github.com/the-sarge/cpace (main)
+filippo.io/edwards25519 v1.2.0 sum=h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo= go_mod_sum=h1:xzAOLCNug/yB62zG1bQ8uziwrIqIuxhctzJT18Q77mc=
+github.com/gtank/ristretto255 v0.2.0 sum=h1:LeOuWr6giplWkkMizx2emfG03SRPJqKt1nfIHLVHQ/0= go_mod_sum=h1:OJ1ox/dWcp7sJ5grYDcZ+kkHYuj5nelW5aaL7ESVXBw=
+# end_utc=2026-07-31T06:58:37Z exit=0
+
+$ go mod graph
+# start_utc=2026-07-31T06:58:37Z
+github.com/the-sarge/cpace filippo.io/edwards25519@v1.2.0
+github.com/the-sarge/cpace github.com/gtank/ristretto255@v0.2.0
+github.com/the-sarge/cpace go@1.26
+github.com/the-sarge/cpace toolchain@go1.26.5
+filippo.io/edwards25519@v1.2.0 go@1.24.0
+github.com/gtank/ristretto255@v0.2.0 filippo.io/edwards25519@v1.1.0
+github.com/gtank/ristretto255@v0.2.0 go@1.23
+go@1.26 toolchain@go1.26
+# end_utc=2026-07-31T06:58:37Z exit=0
+
+$ license_inventory
+# start_utc=2026-07-31T06:58:37Z
+filippo.io/edwards25519 v1.2.0
+2d36597f7117c38b006835ae7f537487207d8ec407aa9d9980794b2030cbc067  LICENSE
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+github.com/gtank/ristretto255 v0.2.0
+1ad49671b401badf0e3aef1d8254a2c5856fb6365e8592c5bac38c0d332356d1  LICENSE
+Copyright (c) 2009 The Go Authors. All rights reserved.
+Copyright (c) 2017 George Tankersley. All rights reserved.
+Copyright (c) 2019 Henry de Valence. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# end_utc=2026-07-31T06:58:37Z exit=0
+
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin/govulncheck -test -show verbose ./...
+# start_utc=2026-07-31T06:58:37Z
+Fetching vulnerabilities from the database...
+
+Checking the code against the vulnerabilities...
+
+The package pattern matched the following 4 root packages:
+  github.com/the-sarge/cpace
+  github.com/the-sarge/cpace
+  github.com/the-sarge/cpace_test
+  github.com/the-sarge/cpace.test
+Govulncheck scanned the following 3 modules and the go1.26.5 standard library:
+  github.com/the-sarge/cpace
+  filippo.io/edwards25519@v1.2.0
+  github.com/gtank/ristretto255@v0.2.0
+
+No vulnerabilities found.
+# end_utc=2026-07-31T06:58:38Z exit=0
+
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-233-tools.Jxzk87/bin/gosec -tests ./...
+# start_utc=2026-07-31T06:58:38Z
+[gosec] 2026/07/31 02:58:39 Including rules: default
+[gosec] 2026/07/31 02:58:39 Excluding rules: default
+[gosec] 2026/07/31 02:58:39 Including analyzers: default
+[gosec] 2026/07/31 02:58:39 Excluding analyzers: default
+[gosec] 2026/07/31 02:58:39 Import directory: /tmp/cpace-233-candidate.80CDYb/repo
+[gosec] 2026/07/31 02:58:39 Import directory: /tmp/cpace-233-candidate.80CDYb/repo/tools/releasepolicy
+[gosec] 2026/07/31 02:58:39 Import directory: /tmp/cpace-233-candidate.80CDYb/repo/tools/evidencebaseline
+[gosec] 2026/07/31 02:58:39 Checking package: cpace
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/api.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/caps.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/core.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/crypto.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/doc.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/errors.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/framing.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/input.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/length_value.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/peer_share.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/session.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/terminal_state.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/transcript.go
+[gosec] 2026/07/31 02:58:39 Checking package: cpace
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/api.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/caps.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/core.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/crypto.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/doc.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/errors.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/framing.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/input.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/length_value.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/peer_share.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/session.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/terminal_state.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/transcript.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/api_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/bench_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/caller_input_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/caps_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/exchange_fixture_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/framing_catalogue_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/fuzz_registry_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/fuzz_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/length_value_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/strings_test.go
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/vectors_test.go
+[gosec] 2026/07/31 02:58:39 Checking package: cpace_test
+[gosec] 2026/07/31 02:58:39 Checking file: /tmp/cpace-233-candidate.80CDYb/repo/examples_test.go
+[gosec] 2026/07/31 02:58:39 Checking package: main
+Results:
+
+
+Summary:
+  Gosec  : dev
+  Files  : 38
+  Lines  : 8266
+  Nosec  : 0
+  Issues : 0
+
+# end_utc=2026-07-31T06:58:39Z exit=0
+
+$ git status --porcelain=v1
+# start_utc=2026-07-31T06:58:39Z
+# end_utc=2026-07-31T06:58:39Z exit=0
+
+$ git diff --exit-code --no-ext-diff
+# start_utc=2026-07-31T06:58:39Z
+# end_utc=2026-07-31T06:58:39Z exit=0
+# candidate_worktree_clean_after=true
+# transcript_end_utc=2026-07-31T06:58:39Z
+# result=pass

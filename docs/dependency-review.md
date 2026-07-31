@@ -1,20 +1,20 @@
 # Dependency Review
 
-Date: 2026-06-19
+Date: 2026-07-31
 
 Target module: `github.com/the-sarge/cpace`
 
-Review commit: `f7efa6a963a954952b1ecad3f46530f13799fe89`
+Review commit: `1f19e278112fa037890848ed6c086addeffdca4e`
 
 Review worktree: clean worktree at the review commit.
 
-Toolchain: Go 1.26.4 (`darwin/arm64`)
+Toolchain: Go 1.26.5 (`darwin/arm64`)
 
-Transcript: `docs/evidence/f7efa6a-20260619/local-analysis.log`
+Transcript: `docs/evidence/1f19e27-20260731/local-analysis.log`
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether this pinned review is fresh for the latest release candidate.
 
-Evidence status: historical Go 1.26.4 signal only. The Go 1.26.5 pin and post-baseline production changes require a full dependency, vulnerability, and SAST/gosec refresh against the exact clean `v0.1.3` candidate before a current-candidate claim.
+Evidence status: current for the frozen `v0.1.3` candidate's dependency, vulnerability, and SAST/gosec lane. Other evidence lanes remain independently gated in `docs/evidence-baseline.md`.
 
 Dependencies:
 
@@ -26,17 +26,21 @@ Dependencies:
 ## Commands
 
 - `go version`
+- `go mod verify`
 - `go list -m all`
+- `go list -m` with module and `go.mod` sums
+- `go mod graph`
+- dependency `LICENSE` inspection with SHA-256 hashes
 - `govulncheck -version`
 - `govulncheck -test -show verbose ./...`
-- `go run github.com/securego/gosec/v2/cmd/gosec@v2.26.1 ./...`
+- pinned `gosec@v2.26.1 -tests ./...`
 
 ## Results
 
 `go version` reported:
 
 ```text
-go version go1.26.4 darwin/arm64
+go version go1.26.5 darwin/arm64
 ```
 
 `go list -m all` reported only the main module plus:
@@ -44,33 +48,34 @@ go version go1.26.4 darwin/arm64
 - `filippo.io/edwards25519 v1.2.0`
 - `github.com/gtank/ristretto255 v0.2.0`
 
+The module and `go.mod` sums match `go.sum`, the graph contains no unexpected module, and `go mod verify` reported `all modules verified`. Both dependency `LICENSE` files are BSD-3-Clause texts; their SHA-256 hashes and full texts are preserved in the transcript. No unknown or incompatible license was found.
+
 `govulncheck -version` reported:
 
 ```text
-Go: go1.26.4
+Go: go1.26.5
 Scanner: govulncheck@v1.3.0
 DB: https://vuln.go.dev
-DB updated: 2026-06-16 23:55:18 +0000 UTC
+DB updated: 2026-07-27 20:14:16 +0000 UTC
 ```
 
-`govulncheck -test -show verbose ./...` scanned the module, the two dependency modules, and the Go 1.26.4 standard library. Result: no vulnerabilities found.
+`govulncheck -test -show verbose ./...` scanned the package and its tests, the two dependency modules, and the Go 1.26.5 standard library. Result: no vulnerabilities found.
 
-The pinned gosec command reported zero issues:
+The pinned test-inclusive gosec command reported zero issues:
 
 ```text
 Summary:
   Gosec  : dev
-  Files  : 13
-  Lines  : 1478
+  Files  : 38
+  Lines  : 8266
   Nosec  : 0
   Issues : 0
 ```
 
-The `Gosec : dev` summary value is the string emitted by the upstream gosec binary for this pinned `go run …gosec@v2.26.1` invocation. The file and line counts increased after the accepted-ADR implementation sequence split the package internals into additional files.
+The `Gosec : dev` value is the upstream binary's version banner. The transcript's embedded Go module metadata independently records `github.com/securego/gosec/v2 v2.26.1` and its module checksum. The scanner-reported 38-file and 8,266-line totals are per-analysis-pass aggregates: under `-tests`, gosec analyzes the 13 non-test root-module files twice and the 12 root-module test files once, representing 25 distinct files and 6,787 distinct lines.
 
-This refresh follows the accepted-ADR implementation sequence through the exact candidate commit, including ADR-0003 peer-share errors, ADR-0001 core extraction and zero-value hardening, ADR-0002 suite API cleanup, ADR-0009 caller input, issue #80 responder decoded-share reuse, and PR #199's Go fix modernization. No dependency versions changed from the previous review.
+The captured manual dependency/license review, `govulncheck`, and test-inclusive gosec results produced no finding requiring a fix, suppression, or VEX record under their applicable `docs/security-gates.md` thresholds; `docs/vex.md` correctly remains empty for these results. This claim does not disposition CodeQL, ast-grep, GitHub Dependency Review, Dependabot, or other GitHub-alert results, which remain part of the pending release-control lane. This refresh covers the exact frozen candidate, including PR #219's Close/zeroization-path changes and the Go 1.26.5 toolchain update. Dependency versions did not change from the previous review.
 
 ## Residual Risk
 
-Repeat this review against the exact release tag if any dependency, toolchain,
-or parser/security-relevant code changes before release.
+The captured `./...` inventory and scans cover the root `github.com/the-sarge/cpace` module and exclude the separate modules under `tools/`. This lane does not replace the still-pending exact-candidate Capslock, paired long-fuzz, security/spec and vector-stability, GitHub alert and release-control, Scorecard, or Release Validation lanes. Repeat this review against a newly selected exact candidate if any dependency, toolchain, parser/framing, protocol, security-relevant code, or package-profile change lands before release.
