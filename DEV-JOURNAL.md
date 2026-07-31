@@ -2633,3 +2633,36 @@ Merged PR #223, a docs-only posture update after upstream OSS-Fuzz declined onbo
 
 - Local: `task docs:check`, `task evidence:baseline`, `git diff --check`, and the targeted RAS `rg` sweeps all passed.
 - GitHub required checks were green before merge on head `f089c7b`: Check, DCO, Dependency Gate, and SAST Gate; the advisory gosec sub-check was neutral as expected.
+
+---
+
+## v0.1.3 candidate contract landed - 2026-07-31 01:41 EDT
+
+**Main:** `f310ba2fb896`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#239](https://github.com/the-sarge/cpace/pull/239), combining issues [#231](https://github.com/the-sarge/cpace/issues/231) and [#232](https://github.com/the-sarge/cpace/issues/232): the repository now pins Go 1.26.5, freezes `1f19e278112fa037890848ed6c086addeffdca4e` as the exact clean `v0.1.3` candidate source, and publishes the breaking pre-v1 migration and evidence-freshness contract. The prerelease remains explicitly non-production-ready.
+
+**Completed**
+
+- Merge commit `f310ba2fb8967081245b6092922f933c034d3db1` preserves reviewed head `ff73e9ebcbdabfc949e8905caba526cec5057f38` and frozen source `1f19e278112fa037890848ed6c086addeffdca4e` as ancestors of `main`; issues #231 and #232 closed automatically.
+- All three tracked Go modules select toolchain Go 1.26.5 while retaining the Go 1.26 language version. Earlier Go 1.26.4 dependency, fuzz, Capslock, security/spec, and vector evidence is explicitly historical.
+- `CHANGELOG.md` now leads the `v0.1.3` notes with the `Config` to `Input` migration, exported `Suite` removal, and nil-safe `Session.Close`, followed by the additive lifecycle and peer-share error APIs; the unchanged wire format and `CPACE-RISTR255-SHA512` draft-21 suite are explicit.
+- The candidate contract excludes Rapid, optional cleanup, dependencies, new API or behavior, ADR-0010 consideration, monorepo, cpace-x25519, and cross-suite work. A security-relevant post-freeze change selects a new candidate and restarts affected evidence lanes.
+- Initial RAS review `20260731T045226-48e1b28b92141904f1205181` produced four accepted documentation-consistency findings, all resolved and confirmed by exact-head verification `20260731T045226-48e1b28b92141904f1205181-verification-1785475459168359000`. Replacement review `20260731T052442-2ac407756e46b0177a6d8524` found one in-contract historical-evidence ambiguity, fixed under the docs-only polish policy before final certification; no review follow-up issue was warranted.
+
+**Decisions**
+
+- The exact source baseline remains `1f19e278112fa037890848ed6c086addeffdca4e`; the eventual signed tag points to a descendant whose post-freeze deltas are limited to admitted evidence artifacts and release documentation.
+- PR #239 used a merge commit so the exact #231 source SHA remains fetchable from `main`.
+
+**Validation**
+
+- Final `task check` passed at `ff73e9ebcbdabfc949e8905caba526cec5057f38`, including documentation and evidence validation, release-helper tests, unit and race tests, formatting/import checks, vet, Staticcheck, ast-grep, and `govulncheck -test ./...` with no vulnerabilities.
+- Protected exact-head `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed. Advisory CodeQL, Staticcheck, GolangCI-Lint, macOS, and Windows lanes also passed.
+
+**Next**
+
+- Parent release tracker [#229](https://github.com/the-sarge/cpace/issues/229) remains open. Begin the frozen-candidate evidence program with [#233](https://github.com/the-sarge/cpace/issues/233); issues #233-#237 must target source SHA `1f19e278112fa037890848ed6c086addeffdca4e`, and #238 owns publication.
