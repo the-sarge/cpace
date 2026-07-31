@@ -483,7 +483,7 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 		{
 			name: "unpinned action",
 			mutate: func(t *testing.T, in string) string {
-				return replaceOnce(t, in, "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0", "actions/checkout@v6")
+				return replaceOnce(t, in, "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1", "actions/checkout@v6")
 			},
 			want: "action must be pinned",
 		},
@@ -504,7 +504,7 @@ func TestReleasePolicyRejectsInvalidWorkflows(t *testing.T) {
 		{
 			name: "setup go action changed",
 			mutate: func(t *testing.T, in string) string {
-				return replaceOnce(t, in, "uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0", "uses: actions/cache@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0")
+				return replaceOnce(t, in, "uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0", "uses: actions/cache@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0")
 			},
 			want: "uses must start with actions/setup-go@",
 		},
@@ -634,7 +634,7 @@ func TestReleasePolicyRejectsDuplicateWorkflowKeys(t *testing.T) {
 		{
 			name: "duplicate setup-go uses",
 			mutate: func(t *testing.T, in string) string {
-				return replaceOnce(t, in, "        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0\n        with:", "        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0\n        uses: actions/cache@924ae3a1cded613372ab5595356fb5720e22ba16\n        with:")
+				return replaceOnce(t, in, "        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0\n        with:", "        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0\n        uses: actions/cache@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e\n        with:")
 			},
 			wantPath: "release.yml:jobs.check.steps[1].uses",
 		},
