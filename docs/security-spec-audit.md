@@ -16,6 +16,8 @@ Vector-stability transcript: `docs/evidence/f7efa6a-20260619/vector-stability.lo
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether this pinned audit is fresh for the latest release candidate.
 
+Evidence status: historical Go 1.26.4 signal only. The Go 1.26.5 pin and post-baseline production changes require a new security/spec audit and a preserved Go 1.26.4 to Go 1.26.5 vector comparison against the exact clean `v0.1.3` candidate before a current-candidate claim.
+
 Draft source: `draft-irtf-cfrg-cpace-21`
 (`https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-cpace-21`)
 

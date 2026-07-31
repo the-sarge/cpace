@@ -12,11 +12,13 @@ This document is the module for pinned evidence baselines. It names the commit, 
 
 ## Current Release-Claim State
 
-The current strongest release evidence remains exact-candidate prerelease evidence plus historical external-review evidence, not a production-readiness claim. The current pinned package-code evidence baseline for dependency review, SAST/gosec, Capslock, security/spec audit, and paired long fuzzing is `f7efa6a963a954952b1ecad3f46530f13799fe89`, captured under Go 1.26.4 in `docs/evidence/f7efa6a-20260619/`.
+The strongest completed release evidence remains the historical exact-candidate prerelease packet at `f7efa6a963a954952b1ecad3f46530f13799fe89`, captured under Go 1.26.4 in `docs/evidence/f7efa6a-20260619/`. It is historical external-review signal, not current `v0.1.3` candidate evidence or a production-readiness claim.
 
-No package-code changes are included after this baseline in the current evidence index. Do not describe any newer commit as release-current on dependency, fuzz, Capslock, or security/spec evidence until those evidence lanes are refreshed at the exact candidate commit.
+The planned `v0.1.3` candidate now pins Go 1.26.5, and PR #219 changed production code on the Close/zeroization path after the pinned baseline. Both changes invalidate freshness. Do not describe any newer commit as release-current on dependency, fuzz, Capslock, security/spec, or vector evidence until the full evidence packet is refreshed at the exact clean candidate commit.
 
 This baseline includes the accepted-ADR implementation sequence (ADR-0003, ADR-0001, ADR-0002, ADR-0009), issue #80's responder decoded-share reuse, PR #199's Go fix modernization, and PR #200's development-journal update. It also includes a fresh tag-ruleset capture, candidate GitHub status capture, fresh Scorecard run, and cross-toolchain vector-stability check in the same evidence bundle.
+
+Before the `v0.1.3` candidate gate, run and preserve the Go 1.26.4 to Go 1.26.5 vector comparison, recording whether outputs are bit-identical or explicitly recording that the older toolchain is unavailable. Then refresh dependency inventory and verification, govulncheck, gosec, Capslock, paired long fuzzing, security/spec audit, tag-ruleset state, GitHub alert state, Scorecard, and release-validation evidence against the same exact candidate commit.
 
 ## Baseline Index
 

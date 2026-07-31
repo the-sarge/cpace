@@ -14,6 +14,8 @@ Transcript: `docs/evidence/f7efa6a-20260619/local-analysis.log`
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether this pinned review is fresh for the latest release candidate.
 
+Evidence status: historical Go 1.26.4 signal only. The Go 1.26.5 pin and post-baseline production changes require a full dependency, vulnerability, and SAST/gosec refresh against the exact clean `v0.1.3` candidate before a current-candidate claim.
+
 Dependencies:
 
 | Module | Version | Role | Notes |

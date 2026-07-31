@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Bump the pinned toolchain directive to Go 1.26.5 after the 2026-07-07 Go security release, which fixes `crypto/tls` and `os` vulnerabilities plus compiler, runtime, `go` command, `net`, `os`, and `syscall` bugs. CI continues to resolve the exact toolchain from `go.mod` with `GOTOOLCHAIN=local`, while the supported language version remains Go 1.26. This candidate-preparation change introduces no public API, wire, protocol, dependency, or package-profile change; the earlier Go 1.26.4 evidence is historical and must be refreshed against the exact `v0.1.3` candidate.
+
 - Document that upstream OSS-Fuzz PR `google/oss-fuzz#15480` was closed on 2026-05-11 and is not current release-readiness evidence; keep `ossfuzz/` as OSS-Fuzz-compatible staging for local helper validation, possible ClusterFuzzLite experiments, or future resubmission.
 - CI hardening: split Autoscaled Fuzz across arm64 and amd64 GARM runner labels,
   cap scheduled fuzz defaults with `GOMAXPROCS` and `FUZZ_TEST_PARALLEL`

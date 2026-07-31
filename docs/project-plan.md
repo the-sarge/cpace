@@ -37,15 +37,10 @@ All rows below are closed and preserved as the policy/API decision record.
 
 ## Recommended PR Order
 
-1. External review cycle.
-   Use `docs/external-review-handoff.md` to brief reviewers on
-   draft-compatible behavior, package-owned framing/profile choices, unsupported
-   scope, current evidence, and remaining release blockers. Track findings in
-   focused follow-up PRs.
-2. Evidence-process hardening for issue #44.
-   PR #48 covers phase 1: a reusable evidence-bundle policy and cross-toolchain vector-stability checklist. The `f7efa6a963a954952b1ecad3f46530f13799fe89` evidence bundle applies that policy with committed raw artifacts, `SHA256SUMS`, and vector-stability results. Keep the issue open only if additional release-packet acceptance criteria remain outside this exact-candidate bundle.
-3. Exact-candidate evidence refresh.
-   The current exact-candidate dependency review, long fuzzing, Capslock, security/spec audit support, tag-ruleset capture, GitHub status, Scorecard, and vector-stability evidence are indexed in `docs/evidence-baseline.md`. Repeat those lanes after any review-driven or security-relevant changes before making a stronger readiness claim.
+1. Pin the local and CI toolchain to the Go 1.26.5 security release without changing the Go 1.26 language version.
+2. Freeze the exact `v0.1.3` candidate scope through issue #232 without admitting new API, behavior, dependency, protocol, parser/framing, or package-profile work.
+3. Refresh exact-candidate dependency/govulncheck, gosec, Capslock, paired long fuzz, security/spec audit, vector stability, tag-ruleset, GitHub alert, Scorecard, and release-validation evidence because PR #219 changed production code on the Close/zeroization path and Go 1.26.5 changes the toolchain.
+4. Cut and validate the signed, explicitly non-production-ready `v0.1.3` prerelease while retaining issues #29-#32 for the future production-readiness path.
 
 ## Completed Evidence
 
@@ -53,15 +48,15 @@ Current pinned evidence baselines and freshness caveats are indexed in `docs/evi
 
 | Area | Evidence | Residual risk |
 | --- | --- | --- |
-| Dependency review | `docs/evidence-baseline.md` indexes the current pinned dependency, vulnerability, and SAST/gosec baseline; `docs/dependency-review.md` carries the lane-specific summary and raw transcript link. | Repeat on the exact release tag if dependencies, toolchain, parser/framing, protocol, security-relevant code, or package-profile docs change. |
-| Long fuzz evidence | `docs/evidence-baseline.md` indexes the current pinned paired long-fuzz baseline; `docs/fuzz-evidence.md` carries the lane-specific summary, raw log links, historical prerelease soak, and interim non-evidence gates. | Repeat if parser, protocol, fuzz harness, dependency, or toolchain changes before release. |
-| Security/spec audit | `docs/evidence-baseline.md` indexes the current pinned security/spec audit baseline; `docs/security-spec-audit.md` records the audited implementation baseline. | Repeat if protocol code, parser/framing code, package-profile docs, dependencies, toolchain, or the targeted draft revision changes. |
+| Dependency review | `docs/evidence-baseline.md` indexes the latest completed historical dependency, vulnerability, and SAST/gosec baseline; `docs/dependency-review.md` carries the lane-specific summary and raw transcript link. | Refresh against the exact `v0.1.3` candidate because package code and the toolchain changed after the pinned baseline. |
+| Long fuzz evidence | `docs/evidence-baseline.md` indexes the latest completed historical paired long-fuzz baseline; `docs/fuzz-evidence.md` carries the lane-specific summary, raw log links, historical prerelease soak, and interim non-evidence gates. | Refresh against the exact `v0.1.3` candidate because package code and the toolchain changed after the pinned baseline. |
+| Security/spec audit | `docs/evidence-baseline.md` indexes the latest completed historical security/spec audit baseline; `docs/security-spec-audit.md` records the audited implementation baseline. | Refresh against the exact `v0.1.3` candidate, including the Go 1.26.4 to Go 1.26.5 vector comparison. |
 | Integration guidance | `docs/integration-guidance.md` documents outer PAKE/version negotiation, downgrade-protection, role-local identity input, and session-output guidance. | External reviewers should still evaluate whether this guidance is sufficient for real integrations. |
 | Release validation and CI hardening | `v0.1.2` is a signed annotated prerelease tag at commit `4e661bc1f925ebedf1f270668129d85bab73e468`. Tag-triggered Release Validation passed `Check`, `Race`, `Govulncheck`, and `Gosec` with SARIF upload in workflow run `25588835119`. Public background signal also includes CodeQL, OpenSSF Scorecard, Staticcheck Advisory, Actionlint, cross-platform smoke, scheduled vulnerability scanning, scheduled gosec, and scheduled fuzz regression. | CI evidence supports auditable prerelease hygiene, not production readiness. Keep release tags signed, watch scheduled lanes, and keep external and cryptographic review as release blockers. |
 | External review handoff | `docs/external-review-handoff.md` summarizes supported scope, package-owned choices, evidence, review questions, and remaining release blockers for external reviewers. | The handoff is a review input, not a completed review. Findings still need to be tracked and resolved. |
 | Threat model | `docs/threat-model.md` records assets, in-scope attackers, non-goals, security boundaries, and reviewer focus areas. | This is a self-authored review input, not an external assessment. Reviewers should check that the model matches real integration risks. |
 | Release checklist | `docs/release-checklist.md` records exact-candidate validation, evidence refresh, signed-tag, release-validation, and GitHub-release steps. | The checklist must be executed against a future candidate before making stronger release-readiness claims. |
-| Capslock capability analysis | `docs/evidence-baseline.md` indexes the current pinned Capslock capability-analysis baseline; `docs/capslock-report.md` carries the lane-specific summary and triage. | Capslock is experimental review signal, not a release gate. Repeat if dependencies, imports, randomness, HKDF/HMAC usage, or the Go toolchain change. |
+| Capslock capability analysis | `docs/evidence-baseline.md` indexes the latest completed historical Capslock capability-analysis baseline; `docs/capslock-report.md` carries the lane-specific summary and triage. | Capslock is experimental review signal, not a release gate. Refresh against the exact `v0.1.3` candidate because the Go toolchain changed. |
 | Performance benchmarks | `bench_test.go` and `task bench` cover full round trips, protocol phases, exporters, and message encoding/decoding with `-benchmem`. | Benchmark results are local comparison evidence, not release gates. Record host, Go version, exact command, and commit when sharing numbers. |
 | OSS-Fuzz-compatible staging | `ossfuzz/` keeps OSS-Fuzz-compatible project files for all 14 native Go fuzz targets. Local `build_fuzzers` and `check_build` validation passed with the repository mounted into a temporary `google/oss-fuzz` checkout on 2026-05-07; upstream PR `google/oss-fuzz#15480` was closed on 2026-05-11 after OSS-Fuzz maintainers declined the project for current project-size/user-base reasons and suggested ClusterFuzzLite instead. | Treat upstream OSS-Fuzz as unavailable for current release-readiness claims. Keep maintainer-controlled long fuzzing, scheduled hosted fuzzing, and autoscaled trusted-runner fuzzing as the active continuous-fuzz signal; consider ClusterFuzzLite separately if the project wants an OSS-Fuzz-adjacent CI service. |
 
