@@ -77,6 +77,10 @@ compare_release_notes() {
 	cmp "$extracted" "$packet_path/release-notes.txt"
 }
 
+candidate_packet_checksums() {
+	(cd "$packet_path" && shasum -a 256 -c SHA256SUMS)
+}
+
 verify_release_metadata() {
 	metadata=$(scripts/release-tag-metadata.sh v0.1.3)
 	printf '%s\n' "$metadata"
@@ -115,7 +119,7 @@ run "task --version" task --version
 run "jq --version" jq --version
 run "cmark --version" cmark --version
 run "verify_manifest_links" verify_manifest_links
-run "shasum -a 256 -c $packet_path/SHA256SUMS" shasum -a 256 -c "$packet_path/SHA256SUMS"
+run "candidate_packet_checksums" candidate_packet_checksums
 run "compare_release_notes" compare_release_notes
 run "verify_release_metadata" verify_release_metadata
 run "scripts/check-release-policy.sh" scripts/check-release-policy.sh
