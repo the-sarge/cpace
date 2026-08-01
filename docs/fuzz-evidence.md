@@ -1,10 +1,12 @@
 # Fuzz Evidence
 
-Date: 2026-05-08 through 2026-06-19
+Date: 2026-05-08 through 2026-07-31
 
 Target module: `github.com/the-sarge/cpace`
 
-Evidence code commit: `f7efa6a963a954952b1ecad3f46530f13799fe89`
+Current candidate evidence commit: `1f19e278112fa037890848ed6c086addeffdca4e`
+
+Historical exact-candidate evidence commit: `f7efa6a963a954952b1ecad3f46530f13799fe89`
 
 Superseded candidate commit: `2e09774f171dde8c62763d6e35a258b0fef88801`
 
@@ -15,14 +17,26 @@ Registered fuzz targets: 14 from `.github/fuzz-targets.json` (current registry e
 
 Baseline status: `docs/evidence-baseline.md` is the current source of truth for whether these pinned fuzz runs are fresh for the latest release candidate.
 
-Evidence status: historical Go 1.26.4 signal only. The Go 1.26.5 pin and post-baseline production changes require new paired long campaigns against the exact clean `v0.1.3` candidate before a current-candidate fuzz claim.
+Evidence status: current exact-candidate Go 1.26.5 paired long-fuzz signal with a recorded Intel all-target `FuzzMessageARoundTrip` deadline non-pass and same-host targeted recovery pass. The raw bundle is `docs/evidence/1f19e27-20260731-fuzz/`.
 
 ## Command
 
-- `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=1 task fuzz` (historical Go 1.26.4 baseline runs)
+- `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=1 task fuzz` (current Go 1.26.5 exact-candidate campaign and historical Go 1.26.4 baseline runs)
 - `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=2 task fuzz` (earlier campaigns below)
 
-## Go 1.26.4 Exact-Candidate Paired Long Runs
+## Go 1.26.5 Current-Candidate Paired Long Runs
+
+These paired maintainer-machine runs refreshed all 14 registered targets under Go 1.26.5 at the frozen `v0.1.3` candidate commit `1f19e278112fa037890848ed6c086addeffdca4e`. Raw setup logs, all-target campaign transcripts, final status captures, same-host targeted rerun evidence, and SHA-256 digests are committed under `docs/evidence/1f19e27-20260731-fuzz/`.
+
+| Host | Platform | Toolchain | Scope | Started | Finished | Result |
+| --- | --- | --- | --- | --- | --- | --- |
+| `m1mini.local` | `darwin/arm64` | Go 1.26.5, Task 3.52.0 | all 14 targets, `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=1 task fuzz` | `2026-07-31T08:29:15Z` | `2026-07-31T22:29:31Z` | PASS: all 14 targets, `rc=0`, `new_fuzz_artifacts=none` |
+| `iMacPro.local` | `darwin/amd64` | Go 1.26.5, Task 3.52.0 | all 14 targets, `FUZZ_RACE=0 GOMAXPROCS=4 FUZZTIME=1h PARALLEL=1 task fuzz` | `2026-07-31T08:29:19Z` | `2026-07-31T22:29:39Z` | NON-PASS: 13 targets passed; `FuzzMessageARoundTrip` reported `context deadline exceeded` at `3600.11s`, `rc=201`, `new_fuzz_artifacts=none` |
+| `iMacPro.local` | `darwin/amd64` | Go 1.26.5 | targeted recovery rerun, `FUZZ_RACE=0 GOMAXPROCS=4 go test -timeout=0 -fuzz=FuzzMessageARoundTrip -fuzztime=1h .` | `2026-07-31T22:50:09Z` | `2026-07-31T23:50:10Z` | PASS: `FuzzMessageARoundTrip`, `345942485` execs, no new interesting inputs, `rc=0`, `new_fuzz_artifacts=none` |
+
+Both all-target campaign transcripts preserve the clean detached candidate commit, clean worktree status, host/platform/tool versions, registry/build-input hashes, the full 14-target registry, focused registry drift tests, `go test -count=1 ./...`, command environment, timestamps, durations, final status, and post-run fuzz-artifact check. With `PARALLEL=1` the 14 targets run sequentially, so the expected wall clock is fourteen hours per host; both all-target campaigns match that schedule. The Intel all-target campaign is intentionally recorded as non-pass, and the same-host targeted rerun supports classifying it as a fuzz shutdown/deadline miss rather than an input-triggered crash; it does not turn the raw Intel all-target transcript into a clean all-target pass.
+
+## Go 1.26.4 Historical Exact-Candidate Paired Long Runs
 
 These paired maintainer-machine runs historically refreshed all 14 registered targets under Go 1.26.4 at commit `f7efa6a963a954952b1ecad3f46530f13799fe89`, covering the accepted-ADR implementation sequence, issue #80, PR #199's Go fix modernization, and PR #200's development-journal merge. They do not cover the Go 1.26.5 `v0.1.3` candidate. Raw logs, final status captures, setup/preflight files, and SHA-256 digests are committed under `docs/evidence/f7efa6a-20260619/`.
 
@@ -173,7 +187,7 @@ the later expansion to 14 targets.
 
 ## Residual Risk
 
-The 2026-06-19 Go 1.26.4 exact-candidate runs are historical paired ARM/Intel long-fuzz evidence pinned to `f7efa6a963a954952b1ecad3f46530f13799fe89`; they do not cover the Go 1.26.5 `v0.1.3` candidate. The 2026-06-11 Go 1.26.4 baseline runs cover the superseded PR #73-era baseline, the earlier Go 1.26.3 candidate runs cover the superseded candidate `2e09774f171dde8c62763d6e35a258b0fef88801`, and the 2026-05-09 through 2026-05-11 supplemental soak records stronger fuzz duration against the signed `v0.1.2` tag commit `4e661bc1f925ebedf1f270668129d85bab73e468`, with a clean ARM all-target soak, an Intel all-target soak that ended nonzero on `FuzzProtocolConsistency`, and a clean same-host targeted rerun of that target. These runs do not replace externally hosted continuous fuzzing; upstream OSS-Fuzz coverage is not currently available because `google/oss-fuzz#15480` was closed on 2026-05-11 after OSS-Fuzz maintainers declined the project for current project-size/user-base reasons and suggested ClusterFuzzLite instead. Repeat paired long fuzzing against the exact clean candidate after any parser, protocol, fuzz harness, dependency, or toolchain change. Production-readiness still requires completion of the remaining release blockers.
+The 2026-07-31 Go 1.26.5 current-candidate campaigns are paired ARM/Intel long-fuzz evidence pinned to `1f19e278112fa037890848ed6c086addeffdca4e`; they include a clean ARM all-target pass and an Intel all-target deadline non-pass recovered by a clean same-host targeted rerun of `FuzzMessageARoundTrip`. The 2026-06-19 Go 1.26.4 exact-candidate runs, the 2026-06-11 Go 1.26.4 baseline runs, the earlier Go 1.26.3 candidate runs, and the 2026-05-09 through 2026-05-11 supplemental soak are historical signal for superseded commits or the signed `v0.1.2` tag. These runs do not replace externally hosted continuous fuzzing; upstream OSS-Fuzz coverage is not currently available because `google/oss-fuzz#15480` was closed on 2026-05-11 after OSS-Fuzz maintainers declined the project for current project-size/user-base reasons and suggested ClusterFuzzLite instead. Repeat paired long fuzzing against the exact clean candidate after any parser, protocol, fuzz harness, dependency, or toolchain change. Production-readiness still requires completion of the remaining release blockers.
 
 The 4-hour split campaign is strong historical signal for the seven-target registry at commit `07ff1e9265c2e003e6dc7d37754c8b2185f03286`, but it is not exact-candidate evidence for the current 14-target harness. Longer continuous fuzzing remains ongoing release-readiness work, now through maintainer-controlled long campaigns, scheduled hosted fuzzing, autoscaled trusted-runner fuzzing, and possible future ClusterFuzzLite integration rather than upstream OSS-Fuzz monitoring.
 

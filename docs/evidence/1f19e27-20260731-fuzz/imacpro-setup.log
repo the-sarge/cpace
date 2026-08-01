@@ -1,0 +1,5 @@
+setup_start_utc=2026-07-31T08:29:08Z
+Cloning into '/private/tmp/cpace-1f19e27-fuzz-20260731T082842Z-imacpro/repo'...
+HEAD is now at 1f19e27 chore: adopt Go 1.26.5 toolchain (#231)
+## HEAD (no branch)
+setup_end_utc=2026-07-31T08:29:09Z

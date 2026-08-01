@@ -2,7 +2,7 @@
 
 Target: `draft-irtf-cfrg-cpace-21`, published April 23, 2026.
 
-Audit: the original matrix was reviewed against implementation commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08. The current evidence status is indexed in `docs/evidence-baseline.md`; `docs/security-spec-audit.md` records the latest completed historical audit at `f7efa6a963a954952b1ecad3f46530f13799fe89` under Go 1.26.4, which does not cover the planned `v0.1.3` candidate. The `scalar_mult_vfy` and invalid/weak-point rows were amended 2026-06-11 for ADR-0003 and 2026-06-16 for issue #80's responder-side decoded-share reuse, both covered by that historical audit.
+Audit: the original matrix was reviewed against implementation commit `2e09774f171dde8c62763d6e35a258b0fef88801` on 2026-05-08. The current evidence status is indexed in `docs/evidence-baseline.md`; `docs/security-spec-audit.md` records the latest completed audit at frozen `v0.1.3` source commit `1f19e278112fa037890848ed6c086addeffdca4e` under Go 1.26.5, including the Go 1.26.4 to Go 1.26.5 vector comparison. The `scalar_mult_vfy` and invalid/weak-point rows include ADR-0003 and issue #80's responder-side decoded-share reuse.
 
 | Draft requirement | Implementation | Tests |
 | --- | --- | --- |
@@ -22,10 +22,14 @@ Package-owned profile and extensions:
 
 | Package behavior | Status | Tests |
 | --- | --- | --- |
+| Single `CPACE-RISTR255-SHA512` suite, exposed as `DraftVersion` plus opaque package behavior rather than a suite-selection API | The exported inert `Suite` markers are removed; package-owned framing keeps fixed suite byte `0x01`, and callers have no in-package negotiation surface | `TestBuildCIWireStability`, `TestWireFormatPrefixByte`, public API inventory in the exact-candidate transcript |
+| Role-local `Input` maps `SelfID`, `PeerID`, and `LocalAssociatedData` into fixed initiator-responder ordering | Password, Context, and SessionID are shared session facts; caller input is copied, capped, and consumed per call, with empty SessionID requiring explicit compatibility opt-in | `TestInputValidation`, `TestInputFieldSizeLimits`, `TestProtocolAllowsEmptyLocalAssociatedData`, `TestRoleLocalIdentityReversalFailsConfirmation`, transcript-locking mismatch tests |
 | `cpace-go` CI construction from draft version, suite, role labels, identities, and context | Package profile over draft-21 CI input, not a generic raw-CI interface | transcript-locking mismatch tests |
 | Binary wire framing with format byte `0xc1`, suite byte, role byte, and draft LEB128 fields | Package-owned application framing | `TestWireFormatPrefixByte`, parser tests |
 | Per-field size caps for package-owned input and wire fields | Password and IDs 4 KiB; context and session ID 1 KiB; local associated data 64 KiB; public shares and tags exact-size decoded | `TestInputFieldSizeLimits`, `TestMessageFramingCatalogueRejectsFieldLimits`, `TestMessageFramingCatalogueOwnsFieldLengthAcceptance` |
+| `Initiator` and `Responder` are copied single-use values whose constructed copies share terminal state; `Finish` and `Close` are terminal | `Finish` consumes and clears persistent core secrets on success or consuming failure; nil-safe/idempotent `Close` clears abandoned state, later `Finish` returns `ErrStateUsed`, and caller-fabricated zero values remain `ErrInvalidInput` | `TestSingleUseStateCloseNilAndZeroValue`, `TestSingleUseStateCloseCleansAbandonedState`, `TestSingleUseStateCloseAfterFinish`, `TestSingleUseStateCopiesShareTerminalState`, `TestSingleUseStateConcurrentFinishClose`, cleanup tests |
 | `Session.Export` using HKDF-SHA512 over confirmed ISK | Package extension following the draft recommendation to process ISK with a KDF | `TestConfirmedExchangeAndExport`, example |
+| `Session.Close`, `PeerID`, and `PeerAssociatedData` lifecycle and metadata | `Close` is nil-safe and idempotent, constructed Session copies share close state, zero-value Sessions remain invalid, and copied peer metadata stays available after close | `TestSessionClose`, `TestSessionValueCopiesShareCloseState`, `TestNilReceiverMethods`, `TestSessionPeerMetadata` |
 | `Session.TranscriptID` as draft `CPaceSidOutput` | Public accessor for draft optional session identifier output; not a complete channel binding for outer negotiation | vector and exchange tests |
 
 Known gaps before a production release:

@@ -1,0 +1,23 @@
+# cpace v0.1.3 targeted fuzz rerun
+# candidate=1f19e278112fa037890848ed6c086addeffdca4e
+# candidate_worktree=/private/tmp/cpace-1f19e27-fuzz-20260731T082842Z-imacpro/repo
+# original_run_dir=/private/tmp/cpace-1f19e27-fuzz-20260731T082842Z-imacpro
+# target=FuzzMessageARoundTrip
+# transcript_start_utc=2026-07-31T22:49:12Z
+
+$ hostname
+iMacPro.local
+
+$ sw_vers
+ProductName:		macOS
+ProductVersion:		15.7.7
+BuildVersion:		24G720
+
+$ uname -a
+Darwin iMacPro.local 24.6.0 Darwin Kernel Version 24.6.0: Tue Apr 21 20:17:54 PDT 2026; root:xnu-11417.140.69.710.16~1/RELEASE_X86_64 x86_64
+
+$ git --version
+git version 2.39.5 (Apple Git-154)
+
+$ go version
+/private/tmp/cpace-1f19e27-fuzz-20260731T082842Z-imacpro/rerun-FuzzMessageARoundTrip-20260731T224912Z/run-targeted-rerun.sh: line 26: go: command not found
