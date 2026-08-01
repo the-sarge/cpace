@@ -1,59 +1,59 @@
 # cpace v0.1.3 final pre-tag gate
 # frozen_source_candidate=1f19e278112fa037890848ed6c086addeffdca4e
-# gate_commit=a140f02e304c56fd998f7c4a6f8f98aa630a7c6f
-# gate_tree=98df5d9895461083bafed801801356710d0e2fdb
-# transcript_start_utc=2026-08-01T04:37:29Z
-# tool_bin=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.DzPEKa/bin
+# gate_commit=9410cfb4081c2aa8963729041a6ab7a141607743
+# gate_tree=4251c1f7e4a145507f66dfe32ef2d74435376e5a
+# transcript_start_utc=2026-08-01T05:00:00Z
+# tool_bin=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.gw1REy/bin
 # capture_script=docs/evidence/1f19e27-20260801-candidate/capture.sh
 
-$ docs/evidence/1f19e27-20260801-candidate/capture.sh /tmp/cpace-237-final-gate
+$ docs/evidence/1f19e27-20260801-candidate/capture.sh /tmp/cpace-246-final-gate
 
 $ hostname
-# start_utc=2026-08-01T04:37:29Z
+# start_utc=2026-08-01T05:00:00Z
 mbp128.local
-# end_utc=2026-08-01T04:37:29Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ sw_vers
-# start_utc=2026-08-01T04:37:29Z
+# start_utc=2026-08-01T05:00:00Z
 ProductName:		macOS
 ProductVersion:		26.6
 BuildVersion:		25G72
-# end_utc=2026-08-01T04:37:29Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ uname -a
-# start_utc=2026-08-01T04:37:29Z
+# start_utc=2026-08-01T05:00:00Z
 Darwin mbp128.local 25.6.0 Darwin Kernel Version 25.6.0: Sat Jul 11 15:27:27 PDT 2026; root:xnu-12377.161.13~4/RELEASE_ARM64_T6041 arm64
-# end_utc=2026-08-01T04:37:29Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ git --version
-# start_utc=2026-08-01T04:37:29Z
+# start_utc=2026-08-01T05:00:00Z
 git version 2.50.1 (Apple Git-155)
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ git rev-parse HEAD
-# start_utc=2026-08-01T04:37:30Z
-a140f02e304c56fd998f7c4a6f8f98aa630a7c6f
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# start_utc=2026-08-01T05:00:00Z
+9410cfb4081c2aa8963729041a6ab7a141607743
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ git rev-parse HEAD^{tree}
-# start_utc=2026-08-01T04:37:30Z
-98df5d9895461083bafed801801356710d0e2fdb
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# start_utc=2026-08-01T05:00:00Z
+4251c1f7e4a145507f66dfe32ef2d74435376e5a
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ git merge-base --is-ancestor 1f19e278112fa037890848ed6c086addeffdca4e HEAD
-# start_utc=2026-08-01T04:37:30Z
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# start_utc=2026-08-01T05:00:00Z
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ git status --porcelain=v1
-# start_utc=2026-08-01T04:37:30Z
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# start_utc=2026-08-01T05:00:00Z
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ git diff --exit-code --no-ext-diff
-# start_utc=2026-08-01T04:37:30Z
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# start_utc=2026-08-01T05:00:00Z
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ postfreeze_scope
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:00Z
 # changed_paths_since_frozen_source
 AGENTS.md
 CHANGELOG.md
@@ -154,39 +154,39 @@ docs/security-spec-audit.md
 docs/spec-matrix.md
 docs/v0.1.3-release-plan.md
 # postfreeze_scope=documentation-and-evidence-only
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ go version
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:00Z
 go version go1.26.5 darwin/arm64
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ go env GOOS GOARCH GOVERSION GOTOOLCHAIN
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:00Z
 darwin
 arm64
 go1.26.5
 auto
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:00Z duration_seconds=0 exit=0
 
 $ task --version
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:00Z
 3.52.0
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:01Z duration_seconds=1 exit=0
 
 $ jq --version
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:01Z
 jq-1.7.1-apple
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:01Z duration_seconds=0 exit=0
 
 $ cmark --version
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:01Z
 cmark 0.31.2 - CommonMark converter
 (C) 2014-2016 John MacFarlane
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:01Z duration_seconds=0 exit=0
 
 $ verify_manifest_links
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:01Z
 docs/evidence/1f19e27-20260731 expected=f5bbef2b529dc7b05642ce3d67297394f3b28d50129cfd7f2cbe60ea7e02ce67 actual=f5bbef2b529dc7b05642ce3d67297394f3b28d50129cfd7f2cbe60ea7e02ce67
 capture.sh: OK
 local-analysis.log: OK
@@ -258,37 +258,37 @@ secret-scanning-open-alerts.json: OK
 vulnerability-run-30257725792-jobs.json: OK
 vulnerability-run-30257725792.json: OK
 vulnerability-runs.json: OK
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:01Z duration_seconds=0 exit=0
 
 $ candidate_packet_checksums
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:01Z
 capture.sh: OK
 packet-manifest.txt: OK
 release-notes.txt: OK
 final-gate.log: OK
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:01Z duration_seconds=0 exit=0
 
 $ compare_release_notes
-# start_utc=2026-08-01T04:37:30Z
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# start_utc=2026-08-01T05:00:01Z
+# end_utc=2026-08-01T05:00:01Z duration_seconds=0 exit=0
 
 $ verify_release_metadata
-# start_utc=2026-08-01T04:37:30Z
+# start_utc=2026-08-01T05:00:01Z
 release-tag=v0.1.3
 sbom-file=cpace-v0.1.3.cdx.json
 prerelease=true
 latest=false
 attestation-bundle=cpace-v0.1.3.cdx.json.sigstore.json
-# end_utc=2026-08-01T04:37:30Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:01Z duration_seconds=0 exit=0
 
 $ scripts/check-release-policy.sh
-# start_utc=2026-08-01T04:37:30Z
-ok  	github.com/the-sarge/cpace/tools/releasepolicy	(cached)
+# start_utc=2026-08-01T05:00:01Z
+ok  	github.com/the-sarge/cpace/tools/releasepolicy	0.261s
 release policy checker passed
-# end_utc=2026-08-01T04:37:31Z duration_seconds=1 exit=0
+# end_utc=2026-08-01T05:00:02Z duration_seconds=1 exit=0
 
 $ task docs:check
-# start_utc=2026-08-01T04:37:31Z
+# start_utc=2026-08-01T05:00:02Z
 task: [docs:check] git diff --check
 task: [docs:check] md_files="$(git ls-files '*.md')"
 if [ -z "$md_files" ]; then
@@ -300,10 +300,10 @@ command -v cmark >/dev/null 2>&1 || {
 }
 cmark --validate-utf8 $md_files >/dev/null
 
-# end_utc=2026-08-01T04:37:31Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:00:02Z duration_seconds=0 exit=0
 
 $ task quick
-# start_utc=2026-08-01T04:37:31Z
+# start_utc=2026-08-01T05:00:02Z
 task: [lint:gofmt] unformatted="$(gofmt -l $(git ls-files '*.go'))"
 if [ -n "$unformatted" ]; then
   echo "gofmt check failed. Run gofmt on:"
@@ -325,11 +325,11 @@ cmark --validate-utf8 $md_files >/dev/null
 task: [ci:classifier] scripts/test-ci-classifier.sh
 CI change classifier tests passed
 task: [quick-test] go test ./...
-ok  	github.com/the-sarge/cpace	0.228s
-# end_utc=2026-08-01T04:37:32Z duration_seconds=1 exit=0
+ok  	github.com/the-sarge/cpace	0.243s
+# end_utc=2026-08-01T05:00:05Z duration_seconds=3 exit=0
 
 $ task check
-# start_utc=2026-08-01T04:37:32Z
+# start_utc=2026-08-01T05:00:05Z
 task: [docs:check] git diff --check
 task: [docs:check] md_files="$(git ls-files '*.md')"
 if [ -z "$md_files" ]; then
@@ -348,14 +348,14 @@ release helper smoke tests passed
 task: [ci:classifier] scripts/test-ci-classifier.sh
 CI change classifier tests passed
 task: [evidence:baseline] scripts/check-evidence-baseline.sh
-ok  	github.com/the-sarge/cpace/tools/evidencebaseline	(cached)
+ok  	github.com/the-sarge/cpace/tools/evidencebaseline	1.564s
 evidence baseline checker passed
 task: [evidence:lint] go vet ./...
 task: [evidence:lint] staticcheck ./...
 task: [test] go test ./...
 ok  	github.com/the-sarge/cpace	(cached)
 task: [test:race] go test -race ./...
-ok  	github.com/the-sarge/cpace	1.662s
+ok  	github.com/the-sarge/cpace	2.035s
 task: [lint:gofmt] unformatted="$(gofmt -l $(git ls-files '*.go'))"
 if [ -n "$unformatted" ]; then
   echo "gofmt check failed. Run gofmt on:"
@@ -385,37 +385,37 @@ task: [lint-ast-grep] command -v ast-grep >/dev/null 2>&1 || {
 task: [lint-ast-grep] ast-grep scan --error
 task: [vuln] govulncheck -test ./...
 No vulnerabilities found.
-# end_utc=2026-08-01T04:38:53Z duration_seconds=81 exit=0
+# end_utc=2026-08-01T05:01:54Z duration_seconds=109 exit=0
 
 $ go test -race ./...
-# start_utc=2026-08-01T04:38:53Z
+# start_utc=2026-08-01T05:01:54Z
 ok  	github.com/the-sarge/cpace	(cached)
-# end_utc=2026-08-01T04:38:54Z duration_seconds=1 exit=0
+# end_utc=2026-08-01T05:01:54Z duration_seconds=0 exit=0
 
 $ go test -cover ./...
-# start_utc=2026-08-01T04:38:54Z
-ok  	github.com/the-sarge/cpace	0.314s	coverage: 97.2% of statements
-# end_utc=2026-08-01T04:38:54Z duration_seconds=0 exit=0
+# start_utc=2026-08-01T05:01:54Z
+ok  	github.com/the-sarge/cpace	0.349s	coverage: 97.2% of statements
+# end_utc=2026-08-01T05:01:55Z duration_seconds=1 exit=0
 
 $ go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...
-# start_utc=2026-08-01T04:38:54Z
-# end_utc=2026-08-01T04:38:56Z duration_seconds=2 exit=0
+# start_utc=2026-08-01T05:01:55Z
+# end_utc=2026-08-01T05:01:57Z duration_seconds=2 exit=0
 
-$ GOBIN=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.DzPEKa/bin go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
-# start_utc=2026-08-01T04:38:56Z
-# end_utc=2026-08-01T04:38:58Z duration_seconds=2 exit=0
+$ GOBIN=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.gw1REy/bin go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+# start_utc=2026-08-01T05:01:57Z
+# end_utc=2026-08-01T05:01:59Z duration_seconds=2 exit=0
 
-$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.DzPEKa/bin/govulncheck -version
-# start_utc=2026-08-01T04:38:58Z
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.gw1REy/bin/govulncheck -version
+# start_utc=2026-08-01T05:01:59Z
 Go: go1.26.5
 Scanner: govulncheck@v1.3.0
 DB: https://vuln.go.dev
 DB updated: 2026-07-27 20:14:16 +0000 UTC
 
-# end_utc=2026-08-01T04:38:58Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:01:59Z duration_seconds=0 exit=0
 
-$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.DzPEKa/bin/govulncheck -test -show verbose ./...
-# start_utc=2026-08-01T04:38:58Z
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.gw1REy/bin/govulncheck -test -show verbose ./...
+# start_utc=2026-08-01T05:01:59Z
 Fetching vulnerabilities from the database...
 
 Checking the code against the vulnerabilities...
@@ -431,59 +431,59 @@ Govulncheck scanned the following 3 modules and the go1.26.5 standard library:
   github.com/gtank/ristretto255@v0.2.0
 
 No vulnerabilities found.
-# end_utc=2026-08-01T04:39:02Z duration_seconds=4 exit=0
+# end_utc=2026-08-01T05:02:01Z duration_seconds=2 exit=0
 
 $ go run github.com/securego/gosec/v2/cmd/gosec@v2.26.1 -tests ./...
-# start_utc=2026-08-01T04:39:02Z
-[gosec] 2026/08/01 00:39:03 Including rules: default
-[gosec] 2026/08/01 00:39:03 Excluding rules: default
-[gosec] 2026/08/01 00:39:03 Including analyzers: default
-[gosec] 2026/08/01 00:39:03 Excluding analyzers: default
-[gosec] 2026/08/01 00:39:03 Import directory: /tmp/cpace-237-final-gate
-[gosec] 2026/08/01 00:39:03 Import directory: /tmp/cpace-237-final-gate/tools/releasepolicy
-[gosec] 2026/08/01 00:39:03 Import directory: /tmp/cpace-237-final-gate/tools/evidencebaseline
-[gosec] 2026/08/01 00:39:04 Checking package: cpace
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/api.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/caps.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/core.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/crypto.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/doc.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/errors.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/framing.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/input.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/length_value.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/peer_share.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/session.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/terminal_state.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/transcript.go
-[gosec] 2026/08/01 00:39:04 Checking package: cpace
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/api.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/caps.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/core.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/crypto.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/doc.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/errors.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/framing.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/input.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/length_value.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/peer_share.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/session.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/terminal_state.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/transcript.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/api_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/bench_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/caller_input_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/caps_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/exchange_fixture_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/framing_catalogue_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/fuzz_registry_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/fuzz_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/length_value_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/strings_test.go
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/vectors_test.go
-[gosec] 2026/08/01 00:39:04 Checking package: cpace_test
-[gosec] 2026/08/01 00:39:04 Checking file: /tmp/cpace-237-final-gate/examples_test.go
-[gosec] 2026/08/01 00:39:04 Checking package: main
+# start_utc=2026-08-01T05:02:01Z
+[gosec] 2026/08/01 01:02:02 Including rules: default
+[gosec] 2026/08/01 01:02:02 Excluding rules: default
+[gosec] 2026/08/01 01:02:02 Including analyzers: default
+[gosec] 2026/08/01 01:02:02 Excluding analyzers: default
+[gosec] 2026/08/01 01:02:02 Import directory: /tmp/cpace-246-final-gate/tools/releasepolicy
+[gosec] 2026/08/01 01:02:02 Import directory: /tmp/cpace-246-final-gate/tools/evidencebaseline
+[gosec] 2026/08/01 01:02:02 Import directory: /tmp/cpace-246-final-gate
+[gosec] 2026/08/01 01:02:02 Checking package: cpace
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/api.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/caps.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/core.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/crypto.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/doc.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/errors.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/framing.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/input.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/length_value.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/peer_share.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/session.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/terminal_state.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/transcript.go
+[gosec] 2026/08/01 01:02:02 Checking package: cpace
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/api.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/caps.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/core.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/crypto.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/doc.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/errors.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/framing.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/input.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/length_value.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/peer_share.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/session.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/terminal_state.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/transcript.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/api_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/bench_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/caller_input_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/caps_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/exchange_fixture_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/framing_catalogue_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/fuzz_registry_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/fuzz_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/length_value_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/strings_test.go
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/vectors_test.go
+[gosec] 2026/08/01 01:02:02 Checking package: cpace_test
+[gosec] 2026/08/01 01:02:02 Checking file: /tmp/cpace-246-final-gate/examples_test.go
+[gosec] 2026/08/01 01:02:02 Checking package: main
 Results:
 
 
@@ -494,21 +494,21 @@ Summary:
   Nosec  : 0
   Issues : 0
 
-# end_utc=2026-08-01T04:39:04Z duration_seconds=2 exit=0
+# end_utc=2026-08-01T05:02:02Z duration_seconds=1 exit=0
 
-$ GOBIN=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.DzPEKa/bin go install github.com/google/capslock/cmd/capslock@v0.3.2
-# start_utc=2026-08-01T04:39:04Z
-# end_utc=2026-08-01T04:39:06Z duration_seconds=2 exit=0
+$ GOBIN=/var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.gw1REy/bin go install github.com/google/capslock/cmd/capslock@v0.3.2
+# start_utc=2026-08-01T05:02:02Z
+# end_utc=2026-08-01T05:02:05Z duration_seconds=3 exit=0
 
-$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.DzPEKa/bin/capslock -version
-# start_utc=2026-08-01T04:39:06Z
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.gw1REy/bin/capslock -version
+# start_utc=2026-08-01T05:02:05Z
 capslock version v0.3.2
 compiled with Go version go1.26.5
 includes Go tools version v0.43.0
-# end_utc=2026-08-01T04:39:06Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:02:05Z duration_seconds=0 exit=0
 
-$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.DzPEKa/bin/capslock -packages ./...
-# start_utc=2026-08-01T04:39:06Z
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.gw1REy/bin/capslock -packages ./...
+# start_utc=2026-08-01T05:02:05Z
 Capslock is an experimental tool for static analysis of Go packages.
 Share feedback and file bugs at https://github.com/google/capslock.
 For additional debugging signals, use verbose mode with -output=verbose
@@ -521,10 +521,10 @@ Analyzed packages:
 ARBITRARY_EXECUTION: 11 references
 UNANALYZED: 13 references
 
-# end_utc=2026-08-01T04:39:06Z duration_seconds=0 exit=0
+# end_utc=2026-08-01T05:02:06Z duration_seconds=1 exit=0
 
-$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.DzPEKa/bin/capslock -packages ./... -output=verbose
-# start_utc=2026-08-01T04:39:06Z
+$ /var/folders/ph/8tf9wjq95wjcv0qf93zg96c00000gn/T//cpace-237-tools.gw1REy/bin/capslock -packages ./... -output=verbose
+# start_utc=2026-08-01T05:02:06Z
 Capslock is an experimental tool for static analysis of Go packages.
 Share feedback and file bugs at https://github.com/google/capslock.
 To get machine-readable full analysis output, use -output=json
@@ -553,14 +553,14 @@ Example callpath:
   core.go:90:24:github.com/the-sarge/cpace.sampleScalar
   crypto.go:59:27:io.ReadFull
 
-# end_utc=2026-08-01T04:39:07Z duration_seconds=1 exit=0
+# end_utc=2026-08-01T05:02:07Z duration_seconds=1 exit=0
 
 $ git status --porcelain=v1
-# start_utc=2026-08-01T04:39:07Z
-# end_utc=2026-08-01T04:39:07Z duration_seconds=0 exit=0
+# start_utc=2026-08-01T05:02:07Z
+# end_utc=2026-08-01T05:02:07Z duration_seconds=0 exit=0
 
 $ git diff --exit-code --no-ext-diff
-# start_utc=2026-08-01T04:39:07Z
-# end_utc=2026-08-01T04:39:07Z duration_seconds=0 exit=0
-# transcript_end_utc=2026-08-01T04:39:07Z
+# start_utc=2026-08-01T05:02:07Z
+# end_utc=2026-08-01T05:02:07Z duration_seconds=0 exit=0
+# transcript_end_utc=2026-08-01T05:02:07Z
 # result=pass
