@@ -1,10 +1,23 @@
-capture_start_utc=2026-08-01T02:44:38Z
+capture_start_utc=2026-08-01T02:54:40Z
 repository=the-sarge/cpace
 candidate=1f19e278112fa037890848ed6c086addeffdca4e
 pr_number=239
 pr_head=ff73e9ebcbdabfc949e8905caba526cec5057f38
 tag_ruleset_id=16048307
 nightly_recovery_run=30618250589
-gh version 2.97.0 (2026-07-31)
+capture_implementation_head=96eb204a20fe9038762d8e298a2f31b91892479b
+capture_implementation_branch=release/v0.1.3-236-github-release-controls
+capture_worktree_state=clean
+hostname=mbp128.local
+operating_system=Darwin
+kernel_release=25.6.0
+architecture=arm64
+git_version=git version 2.50.1 (Apple Git-155)
+go_version=go version go1.26.5 darwin/arm64
+gh_version=gh version 2.97.0 (2026-07-31)
+curl_version=curl 8.7.1 (x86_64-apple-darwin25.0) libcurl/8.7.1 (SecureTransport) LibreSSL/3.3.6 zlib/1.2.12 nghttp2/1.68.1
+jq_version=jq-1.7.1-apple
+shasum_version=6.04
 main_head=fa4ea296daae82e920ae6bb410e9bcb7c0061641
-capture_end_utc=2026-08-01T02:44:55Z
+capture_end_utc=2026-08-01T02:55:00Z
+capture_exit=0
