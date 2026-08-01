@@ -39,9 +39,9 @@ run() {
 }
 
 postfreeze_scope() {
-	changed_paths=$(git diff --name-only "$frozen_source"..HEAD)
+	changed_paths=$(git diff --name-only "$frozen_source"..HEAD) || return 1
 	printf '# changed_paths_since_frozen_source\n%s\n' "$changed_paths"
-	unexpected_paths=$(printf '%s\n' "$changed_paths" | sed -e '/^AGENTS\.md$/d' -e '/^CHANGELOG\.md$/d' -e '/^DEV-JOURNAL\.md$/d' -e '/^docs\//d' -e '/^$/d')
+	unexpected_paths=$(printf '%s\n' "$changed_paths" | sed -e '/^AGENTS\.md$/d' -e '/^CHANGELOG\.md$/d' -e '/^DEV-JOURNAL\.md$/d' -e '/^docs\//d' -e '/^$/d') || return 1
 	if [ -n "$unexpected_paths" ]; then
 		printf 'unexpected post-freeze paths:\n%s\n' "$unexpected_paths" >&2
 		return 1
@@ -51,18 +51,18 @@ postfreeze_scope() {
 
 verify_manifest_links() {
 	while read -r key bundle expected; do
-		manifest_bundle=$(sed -n "s/^${key}_bundle=//p" "$packet_path/packet-manifest.txt")
-		manifest_digest=$(sed -n "s/^${key}_sha256sums_sha256=//p" "$packet_path/packet-manifest.txt")
+		manifest_bundle=$(sed -n "s/^${key}_bundle=//p" "$packet_path/packet-manifest.txt") || return 1
+		manifest_digest=$(sed -n "s/^${key}_sha256sums_sha256=//p" "$packet_path/packet-manifest.txt") || return 1
 		if [ "$manifest_bundle" != "$bundle" ] || [ "$manifest_digest" != "$expected" ]; then
 			echo "manifest mismatch for $key" >&2
 			return 1
 		fi
-		actual=$(shasum -a 256 "$bundle/SHA256SUMS" | awk '{print $1}')
+		actual=$(shasum -a 256 "$bundle/SHA256SUMS" | awk '{print $1}') || return 1
 		printf '%s expected=%s actual=%s\n' "$bundle" "$expected" "$actual"
 		if [ "$actual" != "$expected" ]; then
 			return 1
 		fi
-		(cd "$bundle" && shasum -a 256 -c SHA256SUMS)
+		(cd "$bundle" && shasum -a 256 -c SHA256SUMS) || return 1
 	done <<'EOF'
 dependency_sast docs/evidence/1f19e27-20260731 f5bbef2b529dc7b05642ce3d67297394f3b28d50129cfd7f2cbe60ea7e02ce67
 protocol_vector docs/evidence/1f19e27-20260731-protocol 5a696b17949d0343d6940d784f452861b95f2beaaf74f08d3cff8dbad1dc4ce0
@@ -73,22 +73,22 @@ EOF
 
 compare_release_notes() {
 	extracted=$tool_root/release-notes.txt
-	scripts/extract-release-notes.sh CHANGELOG.md v0.1.3 >"$extracted"
-	cmp "$extracted" "$packet_path/release-notes.txt"
+	scripts/extract-release-notes.sh CHANGELOG.md v0.1.3 >"$extracted" || return 1
+	cmp "$extracted" "$packet_path/release-notes.txt" || return 1
 }
 
 candidate_packet_checksums() {
-	(cd "$packet_path" && shasum -a 256 -c SHA256SUMS)
+	(cd "$packet_path" && shasum -a 256 -c SHA256SUMS) || return 1
 }
 
 verify_release_metadata() {
-	metadata=$(scripts/release-tag-metadata.sh v0.1.3)
+	metadata=$(scripts/release-tag-metadata.sh v0.1.3) || return 1
 	printf '%s\n' "$metadata"
-	printf '%s\n' "$metadata" | grep -Fxq 'release-tag=v0.1.3'
-	printf '%s\n' "$metadata" | grep -Fxq 'sbom-file=cpace-v0.1.3.cdx.json'
-	printf '%s\n' "$metadata" | grep -Fxq 'prerelease=true'
-	printf '%s\n' "$metadata" | grep -Fxq 'latest=false'
-	grep -Fq 'bundle_dst="dist/${SBOM_FILE}.sigstore.json"' .github/workflows/release.yml
+	printf '%s\n' "$metadata" | grep -Fxq 'release-tag=v0.1.3' || return 1
+	printf '%s\n' "$metadata" | grep -Fxq 'sbom-file=cpace-v0.1.3.cdx.json' || return 1
+	printf '%s\n' "$metadata" | grep -Fxq 'prerelease=true' || return 1
+	printf '%s\n' "$metadata" | grep -Fxq 'latest=false' || return 1
+	grep -Fq 'bundle_dst="dist/${SBOM_FILE}.sigstore.json"' .github/workflows/release.yml || return 1
 	printf 'attestation-bundle=cpace-v0.1.3.cdx.json.sigstore.json\n'
 }
 
