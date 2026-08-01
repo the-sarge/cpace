@@ -16,7 +16,7 @@ This packet assembles the current dependency/SAST, protocol/vector/capability, p
 | Toolchain, vectors, Capslock, and protocol audit | `docs/evidence/1f19e27-20260731-protocol/` | Clean detached source candidate; 2026-07-31 08:15:24–08:15:32 UTC; Go 1.26.4 and Go 1.26.5 normalized vector event streams were bit-identical, Capslock classes/counts were unchanged, and all 42 focused top-level protocol/profile tests passed. |
 | Paired long fuzzing | `docs/evidence/1f19e27-20260731-fuzz/` | Clean detached source candidate; 2026-07-31 08:29:08–23:50:10 UTC; ARM passed all 14 targets in 50,416 seconds, Intel passed 13 before a one-hour `FuzzMessageARoundTrip` deadline miss in 50,420 seconds, and the same-host 3,601-second targeted rerun passed with no new artifacts. |
 | GitHub release controls and scheduled signal | `docs/evidence/1f19e27-20260801-github/` | Point-in-time capture 2026-08-01 02:54:40–02:55:00 UTC; active protected tag ruleset with no bypass, exact required `main` contexts, empty open alert sets, Scorecard 7.4, and recorded workflow failure/recovery and runner-availability qualifications. |
-| Final pre-tag integration gate | `final-gate.log` | Clean documentation-only descendant `04816e1c71df0c2f4add52408e237c26e2ff1c5b` (tree `fb61242bbdaae84eba95a49c9bd0b95e7f87082f`); 2026-08-01 04:10:15–04:11:56 UTC; all release-facing local gates and pinned analysis reruns passed, with 97.2% statement coverage. |
+| Final pre-tag integration gate | `final-gate.log` | Clean documentation-only descendant of the frozen source, identified by commit and tree in the transcript and retained in branch history; all release-facing local gates and pinned analysis reruns passed, with 97.2% statement coverage. |
 
 Every source-sensitive lane names candidate `1f19e278112fa037890848ed6c086addeffdca4e`. The GitHub lane also names that frozen source contract while preserving that the source SHA is an intermediate PR #239 commit without direct check suites, the successful required checks belong to its documentation-only checked descendant, and several scheduled signals ran on other explicitly recorded SHAs.
 
@@ -26,16 +26,17 @@ Every source-sensitive lane names candidate `1f19e278112fa037890848ed6c086addeff
 | --- | --- |
 | `packet-manifest.txt` | Frozen source commit/tree plus the SHA-256 digest of each current lane's `SHA256SUMS`; it also marks `f7efa6a963a954952b1ecad3f46530f13799fe89` historical and keeps publication-only checks pending. |
 | `release-notes.txt` | Exact output of `scripts/extract-release-notes.sh CHANGELOG.md v0.1.3`, preserving the breaking pre-v1 migration first, unchanged wire/suite behavior, non-production-ready posture, evidence scope, and remaining #29-#32 production-readiness blockers. |
+| `capture.sh` | Reproduction script preserving the exact gate commands, pinned tool versions, clean-state assertions, and command timing/return-code wrapper. |
 | `final-gate.log` | Raw final pre-tag command transcript with repository identity, clean state, host/tool metadata, commands, timestamps, durations, outputs, and return codes. |
-| `SHA256SUMS` | SHA-256 digests for the manifest, extracted release notes, and final-gate transcript. |
+| `SHA256SUMS` | SHA-256 digests for the capture script, manifest, extracted release notes, and final-gate transcript. |
 
 ## Candidate-Gate Disposition
 
 The dependency review, `govulncheck`, gosec, CodeQL alert, Dependabot alert, secret-scanning alert, and manual license results contain no violation under `docs/security-gates.md`; no `docs/vex.md` entry or suppression is required. The Scorecard deductions, Nightly Fuzz deadline miss with successful failed-job rerun, Intel long-fuzz deadline miss with same-host targeted recovery, and autoscaled arm64 queue limits are preserved as residual process or availability qualifications rather than silently promoted to clean source-candidate runs.
 
-The clean integration gate ran `task docs:check`, `task quick`, `task check`, an explicit race rerun, coverage, pinned Staticcheck, pinned test-aware govulncheck, pinned test-inclusive gosec, normal and verbose Capslock, release-policy validation, release-note extraction, release metadata checks, every child-bundle checksum, and clean-state assertions. The full Task gate took 86 seconds; `govulncheck@v1.3.0` found no vulnerabilities, `gosec@v2.26.1 -tests` reported zero issues, Capslock repeated the expected 11 `ARBITRARY_EXECUTION` and 13 `UNANALYZED` direct references, and the final worktree remained clean.
+The clean integration gate ran `task docs:check`, `task quick`, `task check`, an explicit race rerun, coverage, pinned Staticcheck, pinned test-aware govulncheck, pinned test-inclusive gosec, normal and verbose Capslock, release-policy validation, release-note extraction, release metadata checks, every child-bundle checksum, and clean-state assertions. `govulncheck@v1.3.0` found no vulnerabilities, `gosec@v2.26.1 -tests` reported zero issues, Capslock repeated the expected 11 `ARBITRARY_EXECUTION` and 13 `UNANALYZED` direct references, and the final worktree remained clean.
 
-The clean gate necessarily checked a provisional two-line `final-gate.log` and its matching checksum so the evidence-baseline validator could validate a complete bundle without a self-referential hash. Replacing that marker with the completed transcript is the only post-gate raw-artifact mutation; the packet checksum, evidence-baseline validator, documentation check, and release-note comparison are rerun afterward against the final bytes.
+The gate commit contains the finalized release-facing documentation and capture script plus the preceding valid transcript and checksum. Replacing that transcript with the gate's own output and updating its checksum are the only post-gate mutations, which avoids changing any release claim after the recorded full gate while acknowledging the unavoidable self-reference boundary. The packet checksum, evidence-baseline validator, documentation check, release-note comparison, and full `task check` are rerun against the final committed bytes.
 
 Issue #44's remaining criteria are met by the raw checked bundles, the hash-linked manifest, and the recorded bit-identical Go 1.26.4/1.26.5 vector comparison. Issue #33's pre-tag lanes are assembled here. Its tag-triggered Release Validation and post-gosec-SARIF Code Scanning check are structurally post-tag, remain blocking publication verification, and are not claimed by this packet.
 
@@ -56,6 +57,8 @@ sha256sum -c SHA256SUMS
 ```
 
 Then verify each bundle digest named in `packet-manifest.txt` and run `scripts/check-evidence-baseline.sh` from the repository root.
+
+To reproduce the captured gate, check out a clean descendant of the frozen source containing the finalized packet and run `docs/evidence/1f19e27-20260801-candidate/capture.sh <clean-gate-worktree>`; the script rejects dirty worktrees, non-descendants, and post-freeze paths outside documentation and evidence scope.
 
 ## Residual Limitations
 
