@@ -8,11 +8,11 @@ Last released tag: `v0.1.2`
 
 Last released commit: `4e661bc1f925ebedf1f270668129d85bab73e468`
 
-Current evidence status: see `docs/evidence-baseline.md`. The dependency, vulnerability, and SAST/gosec lane is current for the frozen `v0.1.3` candidate in `docs/evidence/1f19e27-20260731/`; Capslock, security/spec audit, and Go 1.26.4 to Go 1.26.5 vector stability are current in `docs/evidence/1f19e27-20260731-protocol/`; paired long fuzz is current in `docs/evidence/1f19e27-20260731-fuzz/` with a recorded Intel all-target deadline non-pass and same-host targeted recovery; and the point-in-time GitHub release-control capture is current in `docs/evidence/1f19e27-20260801-github/`. The original `v0.1.2` packet and `docs/evidence/f7efa6a-20260619/` remain historical.
+Current evidence status: see `docs/evidence-baseline.md`. The dependency, vulnerability, and SAST/gosec lane is current for the frozen `v0.1.3` candidate in `docs/evidence/1f19e27-20260731/`; Capslock, security/spec audit, and Go 1.26.4 to Go 1.26.5 vector stability are current in `docs/evidence/1f19e27-20260731-protocol/`; paired long fuzz is current in `docs/evidence/1f19e27-20260731-fuzz/` with a recorded Intel all-target deadline non-pass and same-host targeted recovery; the point-in-time GitHub release-control capture is current in `docs/evidence/1f19e27-20260801-github/`; and `docs/evidence/1f19e27-20260801-candidate/` assembles those lanes with the final pre-tag gate. The original `v0.1.2` packet and `docs/evidence/f7efa6a-20260619/` remain historical.
 
-Latest complete multi-lane evidence packet: `docs/evidence/f7efa6a-20260619/`, pinned to package-code candidate `f7efa6a963a954952b1ecad3f46530f13799fe89`. It is unaudited historical prerelease evidence, not current-candidate evidence or a production-readiness claim.
+Latest complete multi-lane evidence packet: `docs/evidence/1f19e27-20260801-candidate/`, pinned to frozen source candidate `1f19e278112fa037890848ed6c086addeffdca4e`. It is project-side prerelease evidence, not independent cryptographic review or a production-readiness claim. The older `docs/evidence/f7efa6a-20260619/` packet is historical.
 
-Frozen `v0.1.3` candidate source: `1f19e278112fa037890848ed6c086addeffdca4e`. Review package code against that exact commit. The dependency, vulnerability, SAST/gosec, Capslock, security/spec, cross-toolchain vector, paired long-fuzz, and pre-publication GitHub release-control lanes are current for this candidate contract; signed-tag Release Validation and post-release verification remain pending.
+Frozen `v0.1.3` candidate source: `1f19e278112fa037890848ed6c086addeffdca4e`. Review package code against that exact commit. The dependency, vulnerability, SAST/gosec, Capslock, security/spec, cross-toolchain vector, paired long-fuzz, pre-publication GitHub release-control, and assembled pre-tag gate lanes are current for this candidate contract; signed-tag Release Validation and post-release verification remain pending publication work.
 
 Status: auditable draft implementation. This package has not had independent
 cryptographic review and is not production-ready.
@@ -42,6 +42,7 @@ cryptographic review before any production-ready claim.
 - `docs/evidence/1f19e27-20260731-protocol/` for exact-candidate Capslock, security/spec, focused protocol, and cross-toolchain vector raw evidence and SHA-256 digests.
 - `docs/evidence/1f19e27-20260731-fuzz/` for exact-candidate paired long-fuzz transcripts, the recorded Intel deadline miss, same-host targeted recovery, and SHA-256 digests.
 - `docs/evidence/1f19e27-20260801-github/` for point-in-time GitHub ruleset, branch-protection, required-check, alert, Scorecard, scheduled-workflow, timing-failure/recovery, and SHA-256 evidence.
+- `docs/evidence/1f19e27-20260801-candidate/` for the complete current packet manifest, extracted release notes, final pre-tag gate, and SHA-256 digests.
 - `docs/evidence/f7efa6a-20260619/` for the historical multi-lane raw evidence bundle and SHA-256 digests.
 - `docs/evidence/v012-candidate-20260508/` for raw v0.1.2 candidate transcript
   files and SHA-256 digests.
@@ -102,7 +103,7 @@ The `v0.1.2` prerelease contains the external-review packet, Go 1.26
 modernization, and refreshed evidence. It has no intended Go API,
 wire/protocol, dependency, or vector behavior change.
 
-The current evidence status and freshness caveats are indexed in `docs/evidence-baseline.md`. The Go 1.26.5 dependency/SAST, protocol/capability, and paired long-fuzz bundles cover frozen candidate source `1f19e278112fa037890848ed6c086addeffdca4e`, including bit-identical normalized vector outputs under Go 1.26.4 and Go 1.26.5 and a same-host targeted fuzz recovery for the recorded Intel deadline miss. The 2026-08-01 GitHub release-control bundle records mutable repository state against the same candidate contract, including the checked PR descendant limitation, empty alert sets, current Scorecard result, Nightly Fuzz failed-job recovery, and autoscaled runner availability; signed-tag Release Validation remains pending.
+The current evidence status and freshness caveats are indexed in `docs/evidence-baseline.md`. The Go 1.26.5 dependency/SAST, protocol/capability, and paired long-fuzz bundles cover frozen candidate source `1f19e278112fa037890848ed6c086addeffdca4e`, including bit-identical normalized vector outputs under Go 1.26.4 and Go 1.26.5 and a same-host targeted fuzz recovery for the recorded Intel deadline miss. The 2026-08-01 GitHub release-control bundle records mutable repository state against the same candidate contract, including the checked PR descendant limitation, empty alert sets, current Scorecard result, Nightly Fuzz failed-job recovery, and autoscaled runner availability. The assembled packet hash-links those lanes and records the pre-tag gate; signed-tag Release Validation remains pending publication work.
 
 Capslock capability-analysis evidence is recorded in `docs/capslock-report.md`; the exact-candidate rerun found unchanged classes and counts, and its pinned baseline and freshness caveat are indexed in `docs/evidence-baseline.md`.
 

@@ -65,6 +65,8 @@ Before each release, capture the active `refs/tags/v*` tag-authority ruleset JSO
 
 For `v0.1.3`, the same 2026-08-01 bundle captures strict `main` protection, the exact required contexts and their successful PR #239 results, empty open Code Scanning/Dependabot/secret-scanning alert responses, the current Scorecard result, and recent scheduled vulnerability, SAST, cross-platform, and fuzz signal. It explicitly records that the frozen source SHA is an intermediate PR commit without direct check suites, plus the successful checked descendant and a Nightly Fuzz deadline failure/recovery pair; preserve those qualifications at the candidate gate.
 
+The assembled `v0.1.3` packet is `docs/evidence/1f19e27-20260801-candidate/`. Its manifest hash-links the four current evidence bundles to the same frozen source contract, and its final-gate transcript records the release-facing validation commands and results. The signed tag, tag-triggered Release Validation, post-SARIF alert check, and published asset verification remain steps 10-12; those checks are structurally post-tag and cannot be used as pre-tag evidence.
+
 ## 4. Long Fuzz Evidence
 
 Run every target from the fuzz-target registry (`.github/fuzz-targets.json`, with target function, package, and OSS-Fuzz-compatible binary name) against the exact candidate commit after the `go test ./...` drift check has confirmed the registry, defined fuzz functions, and OSS-Fuzz-compatible build lines agree. Use maintainer-controlled machines or trusted main-only/manual workflows.
