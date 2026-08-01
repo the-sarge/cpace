@@ -114,7 +114,7 @@ for artifact in "$output_dir"/*.json; do
 done
 
 jq -e '.enforcement == "active" and .target == "tag" and .conditions.ref_name.include == ["refs/tags/v*"] and .bypass_actors == [] and .current_user_can_bypass == "never" and ([.rules[].type] | sort) == (["creation", "deletion", "update"] | sort)' "$output_dir/ruleset-16048307.json" >/dev/null
-jq -e '.required_status_checks.strict == true and ([.required_status_checks.checks[].context] | sort) == (["Check", "DCO", "Dependency Gate", "SAST Gate"] | sort)' "$output_dir/main-branch-protection.json" >/dev/null
+jq -e '.required_status_checks.strict == true and ([.required_status_checks.checks[].context] | sort) == (["Check", "DCO", "Dependency Gate", "SAST Gate"] | sort) and .enforce_admins.enabled == true and .required_conversation_resolution.enabled == true and .allow_force_pushes.enabled == false and .allow_deletions.enabled == false' "$output_dir/main-branch-protection.json" >/dev/null
 jq -e '.total_count == 0' "$output_dir/candidate-check-suites.json" >/dev/null
 jq -e '.total_count == 0' "$output_dir/candidate-check-runs.json" >/dev/null
 jq -e '.check_runs as $runs | ["Check", "DCO", "Dependency Gate", "SAST Gate"] | all(. as $required | any($runs[]; .name == $required and .conclusion == "success"))' "$output_dir/pr-239-check-runs.json" >/dev/null
