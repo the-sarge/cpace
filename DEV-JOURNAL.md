@@ -2755,3 +2755,38 @@ Merged PR [#246](https://github.com/the-sarge/cpace/pull/246), closing issue [#2
 **Next**
 
 - Parent release tracker [#229](https://github.com/the-sarge/cpace/issues/229) and publication issue [#238](https://github.com/the-sarge/cpace/issues/238) remain the live views. Publication requires explicit maintainer authorization for a signed annotated `v0.1.3` tag, then tag-triggered Release Validation, post-SARIF Code Scanning, prerelease/not-latest checks, and SBOM/Sigstore/attestation verification.
+
+---
+
+## v0.1.3 prerelease published - 2026-08-01 01:52 EDT
+
+**Main:** `b4174c6bf4ba`
+**Actor:** Codex
+
+**Summary**
+
+Published the signed `v0.1.3` GitHub prerelease from commit `b4174c6bf4bae78f4081c3d6d6baebff5f1cbbf1`, descended from frozen source candidate `1f19e278112fa037890848ed6c086addeffdca4e`, and completed consumer-style release verification. The release remains explicitly non-production-ready.
+
+**Completed**
+
+- Created and locally verified the signed annotated `v0.1.3` tag. The first push was correctly rejected by tag ruleset `16048307`; after explicit maintainer authorization, a temporary `always` bypass for user actor `3312309` allowed the non-force tag creation, and the ruleset was restored two seconds later to active creation/update/deletion enforcement with an empty bypass list and `current_user_can_bypass: never`.
+- [Release Validation run 30686073480](https://github.com/the-sarge/cpace/actions/runs/30686073480) passed signed-tag verification, Check, Race, Govulncheck, Gosec with SARIF upload, CycloneDX SBOM generation and validation, SBOM attestation, and GitHub Release publication.
+- Consumer-style verification confirmed that the [v0.1.3 GitHub release](https://github.com/the-sarge/cpace/releases/tag/v0.1.3) is a prerelease and not latest, its notes match the gated changelog extraction, and its two expected assets are present. The downloaded SBOM validated as CycloneDX JSON 1.5, matched release-body SHA-256 `ee850eca781db0d170306dc22743a5601c72c1e76b244776e59eae16a0a98de8`, and passed `gh attestation verify`; a fresh remote fetch verified the annotated tag object, maintainer SSH signature, tagger identity, and exact target.
+- Confirmed post-SARIF Code Scanning analysis `1557699480` at `refs/tags/v0.1.3` and the exact tag commit with zero results; the open Code Scanning alert response remained empty.
+- Recorded the publication evidence, break-glass interval, asset verification, and residual risks on [issue #238](https://github.com/the-sarge/cpace/issues/238#issuecomment-5150028176), with cross-tracker comments on issues #229, #33, and #44. Updated the repository release plan, project plan, evidence baseline, and OmniFocus release group without closing a GitHub issue, merging a PR, or pushing `main`.
+
+**Decisions**
+
+- Preserve `v0.1.3` as an immutable, explicitly non-production-ready single-suite prerelease. External review issues #29-#31 and independent cryptographic review issue #32 remain the production-readiness blockers.
+- Keep ADR-0010 proposed and deferred. Whether to resume its independent consideration gate for a possible `v0.2.0` is a separate maintainer decision, not an automatic consequence of this release.
+
+**Validation**
+
+- Pre-tag local `task docs:check`, `task quick`, and `task check` passed; the full gate included release-policy and evidence checks, unit and race tests, formatting and import checks, vet, Staticcheck, ast-grep, and `govulncheck -test ./...` with no vulnerabilities.
+- Tag-triggered Release Validation completed successfully at exact tag commit `b4174c6bf4bae78f4081c3d6d6baebff5f1cbbf1`; release posture, notes, assets, checksum, attestation, remote tag authenticity, and post-SARIF alert state were then checked from the consumer seam.
+- The final documentation-only tracker diff passed `task check`. Separate Standards and Spec review found one stale release-posture statement, which was corrected and re-verified with no remaining findings.
+
+**Next**
+
+- Land the post-release documentation and this journal entry through the maintainer-controlled PR path. Issue #238 remains open, and `main` has not been pushed directly.
+- The next live decision is whether to resume ADR-0010 consideration for a possible `v0.2.0`; repinning and sending external-review outreach for #29-#32 remains the separate production-readiness path.
