@@ -32,7 +32,7 @@ The audit covered:
 - peer-share prevalidation, validation-before-randomness ordering, invalid/identity classification, role-context errors, and the internal nil-plus-error divergence from the draft helper convention;
 - caller-input role mapping, copy ownership, empty-session compatibility, local associated data, peer metadata, and outer-negotiation limits;
 - the production and evidence-relevant delta from historical audit baseline `f7efa6a963a954952b1ecad3f46530f13799fe89`, including issue #219's internal close-protocol concentration, the scalar-sampling explanation correction, workflow/dependency updates, and the Go 1.26.5 pin;
-- exact-candidate dependency evidence, Capslock capability evidence, cross-toolchain vectors, and the freshness limits of the separately captured long-fuzz and still-historical release-control lanes.
+- exact-candidate dependency evidence, Capslock capability evidence, cross-toolchain vectors, and the freshness limits of the separately captured long-fuzz and point-in-time GitHub release-control lanes.
 
 ## Result
 
@@ -85,6 +85,6 @@ The scalar-sampling correction is integrated: masking bounds samples below `2^25
 
 This audit and its evidence are self-review. Passing fixed vectors, focused tests, and static capability analysis does not establish cryptographic correctness, side-channel resistance, or real-world integration safety.
 
-External review of package-owned CI, Message framing, and suite-profile choices remains open. Independent cryptographic review remains required before any production-ready claim. The paired exact-candidate long-fuzz lane is captured separately in `docs/evidence/1f19e27-20260731-fuzz/`; GitHub alert, tag-ruleset, Scorecard, and signed Release Validation lanes remain separate work and are not implied by this audit.
+External review of package-owned CI, Message framing, and suite-profile choices remains open. Independent cryptographic review remains required before any production-ready claim. The paired exact-candidate long-fuzz lane is captured separately in `docs/evidence/1f19e27-20260731-fuzz/`, and the point-in-time GitHub alert, tag-ruleset, Scorecard, and scheduled-signal lane is captured separately in `docs/evidence/1f19e27-20260801-github/`; neither is implied by this audit, and signed Release Validation remains publication work.
 
 Repeat this audit if protocol code, parser/framing code, dependencies, toolchain, package-profile behavior or documentation, evidence-sensitive tooling, or the targeted CPace draft revision changes before the release tag.

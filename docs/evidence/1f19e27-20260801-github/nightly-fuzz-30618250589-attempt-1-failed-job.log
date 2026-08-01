@@ -1,0 +1,396 @@
+﻿2026-07-31T09:10:34.8048505Z Current runner version: '2.336.0'
+2026-07-31T09:10:34.8074383Z ##[group]Runner Image Provisioner
+2026-07-31T09:10:34.8075336Z Hosted Compute Agent
+2026-07-31T09:10:34.8075981Z Version: 20260707.563
+2026-07-31T09:10:34.8076588Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-31T09:10:34.8077367Z Build Date: 2026-07-07T19:33:50Z
+2026-07-31T09:10:34.8078084Z Worker ID: {bf621df3-7921-400d-9902-b074ecbbc2d4}
+2026-07-31T09:10:34.8078876Z Azure Region: westus2
+2026-07-31T09:10:34.8079934Z ##[endgroup]
+2026-07-31T09:10:34.8081884Z ##[group]Operating System
+2026-07-31T09:10:34.8082626Z Ubuntu
+2026-07-31T09:10:34.8083168Z 24.04.4
+2026-07-31T09:10:34.8083666Z LTS
+2026-07-31T09:10:34.8084276Z ##[endgroup]
+2026-07-31T09:10:34.8084834Z ##[group]Runner Image
+2026-07-31T09:10:34.8085474Z Image: ubuntu-24.04
+2026-07-31T09:10:34.8086061Z Version: 20260720.247.2
+2026-07-31T09:10:34.8087334Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-31T09:10:34.8088919Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+2026-07-31T09:10:34.8090092Z ##[endgroup]
+2026-07-31T09:10:34.8091295Z ##[group]GITHUB_TOKEN Permissions
+2026-07-31T09:10:34.8093781Z Contents: read
+2026-07-31T09:10:34.8094477Z Metadata: read
+2026-07-31T09:10:34.8095026Z ##[endgroup]
+2026-07-31T09:10:34.8097233Z Secret source: Actions
+2026-07-31T09:10:34.8098561Z Prepare workflow directory
+2026-07-31T09:10:34.8535677Z Prepare all required actions
+2026-07-31T09:10:34.8590636Z Getting action download info
+2026-07-31T09:10:35.2216503Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-07-31T09:10:35.5668594Z Download action repository 'actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e' (SHA:b7ad1dad31e06c5925ef5d2fc7ad053ef454303e)
+2026-07-31T09:10:35.8471082Z Download action repository 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+2026-07-31T09:10:36.0284443Z Complete job name: Fuzz (FuzzInitiatorFinishWithFuzzedMessageB)
+2026-07-31T09:10:36.1106451Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-07-31T09:10:36.1107609Z with:
+2026-07-31T09:10:36.1108095Z   persist-credentials: false
+2026-07-31T09:10:36.1108660Z   repository: the-sarge/cpace
+2026-07-31T09:10:36.1112916Z   token: ***
+2026-07-31T09:10:36.1113398Z   ssh-strict: true
+2026-07-31T09:10:36.1113877Z   ssh-user: git
+2026-07-31T09:10:36.1114338Z   clean: true
+2026-07-31T09:10:36.1114817Z   sparse-checkout-cone-mode: true
+2026-07-31T09:10:36.1115377Z   fetch-depth: 1
+2026-07-31T09:10:36.1115837Z   fetch-tags: false
+2026-07-31T09:10:36.1116319Z   show-progress: true
+2026-07-31T09:10:36.1116805Z   lfs: false
+2026-07-31T09:10:36.1117264Z   submodules: false
+2026-07-31T09:10:36.1117752Z   set-safe-directory: true
+2026-07-31T09:10:36.1118306Z   allow-unsafe-pr-checkout: false
+2026-07-31T09:10:36.1119141Z env:
+2026-07-31T09:10:36.1119804Z   GOTOOLCHAIN: local
+2026-07-31T09:10:36.1120309Z ##[endgroup]
+2026-07-31T09:10:36.2065452Z Syncing repository: the-sarge/cpace
+2026-07-31T09:10:36.2068297Z ##[group]Getting Git version info
+2026-07-31T09:10:36.2069269Z Working directory is '/home/runner/work/cpace/cpace'
+2026-07-31T09:10:36.2070737Z [command]/usr/bin/git version
+2026-07-31T09:10:36.2138792Z git version 2.54.0
+2026-07-31T09:10:36.2160562Z ##[endgroup]
+2026-07-31T09:10:36.2172818Z Temporarily overriding HOME='/home/runner/work/_temp/4b2242cd-461c-4327-933c-5a2505f59e91' before making global git config changes
+2026-07-31T09:10:36.2175587Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-31T09:10:36.2178740Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/cpace/cpace
+2026-07-31T09:10:36.2233298Z Deleting the contents of '/home/runner/work/cpace/cpace'
+2026-07-31T09:10:36.2237651Z ##[group]Determining repository object format
+2026-07-31T09:10:36.2240246Z ##[endgroup]
+2026-07-31T09:10:36.2241693Z ##[group]Initializing the repository
+2026-07-31T09:10:36.2244225Z [command]/usr/bin/git init /home/runner/work/cpace/cpace
+2026-07-31T09:10:36.2347922Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-31T09:10:36.2349708Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-31T09:10:36.2351108Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-31T09:10:36.2352161Z hint: call:
+2026-07-31T09:10:36.2353158Z hint:
+2026-07-31T09:10:36.2354245Z hint: 	git config --global init.defaultBranch <name>
+2026-07-31T09:10:36.2355484Z hint:
+2026-07-31T09:10:36.2356588Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-31T09:10:36.2358243Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-31T09:10:36.2359254Z hint:
+2026-07-31T09:10:36.2360378Z hint: 	git branch -m <name>
+2026-07-31T09:10:36.2361146Z hint:
+2026-07-31T09:10:36.2362368Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-31T09:10:36.2363551Z Initialized empty Git repository in /home/runner/work/cpace/cpace/.git/
+2026-07-31T09:10:36.2366177Z [command]/usr/bin/git remote add origin https://github.com/the-sarge/cpace
+2026-07-31T09:10:36.2408558Z ##[endgroup]
+2026-07-31T09:10:36.2409695Z ##[group]Disabling automatic garbage collection
+2026-07-31T09:10:36.2411994Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-31T09:10:36.2440346Z ##[endgroup]
+2026-07-31T09:10:36.2441498Z ##[group]Setting up auth
+2026-07-31T09:10:36.2442633Z Removing SSH command configuration
+2026-07-31T09:10:36.2445533Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-31T09:10:36.2478264Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-31T09:10:36.2829230Z Removing HTTP extra header
+2026-07-31T09:10:36.2834609Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-31T09:10:36.2863591Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-31T09:10:36.3071844Z Removing includeIf entries pointing to credentials config files
+2026-07-31T09:10:36.3076033Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-31T09:10:36.3105088Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-31T09:10:36.3328531Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-31T09:10:36.3363705Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/cpace/cpace/.git.path /home/runner/work/_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config
+2026-07-31T09:10:36.3391285Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/cpace/cpace/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config
+2026-07-31T09:10:36.3421674Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config
+2026-07-31T09:10:36.3451045Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config
+2026-07-31T09:10:36.3477309Z ##[endgroup]
+2026-07-31T09:10:36.3478140Z ##[group]Fetching the repository
+2026-07-31T09:10:36.3483667Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +228ebfcaea4a15432a7289f2299dfacb9248910d:refs/remotes/origin/main
+2026-07-31T09:10:36.7901521Z From https://github.com/the-sarge/cpace
+2026-07-31T09:10:36.7903675Z  * [new ref]         228ebfcaea4a15432a7289f2299dfacb9248910d -> origin/main
+2026-07-31T09:10:36.7960991Z [command]/usr/bin/git branch --list --remote origin/main
+2026-07-31T09:10:36.7986833Z   origin/main
+2026-07-31T09:10:36.7995384Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-07-31T09:10:36.8016664Z 228ebfcaea4a15432a7289f2299dfacb9248910d
+2026-07-31T09:10:36.8022036Z ##[endgroup]
+2026-07-31T09:10:36.8023371Z ##[group]Determining the checkout info
+2026-07-31T09:10:36.8024905Z ##[endgroup]
+2026-07-31T09:10:36.8025962Z [command]/usr/bin/git sparse-checkout disable
+2026-07-31T09:10:36.8070668Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-31T09:10:36.8097491Z ##[group]Checking out the ref
+2026-07-31T09:10:36.8100680Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-31T09:10:36.8279777Z Switched to a new branch 'main'
+2026-07-31T09:10:36.8282536Z branch 'main' set up to track 'origin/main'.
+2026-07-31T09:10:36.8291327Z ##[endgroup]
+2026-07-31T09:10:36.8331807Z [command]/usr/bin/git log -1 --format=%H
+2026-07-31T09:10:36.8355635Z 228ebfcaea4a15432a7289f2299dfacb9248910d
+2026-07-31T09:10:36.8364970Z ##[group]Removing auth
+2026-07-31T09:10:36.8366125Z Removing SSH command configuration
+2026-07-31T09:10:36.8368468Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-31T09:10:36.8403034Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-31T09:10:36.8618163Z Removing HTTP extra header
+2026-07-31T09:10:36.8622140Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-31T09:10:36.8653115Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-31T09:10:36.8887016Z Removing includeIf entries pointing to credentials config files
+2026-07-31T09:10:36.8891119Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-31T09:10:36.8917264Z includeif.gitdir:/home/runner/work/cpace/cpace/.git.path
+2026-07-31T09:10:36.8921099Z includeif.gitdir:/home/runner/work/cpace/cpace/.git/worktrees/*.path
+2026-07-31T09:10:36.8924319Z includeif.gitdir:/github/workspace/.git.path
+2026-07-31T09:10:36.8927185Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-07-31T09:10:36.8934878Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/cpace/cpace/.git.path
+2026-07-31T09:10:36.8950159Z /home/runner/work/_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config
+2026-07-31T09:10:36.8964576Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/cpace/cpace/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-e4302ae9\-0219\-484d\-a308\-09e1afc9ea50\.config
+2026-07-31T09:10:36.8999094Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/cpace/cpace/.git/worktrees/*.path
+2026-07-31T09:10:36.9029970Z /home/runner/work/_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config
+2026-07-31T09:10:36.9043535Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/cpace/cpace/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-e4302ae9\-0219\-484d\-a308\-09e1afc9ea50\.config
+2026-07-31T09:10:36.9137891Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-07-31T09:10:36.9178563Z /github/runner_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config
+2026-07-31T09:10:36.9192680Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-e4302ae9\-0219\-484d\-a308\-09e1afc9ea50\.config
+2026-07-31T09:10:36.9224549Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-07-31T09:10:36.9247039Z /github/runner_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config
+2026-07-31T09:10:36.9256975Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-e4302ae9\-0219\-484d\-a308\-09e1afc9ea50\.config
+2026-07-31T09:10:36.9298494Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-31T09:10:36.9521331Z Removing credentials config '/home/runner/work/_temp/git-credentials-e4302ae9-0219-484d-a308-09e1afc9ea50.config'
+2026-07-31T09:10:36.9528338Z ##[endgroup]
+2026-07-31T09:10:36.9907977Z ##[group]Run actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+2026-07-31T09:10:36.9909842Z with:
+2026-07-31T09:10:36.9910640Z   go-version-file: go.mod
+2026-07-31T09:10:36.9911568Z   cache: true
+2026-07-31T09:10:36.9912372Z   check-latest: false
+2026-07-31T09:10:36.9922370Z   token: ***
+2026-07-31T09:10:36.9923153Z env:
+2026-07-31T09:10:36.9923890Z   GOTOOLCHAIN: local
+2026-07-31T09:10:36.9924738Z ##[endgroup]
+2026-07-31T09:10:37.1086237Z Setup go version spec 1.26
+2026-07-31T09:10:37.1356731Z Found in cache @ /opt/hostedtoolcache/go/1.26.5/x64
+2026-07-31T09:10:37.1358944Z Added go to the path
+2026-07-31T09:10:37.1360828Z Successfully set up Go version 1.26
+2026-07-31T09:10:37.8754142Z [command]/opt/hostedtoolcache/go/1.26.5/x64/bin/go env GOMODCACHE
+2026-07-31T09:10:37.8795394Z [command]/opt/hostedtoolcache/go/1.26.5/x64/bin/go env GOCACHE
+2026-07-31T09:10:37.8826503Z /home/runner/go/pkg/mod
+2026-07-31T09:10:37.8855449Z /home/runner/.cache/go-build
+2026-07-31T09:10:38.1710375Z Cache hit for: setup-go-Linux-x64-ubuntu24-go-1.26.5-814ece81adf6f24fa7bd007dee244739438443274d9a26845b30615e3a61a08c
+2026-07-31T09:10:39.4796215Z Received 0 of 67475929 (0.0%), 0.0 MBs/sec
+2026-07-31T09:10:40.2253204Z Received 67475929 of 67475929 (100.0%), 36.9 MBs/sec
+2026-07-31T09:10:40.2254585Z Cache Size: ~64 MB (67475929 B)
+2026-07-31T09:10:40.2317909Z [command]/usr/bin/tar -xf /home/runner/work/_temp/a6845dba-ca7b-4dd5-8941-22754ccccee1/cache.tzst -P -C /home/runner/work/cpace/cpace --use-compress-program unzstd
+2026-07-31T09:10:40.8826669Z Cache restored successfully
+2026-07-31T09:10:40.8863843Z Cache restored from key: setup-go-Linux-x64-ubuntu24-go-1.26.5-814ece81adf6f24fa7bd007dee244739438443274d9a26845b30615e3a61a08c
+2026-07-31T09:10:40.8887458Z go version go1.26.5 linux/amd64
+2026-07-31T09:10:40.8887963Z
+2026-07-31T09:10:40.8888633Z ##[group]go env
+2026-07-31T09:10:40.9644576Z AR='ar'
+2026-07-31T09:10:40.9644901Z CC='gcc'
+2026-07-31T09:10:40.9645150Z CGO_CFLAGS='-O2 -g'
+2026-07-31T09:10:40.9645574Z CGO_CPPFLAGS=''
+2026-07-31T09:10:40.9646125Z CGO_CXXFLAGS='-O2 -g'
+2026-07-31T09:10:40.9646587Z CGO_ENABLED='1'
+2026-07-31T09:10:40.9647022Z CGO_FFLAGS='-O2 -g'
+2026-07-31T09:10:40.9647439Z CGO_LDFLAGS='-O2 -g'
+2026-07-31T09:10:40.9647865Z CXX='g++'
+2026-07-31T09:10:40.9648227Z GCCGO='gccgo'
+2026-07-31T09:10:40.9648582Z GO111MODULE=''
+2026-07-31T09:10:40.9648939Z GOAMD64='v1'
+2026-07-31T09:10:40.9649285Z GOARCH='amd64'
+2026-07-31T09:10:40.9649898Z GOAUTH='netrc'
+2026-07-31T09:10:40.9650250Z GOBIN=''
+2026-07-31T09:10:40.9650649Z GOCACHE='/home/runner/.cache/go-build'
+2026-07-31T09:10:40.9651157Z GOCACHEPROG=''
+2026-07-31T09:10:40.9651506Z GODEBUG=''
+2026-07-31T09:10:40.9651897Z GOENV='/home/runner/.config/go/env'
+2026-07-31T09:10:40.9652232Z GOEXE=''
+2026-07-31T09:10:40.9652468Z GOEXPERIMENT=''
+2026-07-31T09:10:40.9652749Z GOFIPS140='off'
+2026-07-31T09:10:40.9652981Z GOFLAGS=''
+2026-07-31T09:10:40.9653746Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build2998148794=/tmp/go-build -gno-record-gcc-switches'
+2026-07-31T09:10:40.9654525Z GOHOSTARCH='amd64'
+2026-07-31T09:10:40.9655064Z GOHOSTOS='linux'
+2026-07-31T09:10:40.9655296Z GOINSECURE=''
+2026-07-31T09:10:40.9655600Z GOMOD='/home/runner/work/cpace/cpace/go.mod'
+2026-07-31T09:10:40.9655956Z GOMODCACHE='/home/runner/go/pkg/mod'
+2026-07-31T09:10:40.9656259Z GONOPROXY=''
+2026-07-31T09:10:40.9656486Z GONOSUMDB=''
+2026-07-31T09:10:40.9656701Z GOOS='linux'
+2026-07-31T09:10:40.9656934Z GOPATH='/home/runner/go'
+2026-07-31T09:10:40.9657169Z GOPRIVATE=''
+2026-07-31T09:10:40.9657455Z GOPROXY='https://proxy.golang.org,direct'
+2026-07-31T09:10:40.9657803Z GOROOT='/opt/hostedtoolcache/go/1.26.5/x64'
+2026-07-31T09:10:40.9658106Z GOSUMDB='sum.golang.org'
+2026-07-31T09:10:40.9658357Z GOTELEMETRY='local'
+2026-07-31T09:10:40.9658630Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+2026-07-31T09:10:40.9658941Z GOTMPDIR=''
+2026-07-31T09:10:40.9659142Z GOTOOLCHAIN='local'
+2026-07-31T09:10:40.9659975Z GOTOOLDIR='/opt/hostedtoolcache/go/1.26.5/x64/pkg/tool/linux_amd64'
+2026-07-31T09:10:40.9660399Z GOVCS=''
+2026-07-31T09:10:40.9660606Z GOVERSION='go1.26.5'
+2026-07-31T09:10:40.9660835Z GOWORK=''
+2026-07-31T09:10:40.9661083Z PKG_CONFIG='pkg-config'
+2026-07-31T09:10:40.9661249Z
+2026-07-31T09:10:40.9661677Z ##[endgroup]
+2026-07-31T09:10:40.9793170Z ##[group]Run go version
+2026-07-31T09:10:40.9793493Z [36;1mgo version[0m
+2026-07-31T09:10:40.9793783Z [36;1mgo env GOTOOLCHAIN GOPROXY GOSUMDB[0m
+2026-07-31T09:10:40.9843460Z shell: /usr/bin/bash -e {0}
+2026-07-31T09:10:40.9843734Z env:
+2026-07-31T09:10:40.9843934Z   GOTOOLCHAIN: local
+2026-07-31T09:10:40.9844160Z ##[endgroup]
+2026-07-31T09:10:40.9955430Z go version go1.26.5 linux/amd64
+2026-07-31T09:10:40.9982182Z local
+2026-07-31T09:10:40.9982703Z https://proxy.golang.org,direct
+2026-07-31T09:10:40.9983127Z sum.golang.org
+2026-07-31T09:10:41.0041908Z ##[group]Run touch "${RUNNER_TEMP}/fuzz-start-FuzzInitiatorFinishWithFuzzedMessageB"
+2026-07-31T09:10:41.0042570Z [36;1mtouch "${RUNNER_TEMP}/fuzz-start-FuzzInitiatorFinishWithFuzzedMessageB"[0m
+2026-07-31T09:10:41.0088086Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-07-31T09:10:41.0088459Z env:
+2026-07-31T09:10:41.0088656Z   GOTOOLCHAIN: local
+2026-07-31T09:10:41.0088876Z ##[endgroup]
+2026-07-31T09:10:41.0194606Z ##[group]Run go test -race -fuzz="FuzzInitiatorFinishWithFuzzedMessageB" -fuzztime=5m "."
+2026-07-31T09:10:41.0195360Z [36;1mgo test -race -fuzz="FuzzInitiatorFinishWithFuzzedMessageB" -fuzztime=5m "."[0m
+2026-07-31T09:10:41.0238638Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-07-31T09:10:41.0238995Z env:
+2026-07-31T09:10:41.0239193Z   GOTOOLCHAIN: local
+2026-07-31T09:10:41.0239670Z ##[endgroup]
+2026-07-31T09:10:57.1347693Z fuzz: elapsed: 0s, gathering baseline coverage: 0/9 completed
+2026-07-31T09:10:57.1951548Z fuzz: elapsed: 0s, gathering baseline coverage: 9/9 completed, now fuzzing with 4 workers
+2026-07-31T09:11:00.1360571Z fuzz: elapsed: 3s, execs: 2031 (677/sec), new interesting: 3 (total: 12)
+2026-07-31T09:11:03.1365738Z fuzz: elapsed: 6s, execs: 3775 (581/sec), new interesting: 4 (total: 13)
+2026-07-31T09:11:06.1390735Z fuzz: elapsed: 9s, execs: 3775 (0/sec), new interesting: 4 (total: 13)
+2026-07-31T09:11:09.1400634Z fuzz: elapsed: 12s, execs: 3775 (0/sec), new interesting: 4 (total: 13)
+2026-07-31T09:11:12.1360764Z fuzz: elapsed: 15s, execs: 21855 (6031/sec), new interesting: 6 (total: 15)
+2026-07-31T09:11:15.1360616Z fuzz: elapsed: 18s, execs: 23036 (394/sec), new interesting: 6 (total: 15)
+2026-07-31T09:11:18.1365037Z fuzz: elapsed: 21s, execs: 29604 (2189/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:21.1400563Z fuzz: elapsed: 24s, execs: 35562 (1985/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:24.1410550Z fuzz: elapsed: 27s, execs: 43028 (2490/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:27.1360789Z fuzz: elapsed: 30s, execs: 50610 (2528/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:30.1380649Z fuzz: elapsed: 33s, execs: 52877 (755/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:33.1350591Z fuzz: elapsed: 36s, execs: 60270 (2467/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:36.1410610Z fuzz: elapsed: 39s, execs: 68006 (2578/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:39.1350627Z fuzz: elapsed: 42s, execs: 71090 (1028/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:42.1360750Z fuzz: elapsed: 45s, execs: 73823 (911/sec), new interesting: 7 (total: 16)
+2026-07-31T09:11:45.1359325Z fuzz: elapsed: 48s, execs: 89395 (5190/sec), new interesting: 8 (total: 17)
+2026-07-31T09:11:48.1380697Z fuzz: elapsed: 51s, execs: 95008 (1871/sec), new interesting: 8 (total: 17)
+2026-07-31T09:11:51.1380822Z fuzz: elapsed: 54s, execs: 99693 (1562/sec), new interesting: 8 (total: 17)
+2026-07-31T09:11:54.1353666Z fuzz: elapsed: 57s, execs: 105795 (2034/sec), new interesting: 8 (total: 17)
+2026-07-31T09:11:57.1353322Z fuzz: elapsed: 1m0s, execs: 110907 (1704/sec), new interesting: 8 (total: 17)
+2026-07-31T09:12:00.1354272Z fuzz: elapsed: 1m3s, execs: 116618 (1904/sec), new interesting: 9 (total: 18)
+2026-07-31T09:12:03.1380683Z fuzz: elapsed: 1m6s, execs: 121492 (1625/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:06.1356012Z fuzz: elapsed: 1m9s, execs: 125849 (1452/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:09.1391936Z fuzz: elapsed: 1m12s, execs: 130263 (1471/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:12.1380623Z fuzz: elapsed: 1m15s, execs: 134622 (1454/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:15.1373104Z fuzz: elapsed: 1m18s, execs: 138990 (1455/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:18.1366926Z fuzz: elapsed: 1m21s, execs: 143417 (1476/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:21.1350749Z fuzz: elapsed: 1m24s, execs: 147872 (1486/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:24.1357996Z fuzz: elapsed: 1m27s, execs: 152259 (1462/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:27.1367250Z fuzz: elapsed: 1m30s, execs: 156641 (1460/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:30.1356149Z fuzz: elapsed: 1m33s, execs: 161016 (1459/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:33.1391022Z fuzz: elapsed: 1m36s, execs: 164287 (1090/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:36.1361211Z fuzz: elapsed: 1m39s, execs: 167627 (1114/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:39.1370568Z fuzz: elapsed: 1m42s, execs: 170873 (1082/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:42.1380787Z fuzz: elapsed: 1m45s, execs: 174186 (1104/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:45.1370746Z fuzz: elapsed: 1m48s, execs: 177477 (1097/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:48.1360682Z fuzz: elapsed: 1m51s, execs: 180809 (1111/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:51.1370581Z fuzz: elapsed: 1m54s, execs: 183957 (1049/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:54.1370672Z fuzz: elapsed: 1m57s, execs: 187290 (1111/sec), new interesting: 10 (total: 19)
+2026-07-31T09:12:57.1360638Z fuzz: elapsed: 2m0s, execs: 190602 (1104/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:00.1370812Z fuzz: elapsed: 2m3s, execs: 193835 (1078/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:03.1380624Z fuzz: elapsed: 2m6s, execs: 197181 (1115/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:06.1365971Z fuzz: elapsed: 2m9s, execs: 200508 (1108/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:09.1400753Z fuzz: elapsed: 2m12s, execs: 203792 (1094/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:12.1362024Z fuzz: elapsed: 2m15s, execs: 207106 (1105/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:15.1360734Z fuzz: elapsed: 2m18s, execs: 210369 (1088/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:18.1370524Z fuzz: elapsed: 2m21s, execs: 213699 (1110/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:21.1364618Z fuzz: elapsed: 2m24s, execs: 217028 (1110/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:24.1380956Z fuzz: elapsed: 2m27s, execs: 220256 (1076/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:27.1370679Z fuzz: elapsed: 2m30s, execs: 223600 (1114/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:30.1348322Z fuzz: elapsed: 2m33s, execs: 226922 (1108/sec), new interesting: 10 (total: 19)
+2026-07-31T09:13:33.1390730Z fuzz: elapsed: 2m36s, execs: 231346 (1474/sec), new interesting: 11 (total: 20)
+2026-07-31T09:13:36.1380677Z fuzz: elapsed: 2m39s, execs: 235928 (1528/sec), new interesting: 11 (total: 20)
+2026-07-31T09:13:39.1360689Z fuzz: elapsed: 2m42s, execs: 240535 (1536/sec), new interesting: 11 (total: 20)
+2026-07-31T09:13:42.1348811Z fuzz: elapsed: 2m45s, execs: 245103 (1523/sec), new interesting: 11 (total: 20)
+2026-07-31T09:13:45.1365544Z fuzz: elapsed: 2m48s, execs: 249612 (1502/sec), new interesting: 11 (total: 20)
+2026-07-31T09:13:48.1366899Z fuzz: elapsed: 2m51s, execs: 254182 (1524/sec), new interesting: 11 (total: 20)
+2026-07-31T09:13:51.1390681Z fuzz: elapsed: 2m54s, execs: 258795 (1537/sec), new interesting: 11 (total: 20)
+2026-07-31T09:13:54.1353368Z fuzz: elapsed: 2m57s, execs: 263399 (1535/sec), new interesting: 11 (total: 20)
+2026-07-31T09:13:57.1368796Z fuzz: elapsed: 3m0s, execs: 267880 (1493/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:00.1360632Z fuzz: elapsed: 3m3s, execs: 272483 (1535/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:03.1400580Z fuzz: elapsed: 3m6s, execs: 277095 (1537/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:06.1350751Z fuzz: elapsed: 3m9s, execs: 281737 (1548/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:09.1373268Z fuzz: elapsed: 3m12s, execs: 286314 (1526/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:12.1360538Z fuzz: elapsed: 3m15s, execs: 290849 (1512/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:15.1365689Z fuzz: elapsed: 3m18s, execs: 295448 (1533/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:18.1392198Z fuzz: elapsed: 3m21s, execs: 300081 (1543/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:21.1387045Z fuzz: elapsed: 3m24s, execs: 304724 (1548/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:24.1380711Z fuzz: elapsed: 3m27s, execs: 309221 (1499/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:27.1353948Z fuzz: elapsed: 3m30s, execs: 313814 (1532/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:30.1391189Z fuzz: elapsed: 3m33s, execs: 318379 (1521/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:33.1400596Z fuzz: elapsed: 3m36s, execs: 322959 (1527/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:36.1348636Z fuzz: elapsed: 3m39s, execs: 327519 (1520/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:39.1390635Z fuzz: elapsed: 3m42s, execs: 332038 (1506/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:42.1370800Z fuzz: elapsed: 3m45s, execs: 336644 (1535/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:45.1380629Z fuzz: elapsed: 3m48s, execs: 341283 (1547/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:48.1353526Z fuzz: elapsed: 3m51s, execs: 345848 (1522/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:51.1360509Z fuzz: elapsed: 3m54s, execs: 350385 (1513/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:54.1373956Z fuzz: elapsed: 3m57s, execs: 354945 (1520/sec), new interesting: 11 (total: 20)
+2026-07-31T09:14:57.1360556Z fuzz: elapsed: 4m0s, execs: 359460 (1505/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:00.1370986Z fuzz: elapsed: 4m3s, execs: 363909 (1483/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:03.1372379Z fuzz: elapsed: 4m6s, execs: 368505 (1531/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:06.1357154Z fuzz: elapsed: 4m9s, execs: 373114 (1537/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:09.1371461Z fuzz: elapsed: 4m12s, execs: 377666 (1516/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:12.1362138Z fuzz: elapsed: 4m15s, execs: 382153 (1497/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:15.1353307Z fuzz: elapsed: 4m18s, execs: 386722 (1523/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:18.1360742Z fuzz: elapsed: 4m21s, execs: 391246 (1508/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:21.1360671Z fuzz: elapsed: 4m24s, execs: 395767 (1507/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:24.1380950Z fuzz: elapsed: 4m27s, execs: 399348 (1194/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:27.1380614Z fuzz: elapsed: 4m30s, execs: 402825 (1158/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:30.1400601Z fuzz: elapsed: 4m33s, execs: 406233 (1136/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:33.1352197Z fuzz: elapsed: 4m36s, execs: 409661 (1143/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:36.1404603Z fuzz: elapsed: 4m39s, execs: 413061 (1133/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:39.1355469Z fuzz: elapsed: 4m42s, execs: 416510 (1150/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:42.1354312Z fuzz: elapsed: 4m45s, execs: 419892 (1128/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:45.1379373Z fuzz: elapsed: 4m48s, execs: 423323 (1144/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:48.1368140Z fuzz: elapsed: 4m51s, execs: 426721 (1132/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:51.1384283Z fuzz: elapsed: 4m54s, execs: 430140 (1140/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:54.1380866Z fuzz: elapsed: 4m57s, execs: 433569 (1142/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:57.1376379Z fuzz: elapsed: 5m0s, execs: 436950 (1127/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:59.1812835Z fuzz: elapsed: 5m2s, execs: 436950 (0/sec), new interesting: 11 (total: 20)
+2026-07-31T09:15:59.1813773Z --- FAIL: FuzzInitiatorFinishWithFuzzedMessageB (302.05s)
+2026-07-31T09:15:59.1814490Z     context deadline exceeded
+2026-07-31T09:15:59.1814892Z FAIL
+2026-07-31T09:15:59.2443045Z exit status 1
+2026-07-31T09:15:59.2443549Z FAIL	github.com/the-sarge/cpace	302.465s
+2026-07-31T09:15:59.2826002Z ##[error]Process completed with exit code 1.
+2026-07-31T09:15:59.2881243Z ##[group]Run set -euo pipefail
+2026-07-31T09:15:59.2881572Z [36;1mset -euo pipefail[0m
+2026-07-31T09:15:59.2881976Z [36;1mmarker="${RUNNER_TEMP}/fuzz-start-FuzzInitiatorFinishWithFuzzedMessageB"[0m
+2026-07-31T09:15:59.2882766Z [36;1mfiles="$(find . -type f -path "*/testdata/fuzz/FuzzInitiatorFinishWithFuzzedMessageB/*" -newer "${marker}" | sort | sed 's#^\./##')"[0m
+2026-07-31T09:15:59.2883391Z [36;1mif [ -n "$files" ]; then[0m
+2026-07-31T09:15:59.2883679Z [36;1m  echo "found=true" >> "$GITHUB_OUTPUT"[0m
+2026-07-31T09:15:59.2883965Z [36;1m  {[0m
+2026-07-31T09:15:59.2884169Z [36;1m    echo 'files<<EOF'[0m
+2026-07-31T09:15:59.2884409Z [36;1m    echo "$files"[0m
+2026-07-31T09:15:59.2884631Z [36;1m    echo EOF[0m
+2026-07-31T09:15:59.2884847Z [36;1m  } >> "$GITHUB_OUTPUT"[0m
+2026-07-31T09:15:59.2885080Z [36;1melse[0m
+2026-07-31T09:15:59.2885307Z [36;1m  echo "found=false" >> "$GITHUB_OUTPUT"[0m
+2026-07-31T09:15:59.2885583Z [36;1mfi[0m
+2026-07-31T09:15:59.2927965Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-07-31T09:15:59.2928302Z env:
+2026-07-31T09:15:59.2928491Z   GOTOOLCHAIN: local
+2026-07-31T09:15:59.2928703Z ##[endgroup]
+2026-07-31T09:15:59.3076858Z ##[group]Run exit 1
+2026-07-31T09:15:59.3077120Z [36;1mexit 1[0m
+2026-07-31T09:15:59.3117919Z shell: /usr/bin/bash -e {0}
+2026-07-31T09:15:59.3118163Z env:
+2026-07-31T09:15:59.3118347Z   GOTOOLCHAIN: local
+2026-07-31T09:15:59.3118559Z ##[endgroup]
+2026-07-31T09:15:59.3180398Z ##[error]Process completed with exit code 1.
+2026-07-31T09:15:59.3295407Z Post job cleanup.
+2026-07-31T09:15:59.4134227Z [command]/usr/bin/git version
+2026-07-31T09:15:59.4173045Z git version 2.54.0
+2026-07-31T09:15:59.4210130Z Temporarily overriding HOME='/home/runner/work/_temp/824676b4-4d9f-40d8-8374-9f3739730ab7' before making global git config changes
+2026-07-31T09:15:59.4211708Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-31T09:15:59.4224099Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/cpace/cpace
+2026-07-31T09:15:59.4256002Z Removing SSH command configuration
+2026-07-31T09:15:59.4263137Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-31T09:15:59.4296622Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-31T09:15:59.4517017Z Removing HTTP extra header
+2026-07-31T09:15:59.4522737Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-31T09:15:59.4555924Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-31T09:15:59.4770131Z Removing includeIf entries pointing to credentials config files
+2026-07-31T09:15:59.4776177Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-31T09:15:59.4807312Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-31T09:15:59.5157613Z Cleaning up orphan processes
