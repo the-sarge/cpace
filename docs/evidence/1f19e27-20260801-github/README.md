@@ -34,17 +34,33 @@ The current OpenSSF Scorecard API result was 7.4, dated `2026-07-28T10:16:55Z` a
 - Nightly Fuzz run `30618250589` attempt 1 ran all 14 jobs but concluded failure when `FuzzInitiatorFinishWithFuzzedMessageB` reported `context deadline exceeded` at 302.05 seconds, just beyond the five-minute fuzz budget; the corpus-upload path was skipped. A failed-job rerun produced attempt 2, which ran the same target for 302.474 seconds, reported `PASS`, and made the workflow conclude successfully. The attempt-specific job logs are committed because the immutable run URL displays the latest attempt by default.
 - Autoscaled Fuzz run `30339889549` completed amd64 successfully but cancelled arm64 after 24 hours queued. The next scheduled run, `30433278581`, recovered with successful amd64 and arm64 jobs. Run `30524006270` again completed amd64 and cancelled arm64 after a 24-hour queue wait; at capture, run `30614624510` had completed amd64 successfully while arm64 remained queued. These are self-hosted runner-availability limitations rather than fuzz-test failures. The full two-architecture success is supporting scheduled signal only; the exact-candidate paired long-fuzz evidence remains `docs/evidence/1f19e27-20260731-fuzz/`.
 
+## Workflow Provenance
+
+This README is the workflow-link summary, and `docs/evidence-baseline.md` points to this bundle. GitHub Actions run pages and logs are mutable or deletable according to repository retention and administrator actions; no permanence is claimed, and the capture did not establish a fixed retention period. The committed history, run, and job JSON files below are the fallback for every cited run; the Nightly Fuzz fallback also includes the attempt-specific failed and recovery job logs.
+
+| Workflow | Run, event, ref, and exact SHA | Expected jobs or checks | Committed fallback |
+| --- | --- | --- | --- |
+| `.github/workflows/scorecard.yml` | [30350120458](https://github.com/the-sarge/cpace/actions/runs/30350120458); `schedule`; `main`; `741be4ab58ec0cd86e4cb2dcc1da39de8d6348d6` | `Scorecard` | `scorecard-runs.json`, `scorecard-run-30350120458.json`, `scorecard-run-30350120458-jobs.json`, and `scorecard-api.json` |
+| `.github/workflows/vuln.yml` | [30257725792](https://github.com/the-sarge/cpace/actions/runs/30257725792); `schedule`; `main`; `741be4ab58ec0cd86e4cb2dcc1da39de8d6348d6` | `Govulncheck` | `vulnerability-runs.json`, `vulnerability-run-30257725792.json`, and `vulnerability-run-30257725792-jobs.json` |
+| `.github/workflows/gosec.yml` | [30260278649](https://github.com/the-sarge/cpace/actions/runs/30260278649); `schedule`; `main`; `741be4ab58ec0cd86e4cb2dcc1da39de8d6348d6` | `Advisory Gosec` | `gosec-runs.json`, `gosec-run-30260278649.json`, and `gosec-run-30260278649-jobs.json` |
+| `.github/workflows/codeql.yml` | [30679756195](https://github.com/the-sarge/cpace/actions/runs/30679756195); `push`; `main`; `fa4ea296daae82e920ae6bb410e9bcb7c0061641` | `Analyze` | `codeql-runs.json`, `codeql-run-30679756195.json`, and `codeql-run-30679756195-jobs.json` |
+| `.github/workflows/cross-platform.yml` | [30437960712](https://github.com/the-sarge/cpace/actions/runs/30437960712); `schedule`; `main`; `741be4ab58ec0cd86e4cb2dcc1da39de8d6348d6` | `Cross-platform smoke (macos-latest)` and `Cross-platform smoke (windows-latest)` | `cross-platform-runs.json`, `cross-platform-run-30437960712.json`, and `cross-platform-run-30437960712-jobs.json` |
+| `.github/workflows/cross-platform.yml` | [30607298901](https://github.com/the-sarge/cpace/actions/runs/30607298901); `pull_request`; `release/v0.1.3-231-232`; `ff73e9ebcbdabfc949e8905caba526cec5057f38` | `Cross-platform smoke (macos-latest)` and `Cross-platform smoke (windows-latest)` | `cross-platform-runs.json`, `cross-platform-run-30607298901.json`, and `cross-platform-run-30607298901-jobs.json` |
+| `.github/workflows/nightly-fuzz.yml` | [30618250589 attempt 1 and attempt 2](https://github.com/the-sarge/cpace/actions/runs/30618250589); `schedule`; `main`; `228ebfcaea4a15432a7289f2299dfacb9248910d` | `Prepare fuzz matrix` and fourteen `Fuzz (…)` matrix jobs | `nightly-fuzz-runs.json`, attempt-specific run/job JSON, and attempt-specific failed/recovery job logs |
+| `.github/workflows/autoscaled-fuzz.yml` | [30433278581](https://github.com/the-sarge/cpace/actions/runs/30433278581); `schedule`; `main`; `741be4ab58ec0cd86e4cb2dcc1da39de8d6348d6` | `Validate fuzz inputs`, `Autoscaled fuzz (amd64)`, and `Autoscaled fuzz (arm64)` | `autoscaled-fuzz-runs.json` and `autoscaled-fuzz-30433278581{,-jobs}.json` |
+| `.github/workflows/autoscaled-fuzz.yml` | [30614624510](https://github.com/the-sarge/cpace/actions/runs/30614624510); `schedule`; `main`; `228ebfcaea4a15432a7289f2299dfacb9248910d` | `Validate fuzz inputs`, `Autoscaled fuzz (amd64)`, and `Autoscaled fuzz (arm64)` | `autoscaled-fuzz-runs.json` and `autoscaled-fuzz-30614624510{,-jobs}.json` |
+
 ## Contents
 
 | Files | Description |
 | --- | --- |
-| `capture.sh`, `capture-metadata.txt` | Non-overwriting reproduction script plus repository, candidate, PR head, main head, GitHub CLI version, and UTC capture boundaries. |
+| `capture.sh`, `capture-metadata.txt` | Non-overwriting reproduction script plus repository and candidate identities, implementation commit and clean/dirty state, host/OS/architecture, relevant tool versions, main head, return code, and UTC capture boundaries. |
 | `repo.json`, `main-branch.json` | Public repository configuration and the protected live `main` head at capture. |
 | `rulesets-list.json`, `ruleset-16048307.json`, `main-branch-protection.json` | Raw tag-ruleset inventory/detail and branch-protection policy. |
 | `candidate-*.json`, `pr-239*.json`, `candidate-to-pr-239-head-compare.json` | Candidate identity and empty direct-check state, PR #239 identity/checks, and the candidate-to-checked-head documentation-only comparison. |
 | `*-open-alerts.json` | Raw open Code Scanning, Dependabot, and secret-scanning alert responses. |
-| `scorecard-api.json`, `scorecard-runs.json`, `scorecard-run-30350120458.json` | Current Scorecard service result and supporting GitHub workflow state. |
-| `vulnerability-runs.json`, `gosec-runs.json`, `codeql-runs.json`, `cross-platform-runs.json` | Recent scheduled and background security/cross-platform workflow histories. |
+| `scorecard-api.json`, `scorecard-runs.json`, `scorecard-run-30350120458*.json` | Current Scorecard service result and supporting GitHub workflow run/job state. |
+| `vulnerability-*.json`, `gosec-*.json`, `codeql-*.json`, `cross-platform-*.json` | Recent workflow histories plus run/job detail for every cited scheduled or background security/cross-platform run. |
 | `nightly-fuzz-*.json`, `nightly-fuzz-*.log` | Nightly Fuzz history plus attempt-specific run, job, failure, and recovery records. |
 | `autoscaled-fuzz-*.json` | Autoscaled Fuzz history and detailed job state for the two cancellations, the full architecture recovery, and the live queued run. |
 | `SHA256SUMS` | SHA-256 digests for the capture script, metadata, raw API responses, and attempt-specific logs. |

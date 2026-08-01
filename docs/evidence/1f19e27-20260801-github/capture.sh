@@ -12,19 +12,29 @@ nightly_recovery_job=91315441946
 output_dir=${1:?usage: capture.sh <output-directory>}
 script_dir=$(CDPATH= cd "$(dirname "$0")" && pwd)
 script_path=$script_dir/$(basename "$0")
+repo_root=$(git -C "$script_dir" rev-parse --show-toplevel)
+capture_impl_head=$(git -C "$repo_root" rev-parse HEAD)
+capture_impl_branch=$(git -C "$repo_root" branch --show-current)
+capture_worktree_status=$(git -C "$repo_root" status --porcelain=v1 --untracked-files=all)
 
-mkdir -p "$output_dir"
-if [ ! "$script_path" -ef "$output_dir/capture.sh" ]; then
-	cp "$script_path" "$output_dir/capture.sh"
-fi
-
-artifacts='repo.json main-branch.json rulesets-list.json ruleset-16048307.json main-branch-protection.json candidate-commit.json candidate-check-suites.json candidate-check-runs.json candidate-combined-status.json pr-239.json pr-239-check-runs.json candidate-to-pr-239-head-compare.json code-scanning-open-alerts.json dependabot-open-alerts.json secret-scanning-open-alerts.json scorecard-api.json scorecard-runs.json scorecard-run-30350120458.json vulnerability-runs.json gosec-runs.json codeql-runs.json cross-platform-runs.json nightly-fuzz-runs.json nightly-fuzz-30618250589-attempt-1.json nightly-fuzz-30618250589-attempt-1-jobs.json nightly-fuzz-30618250589-attempt-1-failed-job.log nightly-fuzz-30618250589-attempt-2.json nightly-fuzz-30618250589-attempt-2-jobs.json nightly-fuzz-30618250589-attempt-2-recovery-job.log autoscaled-fuzz-runs.json autoscaled-fuzz-30339889549.json autoscaled-fuzz-30339889549-jobs.json autoscaled-fuzz-30433278581.json autoscaled-fuzz-30433278581-jobs.json autoscaled-fuzz-30524006270.json autoscaled-fuzz-30524006270-jobs.json autoscaled-fuzz-30614624510.json autoscaled-fuzz-30614624510-jobs.json capture-metadata.txt'
-for artifact in $artifacts; do
-	if [ -e "$output_dir/$artifact" ]; then
-		echo "refusing to overwrite $output_dir/$artifact" >&2
+if [ -e "$output_dir" ]; then
+	if [ ! -d "$output_dir" ]; then
+		echo "output path is not a directory: $output_dir" >&2
 		exit 1
 	fi
-done
+	if [ -n "$(find "$output_dir" -mindepth 1 -maxdepth 1 -print -quit)" ]; then
+		echo "refusing to write to non-empty output directory: $output_dir" >&2
+		exit 1
+	fi
+else
+	mkdir -p "$output_dir"
+fi
+cp "$script_path" "$output_dir/capture.sh"
+
+capture_run() {
+	gh api "repos/$repo/actions/runs/$1" > "$output_dir/$2.json"
+	gh api "repos/$repo/actions/runs/$1/jobs?per_page=100" > "$output_dir/$2-jobs.json"
+}
 
 capture_start_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 {
@@ -35,7 +45,24 @@ capture_start_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 	printf 'pr_head=%s\n' "$pr_head"
 	printf 'tag_ruleset_id=%s\n' "$tag_ruleset_id"
 	printf 'nightly_recovery_run=%s\n' "$nightly_recovery_run"
-	gh --version | sed -n '1p'
+	printf 'capture_implementation_head=%s\n' "$capture_impl_head"
+	printf 'capture_implementation_branch=%s\n' "$capture_impl_branch"
+	if [ -n "$capture_worktree_status" ]; then
+		printf 'capture_worktree_state=dirty\n'
+		printf 'capture_worktree_status_begin\n%s\ncapture_worktree_status_end\n' "$capture_worktree_status"
+	else
+		printf 'capture_worktree_state=clean\n'
+	fi
+	printf 'hostname=%s\n' "$(hostname)"
+	printf 'operating_system=%s\n' "$(uname -s)"
+	printf 'kernel_release=%s\n' "$(uname -r)"
+	printf 'architecture=%s\n' "$(uname -m)"
+	printf 'git_version=%s\n' "$(git --version)"
+	printf 'go_version=%s\n' "$(go version)"
+	printf 'gh_version=%s\n' "$(gh --version | sed -n '1p')"
+	printf 'curl_version=%s\n' "$(curl --version | sed -n '1p')"
+	printf 'jq_version=%s\n' "$(jq --version)"
+	printf 'shasum_version=%s\n' "$(shasum --version | sed -n '1p')"
 } > "$output_dir/capture-metadata.txt"
 
 gh api "repos/$repo" > "$output_dir/repo.json"
@@ -58,11 +85,16 @@ gh api "repos/$repo/secret-scanning/alerts?state=open&per_page=100" > "$output_d
 
 curl -fsSL "https://api.scorecard.dev/projects/github.com/$repo" > "$output_dir/scorecard-api.json"
 gh api "repos/$repo/actions/workflows/scorecard.yml/runs?per_page=20" > "$output_dir/scorecard-runs.json"
-gh api "repos/$repo/actions/runs/30350120458" > "$output_dir/scorecard-run-30350120458.json"
+capture_run 30350120458 scorecard-run-30350120458
 gh api "repos/$repo/actions/workflows/vuln.yml/runs?per_page=20" > "$output_dir/vulnerability-runs.json"
+capture_run 30257725792 vulnerability-run-30257725792
 gh api "repos/$repo/actions/workflows/gosec.yml/runs?per_page=20" > "$output_dir/gosec-runs.json"
+capture_run 30260278649 gosec-run-30260278649
 gh api "repos/$repo/actions/workflows/codeql.yml/runs?per_page=20" > "$output_dir/codeql-runs.json"
+capture_run 30679756195 codeql-run-30679756195
 gh api "repos/$repo/actions/workflows/cross-platform.yml/runs?per_page=20" > "$output_dir/cross-platform-runs.json"
+capture_run 30437960712 cross-platform-run-30437960712
+capture_run 30607298901 cross-platform-run-30607298901
 
 gh api "repos/$repo/actions/workflows/nightly-fuzz.yml/runs?per_page=20" > "$output_dir/nightly-fuzz-runs.json"
 gh api "repos/$repo/actions/runs/$nightly_recovery_run/attempts/1" > "$output_dir/nightly-fuzz-30618250589-attempt-1.json"
@@ -74,8 +106,7 @@ gh api --allow-escape-sequences "repos/$repo/actions/jobs/$nightly_recovery_job/
 
 gh api "repos/$repo/actions/workflows/autoscaled-fuzz.yml/runs?per_page=20" > "$output_dir/autoscaled-fuzz-runs.json"
 for run_id in 30339889549 30433278581 30524006270 30614624510; do
-	gh api "repos/$repo/actions/runs/$run_id" > "$output_dir/autoscaled-fuzz-$run_id.json"
-	gh api "repos/$repo/actions/runs/$run_id/jobs?per_page=100" > "$output_dir/autoscaled-fuzz-$run_id-jobs.json"
+	capture_run "$run_id" "autoscaled-fuzz-$run_id"
 done
 
 for artifact in "$output_dir"/*.json; do
@@ -98,5 +129,7 @@ jq -e '.run_attempt == 2 and .conclusion == "success"' "$output_dir/nightly-fuzz
 capture_end_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 printf 'main_head=%s\n' "$(jq -r '.commit.sha' "$output_dir/main-branch.json")" >> "$output_dir/capture-metadata.txt"
 printf 'capture_end_utc=%s\n' "$capture_end_utc" >> "$output_dir/capture-metadata.txt"
+printf 'capture_exit=%s\n' 0 >> "$output_dir/capture-metadata.txt"
 
-(cd "$output_dir" && shasum -a 256 capture.sh $artifacts > SHA256SUMS)
+artifact_files=$(cd "$output_dir" && find . -type f ! -name SHA256SUMS -print | sed 's#^\./##' | LC_ALL=C sort)
+(cd "$output_dir" && shasum -a 256 $artifact_files > SHA256SUMS)
