@@ -2698,3 +2698,60 @@ Merged PR [#241](https://github.com/the-sarge/cpace/pull/241), closing issue [#2
 **Next**
 
 - Continue the open [v0.1.3 release tracker #229](https://github.com/the-sarge/cpace/issues/229) with [#234](https://github.com/the-sarge/cpace/issues/234), which owns exact-candidate toolchain, vector, and protocol-stability evidence. Issues #235-#237 remain the subsequent fuzz, release-control, and assembled-packet gates.
+
+---
+
+## v0.1.3 GitHub release controls landed - 2026-07-31 23:52 EDT
+
+**Main:** `7cd430f559c8`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#244](https://github.com/the-sarge/cpace/pull/244), closing issue [#236](https://github.com/the-sarge/cpace/issues/236) and recording the mutable GitHub release-control state observed immediately before `v0.1.3` publication work. The capture is point-in-time prerelease evidence tied to frozen candidate source `1f19e278112fa037890848ed6c086addeffdca4e`, not a production-readiness claim or a claim that the intermediate source SHA carried direct checks.
+
+**Completed**
+
+- Committed `docs/evidence/1f19e27-20260801-github/` with raw GitHub API responses, attempt-specific normalized workflow logs, capture metadata, a guarded reproduction script, and a 51-entry `SHA256SUMS` covering every non-summary artifact.
+- Recorded active protected `refs/tags/v*` creation/update/deletion rules with no bypass, strict `main` protection requiring exactly `Check`, `DCO`, `Dependency Gate`, and `SAST Gate`, empty Code Scanning/Dependabot/secret-scanning alert sets, and Scorecard 7.4.
+- Preserved the frozen source SHA's lack of direct GitHub checks while recording successful required checks on PR #239's documentation-only checked descendant. Scheduled evidence preserves the Nightly Fuzz deadline failure and successful failed-job rerun plus recurring autoscaled arm64 availability limits without promoting those runs to exact-candidate evidence.
+- Successful initial RAS review `20260801T030925-464b7393cd5a3fb856d13fdf` found two in-contract documentation and capture-guard gaps, resolved in `a50b0b0`. Successful replacement review `20260801T033616-5dc0a3c5bcec739703a7f254` found four bounded recapture and wording gaps, resolved in final head `92ed339`; the two preceding failed RAS attempts produced no usable synthesis.
+- Merge commit `7cd430f559c856b295f84c3def22da60899c7d10` preserves reviewed head `92ed339b43256d817fd94287bb7917fe495408e3` on `main`.
+
+**Validation**
+
+- Final exact-head `task check`, evidence-baseline validation, all 51 bundle checksums, executable branch-protection assertions, and repository whitespace validation passed.
+- Hosted `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed on reviewed head `92ed339`; the advisory gosec sub-check was neutral as expected.
+
+**Next**
+
+- Continue parent release tracker [#229](https://github.com/the-sarge/cpace/issues/229) with assembled-packet gate [#237](https://github.com/the-sarge/cpace/issues/237). Signed-tag Release Validation and post-SARIF Code Scanning remain publication work rather than pre-tag evidence.
+
+---
+
+## v0.1.3 evidence packet landed - 2026-08-01 01:05 EDT
+
+**Main:** `e32e0a720696`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#246](https://github.com/the-sarge/cpace/pull/246), closing issue [#237](https://github.com/the-sarge/cpace/issues/237) and assembling the dependency/SAST, protocol/vector/capability, paired long-fuzz, and GitHub release-control lanes into one tamper-evident `v0.1.3` candidate packet. The packet remains explicitly non-production-ready and preserves issues #29-#32 as blockers for a future production-readiness claim.
+
+**Completed**
+
+- Added `docs/evidence/1f19e27-20260801-candidate/` with a cross-bundle manifest, exact extracted release notes, fail-fast capture script, raw final-gate transcript, and SHA-256 manifest, all pinned to frozen source candidate `1f19e278112fa037890848ed6c086addeffdca4e`.
+- Marked the older `f7efa6a963a954952b1ecad3f46530f13799fe89` packet historical, indexed the current evidence lanes and residual limitations, and reconciled the dependency/SAST lane summary with the completed point-in-time GitHub evidence.
+- Preserved the Intel all-target fuzz deadline miss with same-host targeted recovery, mutable GitHub-state boundary, absence of direct checks on the frozen source SHA, and the publication-only status of signed-tag Release Validation and post-SARIF Code Scanning.
+- RAS review `20260801T044605-054297133c9217a63f51f862` found one low-severity stale summary contradiction. It was independently accepted as `fix-now`, resolved in `9410cfb`, and followed by a full gate recapture; the shared low/docs-only policy skipped another RAS verify or replacement review after exact-head certification.
+- Merge commit `e32e0a7206961237dfa8a5cb733fd5f71bd5480e` preserves reviewed and certified head `a09cfe610dff3426fb650983f62da8dfbf855c7c` on `main`.
+
+**Validation**
+
+- The final gate ran documentation, unit, race, formatting, vet, Staticcheck, vulnerability, gosec, Capslock, evidence-policy, release-policy, release-metadata, release-note, and checksum checks on reachable gate commit `9410cfb4081c2aa8963729041a6ab7a141607743`; coverage remained 97.2%, govulncheck found no vulnerabilities, and test-inclusive gosec reported zero issues.
+- Exact final-head `task check`, every child and candidate packet checksum, exact release-note extraction, and clean-worktree checks passed at `a09cfe6`.
+- Hosted `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed on exact reviewed head `a09cfe6`; GitHub reported PR #246 clean and mergeable before merge.
+
+**Next**
+
+- Parent release tracker [#229](https://github.com/the-sarge/cpace/issues/229) and publication issue [#238](https://github.com/the-sarge/cpace/issues/238) remain the live views. Publication requires explicit maintainer authorization for a signed annotated `v0.1.3` tag, then tag-triggered Release Validation, post-SARIF Code Scanning, prerelease/not-latest checks, and SBOM/Sigstore/attestation verification.
