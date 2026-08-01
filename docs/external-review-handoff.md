@@ -8,11 +8,11 @@ Last released tag: `v0.1.2`
 
 Last released commit: `4e661bc1f925ebedf1f270668129d85bab73e468`
 
-Current evidence status: see `docs/evidence-baseline.md`. The dependency, vulnerability, and SAST/gosec lane is current for the frozen `v0.1.3` candidate in `docs/evidence/1f19e27-20260731/`; Capslock, security/spec audit, and Go 1.26.4 to Go 1.26.5 vector stability are current in `docs/evidence/1f19e27-20260731-protocol/`. The original `v0.1.2` packet and `docs/evidence/f7efa6a-20260619/` remain historical for the still-pending long-fuzz and release-control lanes.
+Current evidence status: see `docs/evidence-baseline.md`. The dependency, vulnerability, and SAST/gosec lane is current for the frozen `v0.1.3` candidate in `docs/evidence/1f19e27-20260731/`; Capslock, security/spec audit, and Go 1.26.4 to Go 1.26.5 vector stability are current in `docs/evidence/1f19e27-20260731-protocol/`; paired long fuzz is current in `docs/evidence/1f19e27-20260731-fuzz/` with a recorded Intel all-target deadline non-pass and same-host targeted recovery. The original `v0.1.2` packet and `docs/evidence/f7efa6a-20260619/` remain historical for the still-pending release-control lanes.
 
 Latest complete multi-lane evidence packet: `docs/evidence/f7efa6a-20260619/`, pinned to package-code candidate `f7efa6a963a954952b1ecad3f46530f13799fe89`. It is unaudited historical prerelease evidence, not current-candidate evidence or a production-readiness claim.
 
-Frozen `v0.1.3` candidate source: `1f19e278112fa037890848ed6c086addeffdca4e`. Review package code against that exact commit. The dependency, vulnerability, SAST/gosec, Capslock, security/spec, and cross-toolchain vector lanes are fresh for this candidate under Go 1.26.5; paired long fuzz and release-control evidence remain historical and must still be refreshed before `v0.1.3`.
+Frozen `v0.1.3` candidate source: `1f19e278112fa037890848ed6c086addeffdca4e`. Review package code against that exact commit. The dependency, vulnerability, SAST/gosec, Capslock, security/spec, cross-toolchain vector, and paired long-fuzz lanes are fresh for this candidate under Go 1.26.5; release-control evidence remains historical and must still be refreshed before `v0.1.3`.
 
 Status: auditable draft implementation. This package has not had independent
 cryptographic review and is not production-ready.
@@ -100,7 +100,7 @@ The `v0.1.2` prerelease contains the external-review packet, Go 1.26
 modernization, and refreshed evidence. It has no intended Go API,
 wire/protocol, dependency, or vector behavior change.
 
-The current evidence status and freshness caveats are indexed in `docs/evidence-baseline.md`. The Go 1.26.5 dependency/SAST and protocol/capability bundles cover frozen candidate source `1f19e278112fa037890848ed6c086addeffdca4e`, including bit-identical normalized vector outputs under Go 1.26.4 and Go 1.26.5. The historical `f7efa6a963a954952b1ecad3f46530f13799fe89` bundle covers paired long fuzz and release-control lanes only for that older Go 1.26.4 commit; repeat those lanes against the frozen candidate before a complete current-candidate packet.
+The current evidence status and freshness caveats are indexed in `docs/evidence-baseline.md`. The Go 1.26.5 dependency/SAST, protocol/capability, and paired long-fuzz bundles cover frozen candidate source `1f19e278112fa037890848ed6c086addeffdca4e`, including bit-identical normalized vector outputs under Go 1.26.4 and Go 1.26.5 and a same-host targeted fuzz recovery for the recorded Intel deadline miss. The historical `f7efa6a963a954952b1ecad3f46530f13799fe89` bundle covers release-control lanes only for that older Go 1.26.4 commit; repeat those lanes against the frozen candidate before a complete current-candidate packet.
 
 Capslock capability-analysis evidence is recorded in `docs/capslock-report.md`; the exact-candidate rerun found unchanged classes and counts, and its pinned baseline and freshness caveat are indexed in `docs/evidence-baseline.md`.
 
