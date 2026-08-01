@@ -52,6 +52,8 @@ The intended required PR gates are:
 `Dependency Gate` and `SAST Gate` must be listed in branch protection before
 the project treats OSPS-VM-05.03 and OSPS-VM-06.02 as satisfied.
 
+The 2026-08-01 release-control capture in `docs/evidence/1f19e27-20260801-github/` confirmed that strict `main` protection required exactly `Check`, `DCO`, `Dependency Gate`, and `SAST Gate`, matching this policy, with administrator enforcement and conversation resolution enabled and force pushes and deletion disabled. The frozen source candidate is an intermediate commit in PR #239 with no direct GitHub check suites; all four required contexts passed on the PR's documentation-only checked descendant before protected merge.
+
 Keep required lanes short, deterministic, and least-privilege. New security or
 analysis tools should start as background signal before being considered for a
 required gate.
@@ -101,7 +103,7 @@ Release tags should remain signed annotated tags. Downstream consumers should be
 
 The primary release trust root is the signed annotated `v*` tag. Release Validation verifies that tag against `.github/allowed_signers`, then treats the checked-out source tree as the release candidate. That CI verification catches maintainer mistakes such as lightweight tags, unsigned tags, or signatures outside the documented signer set, but it does not protect against a principal who can create, update, or delete a `v*` tag and thereby choose both the workflow definition and the checked-in signer file.
 
-The primary tag-authority control is the active GitHub repository ruleset `16048307` on `refs/tags/v*`, covering creation, update, and deletion with no routine bypass actors. That state is admin-mutable GitHub configuration rather than repository content, so each release must capture fresh ruleset JSON before tagging and document any break-glass change. The committed 2026-06-10 evidence under `docs/evidence/tagruleset-20260610/` is historical baseline evidence, and the 2026-06-19 exact-candidate capture lives under `docs/evidence/f7efa6a-20260619/`; neither is a permanent release claim for future tags.
+The primary tag-authority control is the active GitHub repository ruleset `16048307` on `refs/tags/v*`, covering creation, update, and deletion with no routine bypass actors. That state is admin-mutable GitHub configuration rather than repository content, so each release must capture fresh ruleset JSON before tagging and document any break-glass change. The current `v0.1.3` point-in-time capture is `docs/evidence/1f19e27-20260801-github/`; the 2026-06-10 and 2026-06-19 bundles remain historical, and none of these captures is a permanent claim for future tags.
 
 CI attests the generated SBOM asset, not the CPace protocol implementation, Go API, source archive, Go module proxy entry, or SLSA Build Level 3 provenance. The SBOM attestation binds `cpace-<tag>.cdx.json` to the GitHub Actions run through GitHub artifact attestations with the CycloneDX predicate type `https://cyclonedx.org/bom`; the attached `cpace-<tag>.cdx.json.sigstore.json` bundle is retained for verifiers that need the Sigstore bundle. The release-body SHA-256 checksum is only a corruption-detection convenience because the release body and assets share the mutable GitHub Release trust domain.
 

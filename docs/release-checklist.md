@@ -61,7 +61,9 @@ bundle shape, required metadata, checksum verification, and optional detached
 signature handling. Summary docs may explain evidence, but the evidence packet
 should preserve the raw logs or immutable workflow links.
 
-Before each release, capture the active `refs/tags/v*` tag-authority ruleset JSON as recurring release evidence. Record `gh api /repos/the-sarge/cpace/rulesets` and `gh api /repos/the-sarge/cpace/rulesets/16048307`, then confirm ruleset `16048307` is active, covers creation/update/deletion for `refs/tags/v*`, has `bypass_actors: []`, and reports `current_user_can_bypass: never`. The 2026-06-10 baseline is committed under `docs/evidence/tagruleset-20260610/`, and the 2026-06-19 exact-candidate capture is committed under `docs/evidence/f7efa6a-20260619/`; each release needs a fresh capture because GitHub ruleset state is admin-mutable.
+Before each release, capture the active `refs/tags/v*` tag-authority ruleset JSON as recurring release evidence. Record `gh api /repos/the-sarge/cpace/rulesets` and `gh api /repos/the-sarge/cpace/rulesets/16048307`, then confirm ruleset `16048307` is active, covers creation/update/deletion for `refs/tags/v*`, has `bypass_actors: []`, and reports `current_user_can_bypass: never`. The current `v0.1.3` capture is committed under `docs/evidence/1f19e27-20260801-github/`; the 2026-06-10 and 2026-06-19 bundles are historical, and each release still needs a fresh-enough capture because GitHub ruleset state is admin-mutable.
+
+For `v0.1.3`, the same 2026-08-01 bundle captures strict `main` protection, the exact required contexts and their successful PR #239 results, empty open Code Scanning/Dependabot/secret-scanning alert responses, the current Scorecard result, and recent scheduled vulnerability, SAST, cross-platform, and fuzz signal. It explicitly records that the frozen source SHA is an intermediate PR commit without direct check suites, plus the successful checked descendant and a Nightly Fuzz deadline failure/recovery pair; preserve those qualifications at the candidate gate.
 
 ## 4. Long Fuzz Evidence
 

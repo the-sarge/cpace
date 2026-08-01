@@ -1,0 +1,10 @@
+capture_start_utc=2026-08-01T02:44:38Z
+repository=the-sarge/cpace
+candidate=1f19e278112fa037890848ed6c086addeffdca4e
+pr_number=239
+pr_head=ff73e9ebcbdabfc949e8905caba526cec5057f38
+tag_ruleset_id=16048307
+nightly_recovery_run=30618250589
+gh version 2.97.0 (2026-07-31)
+main_head=fa4ea296daae82e920ae6bb410e9bcb7c0061641
+capture_end_utc=2026-08-01T02:44:55Z
