@@ -41,7 +41,7 @@ jobs:
           go env GOTOOLCHAIN GOPROXY GOSUMDB
 
       - name: Install actionlint
-        run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+        run: scripts/go-tool.sh install actionlint
 
       - name: Run actionlint
         run: actionlint

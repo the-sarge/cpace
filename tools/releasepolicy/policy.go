@@ -204,12 +204,12 @@ var acceptedReleasePolicy = releasePolicy{
 				{
 					name:     "Install task",
 					identity: "Install task",
-					runLines: []string{`go install github.com/go-task/task/v3/cmd/task@v3.50.0`},
+					runLines: []string{`scripts/go-tool.sh install task`},
 				},
 				{
 					name:     "Install govulncheck",
 					identity: "Install govulncheck",
-					runLines: []string{`go install golang.org/x/vuln/cmd/govulncheck@v1.3.0`},
+					runLines: []string{`scripts/go-tool.sh install govulncheck`},
 				},
 				{
 					name:     "Run vulnerability scan",
@@ -237,12 +237,12 @@ var acceptedReleasePolicy = releasePolicy{
 				{
 					name:     "Install task",
 					identity: "Install task",
-					runLines: []string{`go install github.com/go-task/task/v3/cmd/task@v3.50.0`},
+					runLines: []string{`scripts/go-tool.sh install task`},
 				},
 				{
 					name:     "Install gosec",
 					identity: "Install gosec",
-					runLines: []string{`go install github.com/securego/gosec/v2/cmd/gosec@v2.26.1`},
+					runLines: []string{`scripts/go-tool.sh install gosec`},
 				},
 				{
 					name:            "Run gosec scan",
@@ -487,6 +487,7 @@ var acceptedReleasePolicy = releasePolicy{
 		},
 	},
 	requiredScripts: []string{
+		"scripts/go-tool.sh",
 		"scripts/release-tag-policy.sh",
 		"scripts/release-metadata.sh",
 		"scripts/release-tag-metadata.sh",

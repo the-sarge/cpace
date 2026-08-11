@@ -42,10 +42,10 @@ jobs:
           go env GOTOOLCHAIN GOPROXY GOSUMDB
 
       - name: Install task
-        run: go install github.com/go-task/task/v3/cmd/task@v3.50.0
+        run: scripts/go-tool.sh install task
 
       - name: Install gosec
-        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.26.1
+        run: scripts/go-tool.sh install gosec
 
       - name: Run advisory gosec scan
         id: gosec
