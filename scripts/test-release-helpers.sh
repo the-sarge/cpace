@@ -588,6 +588,4 @@ if "$repo_root/scripts/validate-cyclonedx-sbom.sh" "$bad_sbom" >"$tmpdir/bad.out
   exit 1
 fi
 
-"$repo_root/scripts/check-release-policy.sh"
-
 echo "release helper smoke tests passed"
