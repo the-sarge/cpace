@@ -2,7 +2,7 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
-This repo is **single-context**: one `CONTEXT.md` plus `docs/adr/` at the repo root cover the whole project. cpace is a single flat Go package implementing one CPace suite, so there is one domain vocabulary.
+This repo is **single-context**: one `CONTEXT.md` plus `docs/adr/` at the repo root cover the whole project. The repository contains the root cpace library module and two nested validation-tool modules, but they share one domain vocabulary and one decision-record set.
 
 ## Before exploring, read these
 
@@ -17,10 +17,13 @@ Single-context layout (this repo):
 
 ```
 /
-├── CONTEXT.md            ← domain glossary
-├── docs/adr/             ← architecture decision records — read the live
-│                            directory; do not rely on a hardcoded list
-└── *.go                  ← flat package at the repo root
+├── CONTEXT.md                      ← shared domain glossary
+├── docs/adr/                       ← shared architecture decision records; read the live directory
+├── go.mod                          ← root cpace library module
+├── *.go                            ← flat cpace package for the root library module
+└── tools/
+    ├── evidencebaseline/go.mod     ← evidence validation-tool module
+    └── releasepolicy/go.mod        ← release-policy validation-tool module
 ```
 
 ## Use the glossary's vocabulary

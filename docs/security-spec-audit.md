@@ -77,7 +77,7 @@ ADR-0003 remains satisfied: exported peer-share sentinels classify non-canonical
 
 ADR-0006 and ADR-0008 remain satisfied: nil `Close` calls are successful no-ops, zero-value state is strict, `Finish` and `Close` are shared terminal operations, and Close provides deterministic cleanup for abandoned single-use state.
 
-ADR-0009 remains satisfied: role-local `Input` maps `SelfID` and `PeerID` per role, `LocalAssociatedData` names caller-local associated data, package caps and copy ownership are preserved, and no reusable password-owning validated-input object exists. The named manual secret-lifetime audit remains `docs/adr-0009-secret-lifetime-audit.md`.
+ADR-0009 remains satisfied: role-local `Input` maps `SelfID` and `PeerID` per role, `LocalAssociatedData` names caller-local associated data, package caps and copy ownership are preserved, and no reusable password-owning validated-input object exists. The named manual secret-lifetime audit remains `docs/caller-input-secret-lifetime-audit.md`.
 
 The scalar-sampling correction is integrated: masking bounds samples below `2^252 < L`, making canonical-decode rejection unreachable defense-in-depth; the only reachable retry is the all-zero masked sample at approximately `2^-252` per attempt. The implementation behavior did not change.
 

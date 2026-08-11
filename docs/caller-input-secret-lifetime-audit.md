@@ -1,4 +1,4 @@
-# ADR-0009 Secret-Lifetime Audit
+# Caller Input Secret-Lifetime Audit
 
 Date: 2026-06-16
 
