@@ -62,6 +62,17 @@ scan_direct_go_module_selectors() {
   grep -En '[[:alnum:]_.-]+\.[[:alpha:]][[:alnum:]-]*/[^[:space:]]+@[^[:space:]]+' "$@"
 }
 
+scan_direct_go_tool_commands() {
+  found=1
+  for path in "$@"; do
+    if awk '{ sub(/\\[[:space:]]*$/, ""); printf "%s ", $0 }' "$path" | grep -Eq '(^|[^[:alnum:]_])go[[:space:]]+((-C([[:space:]]+[^[:space:]]+|=[^[:space:]]+)|-[nx])[[:space:]]+)*(install|run)([[:space:]]|$)'; then
+      printf '%s\n' "$path"
+      found=0
+    fi
+  done
+  return "$found"
+}
+
 fixture_number=0
 for command in \
   'go install example.com/tool@v1.2.3' \
@@ -85,6 +96,7 @@ printf 'runLines: []string{`go run example.com/tool@main`},\n' >"$tmpdir/direct-
 printf 'go \\\n  install example.com/tool@deadbeef\n' >"$tmpdir/direct-command-continuation"
 printf '%s\n' 'run: >-' '  go install' '  example.com/tool@latest' >"$tmpdir/direct-command-folded-yaml"
 printf '%s\n' 'go -C . install example.com/tool@latest' >"$tmpdir/direct-command-go-c"
+printf '%s\n' 'go install "$MODULE@$VERSION"' >"$tmpdir/direct-command-variable"
 for fixture in "$tmpdir/direct-command-yaml" "$tmpdir/direct-command-policy" "$tmpdir/direct-command-continuation" "$tmpdir/direct-command-folded-yaml" "$tmpdir/direct-command-go-c"; do
   if ! scan_direct_go_module_selectors "$fixture" >/dev/null; then
     echo "direct Go module selector guard missed formatted fixture: $fixture" >&2
@@ -92,12 +104,28 @@ for fixture in "$tmpdir/direct-command-yaml" "$tmpdir/direct-command-policy" "$t
   fi
 done
 
-if scan_direct_go_module_selectors \
+for fixture in "$tmpdir"/direct-command-*; do
+  if ! scan_direct_go_tool_commands "$fixture" >/dev/null; then
+    echo "direct Go tool command guard missed fixture: $fixture" >&2
+    exit 1
+  fi
+done
+
+set -- \
   "$repo_root/Taskfile.yml" \
   "$repo_root"/.github/workflows/*.yml \
   "$repo_root/docs/release-checklist.md" \
-  "$repo_root"/tools/releasepolicy/*.go >"$tmpdir/raw-pins.out"; then
-  echo "active configuration contains a direct Go module selector:" >&2
+  "$repo_root"/tools/releasepolicy/*.go
+: >"$tmpdir/raw-pins.out"
+raw_tool_configuration=false
+if scan_direct_go_tool_commands "$@" >>"$tmpdir/raw-pins.out"; then
+  raw_tool_configuration=true
+fi
+if scan_direct_go_module_selectors "$@" >>"$tmpdir/raw-pins.out"; then
+  raw_tool_configuration=true
+fi
+if [ "$raw_tool_configuration" = true ]; then
+  echo "active configuration contains a direct Go tool command or module selector:" >&2
   cat "$tmpdir/raw-pins.out" >&2
   exit 1
 fi
