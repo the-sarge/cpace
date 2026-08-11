@@ -140,6 +140,18 @@ tasks:
     cmds:
       - scripts/test-release-helpers.sh
 
+  release:policy:
+    desc: Validate the accepted release workflow policy
+    cmds:
+      - scripts/check-release-policy.sh
+
+  release:lint:
+    desc: Run lint checks for the release policy checker module
+    dir: tools/releasepolicy
+    cmds:
+      - go vet ./...
+      - "{{.STATICCHECK}} ./..."
+
   ci:classifier:
     desc: Run CI change classifier tests
     cmds:
@@ -206,6 +218,8 @@ tasks:
     cmds:
       - task: docs:check
       - task: release:helpers
+      - task: release:policy
+      - task: release:lint
       - task: ci:classifier
       - task: evidence:baseline
       - task: evidence:lint
