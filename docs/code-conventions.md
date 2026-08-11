@@ -6,7 +6,8 @@ These conventions record the repository's established implementation dialect so 
 
 - Name an unexported constructor `newX`, where `X` identifies the type or concept it constructs; use a different verb when a function performs an operation rather than construction.
 - Prefix every production panic message with `cpace: ` so an invariant failure is attributable to the package.
-- Prefix every panic raised only by test infrastructure with `cpace test: ` so fixture or catalogue failures are distinguishable from production invariant failures.
+- Prefix panics raised by test fixtures, catalogues, and helpers with `cpace test: ` so test-infrastructure failures are distinguishable from production invariant failures.
+- Keep the conventional plain `panic(err)` idiom in godoc `Example` functions, which demonstrate caller behavior rather than test-infrastructure invariants.
 
 ## Tests
 
@@ -18,8 +19,8 @@ These conventions record the repository's established implementation dialect so 
 
 ## Shell
 
-- Write executable files under `scripts/` as strict POSIX shell: start with `#!/bin/sh`, immediately enable `set -eu`, and use POSIX syntax rather than Bash-only features.
-- Write sourced definition libraries under `scripts/` with `#!/bin/sh`, keep them side-effect-free, and namespace their definitions for the caller; they inherit strict mode from the executable script instead of changing the caller's shell options.
+- Write files under `scripts/` that are run as commands as strict POSIX shell: start with `#!/bin/sh`, immediately enable `set -eu`, and use POSIX syntax rather than Bash-only features.
+- Treat files under `scripts/` that are sourced for definitions as sourced libraries regardless of executable mode: start them with `#!/bin/sh`, keep them side-effect-free, and namespace their definitions for the caller; they inherit strict mode from the command script instead of changing the caller's shell options.
 - Start every Taskfile-embedded Bash block with `set -euo pipefail` before performing work.
 
 ## Validation Tool Packages

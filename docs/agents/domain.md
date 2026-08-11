@@ -20,6 +20,7 @@ Single-context layout (this repo):
 ├── CONTEXT.md                      ← shared domain glossary
 ├── docs/adr/                       ← shared architecture decision records; read the live directory
 ├── go.mod                          ← root cpace library module
+├── *.go                            ← flat cpace package for the root library module
 └── tools/
     ├── evidencebaseline/go.mod     ← evidence validation-tool module
     └── releasepolicy/go.mod        ← release-policy validation-tool module
