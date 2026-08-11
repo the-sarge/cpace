@@ -302,7 +302,7 @@ func FuzzScalarMultVFY(f *testing.F) {
 			if len(out) != pointSize {
 				t.Fatalf("scalarMultVFY output length=%d", len(out))
 			}
-			if bytes.Equal(out, identityEncoding) {
+			if bytes.Equal(out, make([]byte, pointSize)) {
 				t.Fatalf("scalarMultVFY accepted identity output")
 			}
 			return
@@ -325,7 +325,7 @@ func FuzzScalarMultVFY(f *testing.F) {
 			if errors.Is(err, ErrPeerShareEncoding) || errors.Is(err, ErrPeerShareIdentity) {
 				t.Fatalf("length rejection err=%v wraps a peer-share sentinel", err)
 			}
-		case bytes.Equal(encoded, identityEncoding):
+		case bytes.Equal(encoded, make([]byte, pointSize)):
 			if !errors.Is(err, ErrPeerShareIdentity) || errors.Is(err, ErrPeerShareEncoding) {
 				t.Fatalf("identity rejection err=%v want ErrPeerShareIdentity only", err)
 			}
@@ -339,7 +339,7 @@ func FuzzScalarMultVFY(f *testing.F) {
 
 func FuzzMessageARoundTrip(f *testing.F) {
 	f.Add([]byte("sid"), exactMessageFieldBytes(messageASpec, pointSize, 0x42, 0), []byte("ADa"))
-	f.Add([]byte{}, identityEncoding, []byte{})
+	f.Add([]byte{}, make([]byte, pointSize), []byte{})
 	f.Add(bytes.Repeat([]byte{0x01}, 8), exactMessageFieldBytes(messageASpec, pointSize, 0x02, -1), bytes.Repeat([]byte{0x03}, 8))
 	f.Fuzz(func(t *testing.T, sid, ya, ada []byte) {
 		if len(sid) > fuzzProtocolInputCap || len(ya) > fuzzProtocolInputCap || len(ada) > fuzzProtocolInputCap {
@@ -364,7 +364,7 @@ func FuzzMessageARoundTrip(f *testing.F) {
 
 func FuzzMessageBRoundTrip(f *testing.F) {
 	f.Add(exactMessageFieldBytes(messageBSpec, pointSize, 0x42, 0), []byte("ADb"), exactMessageFieldBytes(messageBSpec, tagSize, 0x99, 0))
-	f.Add(identityEncoding, []byte{}, exactMessageFieldBytes(messageBSpec, tagSize, 0x00, 0))
+	f.Add(make([]byte, pointSize), []byte{}, exactMessageFieldBytes(messageBSpec, tagSize, 0x00, 0))
 	f.Add(exactMessageFieldBytes(messageBSpec, pointSize, 0x02, -1), bytes.Repeat([]byte{0x03}, 8), exactMessageFieldBytes(messageBSpec, tagSize, 0x04, -1))
 	f.Fuzz(func(t *testing.T, yb, adb, tag []byte) {
 		if len(yb) > fuzzProtocolInputCap || len(adb) > fuzzProtocolInputCap || len(tag) > fuzzProtocolInputCap {

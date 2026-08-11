@@ -207,7 +207,7 @@ func TestEmbeddedDraftInvalidVectorJSON(t *testing.T) {
 	if len(v.InvalidY1) == 0 || len(v.InvalidY2) == 0 {
 		t.Fatal("missing invalid vectors")
 	}
-	if !bytes.Equal(v.InvalidY2, identityEncoding) {
+	if !bytes.Equal(v.InvalidY2, make([]byte, pointSize)) {
 		t.Fatalf("Invalid Y2 got %x want identity encoding", v.InvalidY2)
 	}
 }
