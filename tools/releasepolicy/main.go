@@ -416,14 +416,14 @@ func checkRequiredScripts(repoRoot string) []finding {
 	var findings []finding
 	for _, path := range acceptedReleasePolicy.requiredScripts {
 		full := filepath.Join(repoRoot, path)
-		info, err := os.Stat(full)
+		info, err := os.Lstat(full)
 		switch {
 		case errors.Is(err, os.ErrNotExist):
 			findings = append(findings, finding{path: full, msg: "missing required release helper"})
 		case err != nil:
 			findings = append(findings, finding{path: full, msg: err.Error()})
-		case info.IsDir():
-			findings = append(findings, finding{path: full, msg: "expected file, got directory"})
+		case !info.Mode().IsRegular():
+			findings = append(findings, finding{path: full, msg: "required release helper must be a regular file"})
 		case info.Mode().Perm()&0111 == 0:
 			findings = append(findings, finding{path: full, msg: "required release helper must be executable"})
 		}

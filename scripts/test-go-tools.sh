@@ -97,6 +97,7 @@ printf 'go \\\n  install example.com/tool@deadbeef\n' >"$tmpdir/direct-command-c
 printf '%s\n' 'run: >-' '  go install' '  example.com/tool@latest' >"$tmpdir/direct-command-folded-yaml"
 printf '%s\n' 'go -C . install example.com/tool@latest' >"$tmpdir/direct-command-go-c"
 printf '%s\n' 'go install "$MODULE@$VERSION"' >"$tmpdir/direct-command-variable"
+printf '%s\n' 'run: go install example.com/tool@v1.2.3' >"$tmpdir/workflow.yaml"
 for fixture in "$tmpdir/direct-command-yaml" "$tmpdir/direct-command-policy" "$tmpdir/direct-command-continuation" "$tmpdir/direct-command-folded-yaml" "$tmpdir/direct-command-go-c"; do
   if ! scan_direct_go_module_selectors "$fixture" >/dev/null; then
     echo "direct Go module selector guard missed formatted fixture: $fixture" >&2
@@ -110,12 +111,25 @@ for fixture in "$tmpdir"/direct-command-*; do
     exit 1
   fi
 done
+if ! scan_direct_go_tool_commands "$tmpdir/workflow.yaml" >/dev/null; then
+  echo "direct Go tool command guard missed .yaml workflow fixture" >&2
+  exit 1
+fi
 
 set -- \
   "$repo_root/Taskfile.yml" \
-  "$repo_root"/.github/workflows/*.yml \
   "$repo_root/docs/release-checklist.md" \
   "$repo_root"/tools/releasepolicy/*.go
+workflow_files=$(git -C "$repo_root" ls-files -- '.github/workflows/*.yml' '.github/workflows/*.yaml')
+[ -n "$workflow_files" ] || {
+  echo "no tracked GitHub workflows found" >&2
+  exit 1
+}
+while IFS= read -r workflow; do
+  set -- "$@" "$repo_root/$workflow"
+done <<EOF
+$workflow_files
+EOF
 : >"$tmpdir/raw-pins.out"
 raw_tool_configuration=false
 if scan_direct_go_tool_commands "$@" >>"$tmpdir/raw-pins.out"; then

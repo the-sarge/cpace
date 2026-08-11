@@ -211,6 +211,7 @@ tasks:
         if [ "$docs_only" = "true" ]; then
           echo "Docs-only changes detected; running docs validation."
           task docs:check
+          task ci:go-tools
         else
           echo "Code or workflow changes detected; running quick validation."
           task quick

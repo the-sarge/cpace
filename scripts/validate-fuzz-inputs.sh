@@ -74,6 +74,9 @@ fi
 fuzz_test_parallel=${FUZZ_TEST_PARALLEL:-}
 if [ -n "$fuzz_test_parallel" ]; then
   validate_positive_integer FUZZ_TEST_PARALLEL "$fuzz_test_parallel"
+  case "$fuzz_test_parallel" in
+    0[0-9]*) fail "FUZZ_TEST_PARALLEL must be canonical decimal without leading zeroes (got: '$fuzz_test_parallel')" ;;
+  esac
 fi
 
 max_wall_minutes=${FUZZ_MAX_WALL_MINUTES:-}
@@ -86,7 +89,15 @@ command -v jq >/dev/null 2>&1 || fail "jq is required to validate the fuzz targe
 if ! jq empty "$registry"; then
   fail "$registry contains malformed JSON"
 fi
-target_count=$(jq -er 'if type == "array" then length else empty end' "$registry") || fail "$registry must be a JSON array"
+top_level_count=$(jq -r -s 'length' "$registry")
+if [ "$top_level_count" -ne 1 ]; then
+  fail "$registry must contain exactly one top-level JSON array"
+fi
+registry_type=$(jq -r -s '.[0] | type' "$registry")
+if [ "$registry_type" != "array" ]; then
+  fail "$registry must be a JSON array"
+fi
+target_count=$(jq -r -s '.[0] | length' "$registry")
 if [ "$target_count" -lt 1 ]; then
   fail "$registry contains no targets"
 fi

@@ -771,6 +771,35 @@ func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
 	requireFinding(t, findings, "required release helper must be executable")
 }
 
+func TestReleasePolicyRejectsSymlinkRequiredScripts(t *testing.T) {
+	tests := []struct {
+		name   string
+		target string
+	}{
+		{name: "existing target", target: "release-tag-policy.sh"},
+		{name: "dangling target", target: "missing.sh"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repoRoot := t.TempDir()
+			writeReleasePolicyRepoFixture(t, repoRoot)
+			helperPath := filepath.Join(repoRoot, "scripts", "go-tool.sh")
+			if err := os.Remove(helperPath); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(tt.target, helperPath); err != nil {
+				t.Fatal(err)
+			}
+
+			findings, err := checkRepo(repoRoot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			requireFinding(t, findings, "required release helper must be a regular file")
+		})
+	}
+}
+
 func TestReleasePolicyRejectsMissingRequiredSupportFile(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)

@@ -12,12 +12,16 @@ invalid_registry="$fixture_dir/invalid.json"
 non_array_registry="$fixture_dir/non-array.json"
 false_registry="$fixture_dir/false.json"
 null_registry="$fixture_dir/null.json"
+array_then_object_registry="$fixture_dir/array-then-object.json"
+two_arrays_registry="$fixture_dir/two-arrays.json"
 printf '%s\n' '[{"target":"FuzzOne"},{"target":"FuzzTwo"},{"target":"FuzzThree"}]' >"$valid_registry"
 printf '%s\n' '[]' >"$empty_registry"
 printf '%s\n' '{' >"$invalid_registry"
 printf '%s\n' '{}' >"$non_array_registry"
 printf '%s\n' 'false' >"$false_registry"
 printf '%s\n' 'null' >"$null_registry"
+printf '%s\n' '[{"target":"FuzzOne"}]' '{}' >"$array_then_object_registry"
+printf '%s\n' '[{"target":"FuzzOne"}]' '[{"target":"FuzzTwo"}]' >"$two_arrays_registry"
 mkdir "$fixture_dir/no-jq"
 
 fail() {
@@ -86,6 +90,8 @@ assert_fails "invalid FUZZ_RACE" "FUZZ_RACE must match" run_validator "$valid_re
 assert_fails "zero GOMAXPROCS" "GOMAXPROCS must be positive" run_validator "$valid_registry" GOMAXPROCS=0
 assert_fails "oversized GOMAXPROCS" "GOMAXPROCS value is too large" run_validator "$valid_registry" GOMAXPROCS=1000000
 assert_fails "zero FUZZ_TEST_PARALLEL" "FUZZ_TEST_PARALLEL must be positive" run_validator "$valid_registry" FUZZ_TEST_PARALLEL=0
+assert_fails "invalid leading-zero FUZZ_TEST_PARALLEL" "FUZZ_TEST_PARALLEL must be canonical decimal" run_validator "$valid_registry" FUZZ_TEST_PARALLEL=08
+assert_fails "ambiguous leading-zero FUZZ_TEST_PARALLEL" "FUZZ_TEST_PARALLEL must be canonical decimal" run_validator "$valid_registry" FUZZ_TEST_PARALLEL=010
 assert_fails "oversized FUZZ_TEST_PARALLEL" "FUZZ_TEST_PARALLEL value is too large" run_validator "$valid_registry" FUZZ_TEST_PARALLEL=1000000
 assert_fails "invalid wall cap" "FUZZ_MAX_WALL_MINUTES must be positive" run_validator "$valid_registry" FUZZ_MAX_WALL_MINUTES=0
 assert_fails "wall cap reached" "must stay under 120 minutes" run_validator "$valid_registry" FUZZTIME=60m PARALLEL=2 FUZZ_MAX_WALL_MINUTES=120
@@ -94,7 +100,13 @@ assert_fails "invalid registry" "contains malformed JSON" run_validator "$invali
 assert_fails "non-array registry" "must be a JSON array" run_validator "$non_array_registry"
 assert_fails "false registry" "must be a JSON array" run_validator "$false_registry"
 assert_fails "null registry" "must be a JSON array" run_validator "$null_registry"
+assert_fails "array followed by object" "exactly one top-level JSON array" run_validator "$array_then_object_registry"
+assert_fails "two arrays" "exactly one top-level JSON array" run_validator "$two_arrays_registry"
 assert_fails "missing registry" "fuzz target registry not found" run_validator "$fixture_dir/missing.json"
 assert_fails "missing jq" "jq is required" run_without_jq
+
+grep -Fq 'FUZZ_MAX_WALL_MINUTES: "240"' "$repo_root/.github/workflows/autoscaled-fuzz.yml"
+grep -Fq 'run: scripts/validate-fuzz-inputs.sh' "$repo_root/.github/workflows/autoscaled-fuzz.yml"
+grep -Fq 'scripts/validate-fuzz-inputs.sh' "$repo_root/Taskfile.yml"
 
 printf '%s\n' "Fuzz input validator tests passed"

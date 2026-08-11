@@ -91,8 +91,10 @@ jobs:
         run: |
           scripts/test-release-helpers.sh
           scripts/test-ci-classifier.sh
-          scripts/test-go-tools.sh
           scripts/test-fuzz-inputs.sh
+
+      - name: Validate Go tool catalogue and routing
+        run: scripts/test-go-tools.sh
 
       - name: Run release policy checker
         run: scripts/check-release-policy.sh
