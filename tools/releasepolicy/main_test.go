@@ -103,6 +103,19 @@ func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
 	if !seenScripts["scripts/release-metadata.sh"] {
 		t.Fatal("accepted release policy must require scripts/release-metadata.sh")
 	}
+	seenFiles := map[string]bool{}
+	for _, path := range acceptedReleasePolicy.requiredFiles {
+		if path == "" {
+			t.Fatal("required file path is empty")
+		}
+		if seenFiles[path] {
+			t.Fatalf("duplicate required file %q", path)
+		}
+		seenFiles[path] = true
+	}
+	if !seenFiles["scripts/go-tool-versions.sh"] {
+		t.Fatal("accepted release policy must require scripts/go-tool-versions.sh")
+	}
 	seenConfigs := map[string]bool{}
 	for _, config := range acceptedReleasePolicy.requiredConfigs {
 		if config.path == "" {
@@ -202,6 +215,7 @@ func TestCloneReleasePolicyIsDeep(t *testing.T) {
 	requireStringSliceNotAliased(t, "push tags", acceptedReleasePolicy.pushTags, clone.pushTags, 0, "changed")
 	requireStringMapNotAliased(t, "top permissions", acceptedReleasePolicy.topPermission, clone.topPermission, "contents", "write")
 	requireStringSliceNotAliased(t, "required scripts", acceptedReleasePolicy.requiredScripts, clone.requiredScripts, 0, "changed")
+	requireStringSliceNotAliased(t, "required files", acceptedReleasePolicy.requiredFiles, clone.requiredFiles, 0, "changed")
 	requireConfigPolicySliceNotAliased(t, acceptedReleasePolicy.requiredConfigs, clone.requiredConfigs, 0, "changed")
 	syftConfig := indexOfRequiredConfig(t, acceptedReleasePolicy, ".github/syft-release.yaml")
 	requireStringSliceNotAliased(t, "required config excludes", acceptedReleasePolicy.requiredConfigs[syftConfig].excludes, clone.requiredConfigs[syftConfig].excludes, 0, "changed")
@@ -226,6 +240,7 @@ func cloneReleasePolicy(policy releasePolicy) releasePolicy {
 		policy.jobs[i] = cloneReleaseJobPolicy(policy.jobs[i])
 	}
 	policy.requiredScripts = append([]string(nil), policy.requiredScripts...)
+	policy.requiredFiles = append([]string(nil), policy.requiredFiles...)
 	policy.requiredConfigs = append([]releaseConfigPolicy(nil), policy.requiredConfigs...)
 	for i := range policy.requiredConfigs {
 		policy.requiredConfigs[i].excludes = append([]string(nil), policy.requiredConfigs[i].excludes...)
@@ -756,6 +771,20 @@ func TestReleasePolicyRejectsNonExecutableRequiredScripts(t *testing.T) {
 	requireFinding(t, findings, "required release helper must be executable")
 }
 
+func TestReleasePolicyRejectsMissingRequiredSupportFile(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	if err := os.Remove(filepath.Join(repoRoot, "scripts", "go-tool-versions.sh")); err != nil {
+		t.Fatal(err)
+	}
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "missing required release support file")
+}
+
 func TestReleasePolicyRejectsMissingRequiredConfig(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
@@ -892,6 +921,8 @@ func writeReleasePolicyRepoFixture(t *testing.T, repoRoot string) {
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "release.yml"), []byte(currentWorkflow(t)), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(acceptedReleasePolicy.expectedSigners), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "syft-release.yaml"), []byte(acceptedSyftReleaseConfig), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "go-tool-versions.sh"), []byte("cpace_go_tool_version=v1.0.0\n"), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "go-tool.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-tag-policy.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-metadata.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)
 	mustWriteFile(t, filepath.Join(repoRoot, "scripts", "release-tag-metadata.sh"), []byte("#!/bin/sh\nexit 0\n"), 0o755)

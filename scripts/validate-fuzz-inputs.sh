@@ -1,9 +1,12 @@
 #!/bin/sh
-
 set -eu
 
-repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-registry=${1:-"$repo_root/.github/fuzz-targets.json"}
+if [ "$#" -gt 0 ]; then
+  registry=$1
+else
+  repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+  registry="$repo_root/.github/fuzz-targets.json"
+fi
 
 fail() {
   printf 'Fuzz input validation failed: %s\n' "$1" >&2
@@ -78,8 +81,12 @@ if [ -n "$max_wall_minutes" ]; then
   validate_positive_integer FUZZ_MAX_WALL_MINUTES "$max_wall_minutes"
 fi
 
+command -v jq >/dev/null 2>&1 || fail "jq is required to validate the fuzz target registry"
 [ -f "$registry" ] || fail "fuzz target registry not found: $registry"
-target_count=$(jq -er 'if type == "array" then length else error("not an array") end' "$registry" 2>/dev/null) || fail "$registry must be a JSON array"
+if ! jq -e . "$registry" >/dev/null; then
+  fail "$registry contains malformed JSON"
+fi
+target_count=$(jq -er 'if type == "array" then length else empty end' "$registry") || fail "$registry must be a JSON array"
 if [ "$target_count" -lt 1 ]; then
   fail "$registry contains no targets"
 fi

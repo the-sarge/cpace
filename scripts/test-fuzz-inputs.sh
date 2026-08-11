@@ -1,5 +1,4 @@
 #!/bin/sh
-
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -10,9 +9,12 @@ trap 'rm -rf "$fixture_dir"' EXIT HUP INT TERM
 valid_registry="$fixture_dir/valid.json"
 empty_registry="$fixture_dir/empty.json"
 invalid_registry="$fixture_dir/invalid.json"
+non_array_registry="$fixture_dir/non-array.json"
 printf '%s\n' '[{"target":"FuzzOne"},{"target":"FuzzTwo"},{"target":"FuzzThree"}]' >"$valid_registry"
 printf '%s\n' '[]' >"$empty_registry"
 printf '%s\n' '{' >"$invalid_registry"
+printf '%s\n' '{}' >"$non_array_registry"
+mkdir "$fixture_dir/no-jq"
 
 fail() {
   printf '%s\n' "$1" >&2
@@ -56,6 +58,13 @@ run_validator() {
   )
 }
 
+run_without_jq() {
+  (
+    export FUZZTIME=10m PARALLEL=2 FUZZ_RACE=0
+    PATH="$fixture_dir/no-jq" /bin/sh "$validator" "$valid_registry"
+  )
+}
+
 assert_passes "required inputs" run_validator "$valid_registry"
 assert_passes "optional worker limits" run_validator "$valid_registry" GOMAXPROCS=4 FUZZ_TEST_PARALLEL=2
 assert_passes "duration units" run_validator "$valid_registry" FUZZTIME=1s
@@ -77,7 +86,9 @@ assert_fails "oversized FUZZ_TEST_PARALLEL" "FUZZ_TEST_PARALLEL value is too lar
 assert_fails "invalid wall cap" "FUZZ_MAX_WALL_MINUTES must be positive" run_validator "$valid_registry" FUZZ_MAX_WALL_MINUTES=0
 assert_fails "wall cap reached" "must stay under 120 minutes" run_validator "$valid_registry" FUZZTIME=60m PARALLEL=2 FUZZ_MAX_WALL_MINUTES=120
 assert_fails "empty registry" "contains no targets" run_validator "$empty_registry"
-assert_fails "invalid registry" "must be a JSON array" run_validator "$invalid_registry"
+assert_fails "invalid registry" "contains malformed JSON" run_validator "$invalid_registry"
+assert_fails "non-array registry" "must be a JSON array" run_validator "$non_array_registry"
 assert_fails "missing registry" "fuzz target registry not found" run_validator "$fixture_dir/missing.json"
+assert_fails "missing jq" "jq is required" run_without_jq
 
 printf '%s\n' "Fuzz input validator tests passed"

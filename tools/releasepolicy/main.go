@@ -52,6 +52,7 @@ func checkRepo(repoRoot string) ([]finding, error) {
 	findings = append(findings, checkWorkflow(workflowPath, workflow)...)
 	findings = append(findings, checkAllowedSigners(repoRoot)...)
 	findings = append(findings, checkRequiredScripts(repoRoot)...)
+	findings = append(findings, checkRequiredFiles(repoRoot)...)
 	findings = append(findings, checkRequiredConfigs(repoRoot)...)
 	return findings, nil
 }
@@ -425,6 +426,23 @@ func checkRequiredScripts(repoRoot string) []finding {
 			findings = append(findings, finding{path: full, msg: "expected file, got directory"})
 		case info.Mode().Perm()&0111 == 0:
 			findings = append(findings, finding{path: full, msg: "required release helper must be executable"})
+		}
+	}
+	return findings
+}
+
+func checkRequiredFiles(repoRoot string) []finding {
+	var findings []finding
+	for _, path := range acceptedReleasePolicy.requiredFiles {
+		full := filepath.Join(repoRoot, path)
+		info, err := os.Lstat(full)
+		switch {
+		case errors.Is(err, os.ErrNotExist):
+			findings = append(findings, finding{path: full, msg: "missing required release support file"})
+		case err != nil:
+			findings = append(findings, finding{path: full, msg: err.Error()})
+		case !info.Mode().IsRegular():
+			findings = append(findings, finding{path: full, msg: "required release support file must be a regular file"})
 		}
 	}
 	return findings

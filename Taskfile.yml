@@ -21,9 +21,8 @@ vars:
   GOSEC: '{{.GOSEC | default "gosec"}}'
   GOFMT: '{{.GOFMT | default "gofmt"}}'
   GOIMPORTS: '{{.GOIMPORTS | default "goimports"}}'
-  GOLANGCI_LINT: '{{.GOLANGCI_LINT | default (printf "%s/scripts/go-tool.sh run golangci-lint" .ROOT_DIR)}}'
+  GO_TOOL: '{{.GO_TOOL | default (printf "%s/scripts/go-tool.sh" .ROOT_DIR)}}'
   GOVULNCHECK: '{{.GOVULNCHECK | default "govulncheck"}}'
-  STATICCHECK: '{{.STATICCHECK | default (printf "%s/scripts/go-tool.sh run staticcheck" .ROOT_DIR)}}'
   FUZZTIME: '{{.FUZZTIME | default "30s"}}'
   BENCH: '{{.BENCH | default "."}}'
   BENCHCOUNT: '{{.BENCHCOUNT | default "1"}}'
@@ -93,7 +92,7 @@ tasks:
     desc: Run Go vet and staticcheck
     cmds:
       - go vet ./...
-      - "{{.STATICCHECK}} ./..."
+      - '{{if .STATICCHECK}}{{.STATICCHECK}} ./...{{else}}"{{.GO_TOOL}}" run staticcheck ./...{{end}}'
 
   lint-ast-grep:
     desc: Run ast-grep structural linting rules
@@ -108,7 +107,7 @@ tasks:
   lint:golangci:
     desc: Run curated golangci-lint advisory analyzers
     cmds:
-      - "{{.GOLANGCI_LINT}} run"
+      - '{{if .GOLANGCI_LINT}}{{.GOLANGCI_LINT}} run{{else}}"{{.GO_TOOL}}" run golangci-lint run{{end}}'
 
   docs:check:
     desc: Validate tracked Markdown and whitespace
@@ -150,7 +149,7 @@ tasks:
     dir: tools/releasepolicy
     cmds:
       - go vet ./...
-      - "{{.STATICCHECK}} ./..."
+      - '{{if .STATICCHECK}}{{.STATICCHECK}} ./...{{else}}"{{.GO_TOOL}}" run staticcheck ./...{{end}}'
 
   ci:classifier:
     desc: Run CI change classifier tests
@@ -177,7 +176,7 @@ tasks:
     dir: tools/evidencebaseline
     cmds:
       - go vet ./...
-      - "{{.STATICCHECK}} ./..."
+      - '{{if .STATICCHECK}}{{.STATICCHECK}} ./...{{else}}"{{.GO_TOOL}}" run staticcheck ./...{{end}}'
 
   quick:
     desc: Lightweight local iteration lane

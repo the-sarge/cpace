@@ -58,15 +58,31 @@ if [ "$pin_count" -ne 6 ]; then
   exit 1
 fi
 
-if git -C "$repo_root" grep -nE 'go (install|run) [^[:space:]]+@v[0-9]' -- Taskfile.yml .github/workflows docs/release-checklist.md tools/releasepolicy >"$tmpdir/raw-pins.out"; then
+direct_selector_pattern='go (install|run) [^[:space:]]+@[^[:space:]]+'
+for selector in '@v1.2.3' '@latest' '@main' '@deadbeef'; do
+  printf 'go install example.com/tool%s\n' "$selector" >"$tmpdir/direct-selector"
+  if ! grep -Eq "$direct_selector_pattern" "$tmpdir/direct-selector"; then
+    echo "direct selector guard missed $selector" >&2
+    exit 1
+  fi
+done
+
+if git -C "$repo_root" grep -nE "$direct_selector_pattern" -- Taskfile.yml .github/workflows docs/release-checklist.md tools/releasepolicy >"$tmpdir/raw-pins.out"; then
   echo "active configuration contains direct Go tool pins:" >&2
   cat "$tmpdir/raw-pins.out" >&2
   exit 1
 fi
 
-grep -Fq 'scripts/go-tool.sh run staticcheck' "$repo_root/Taskfile.yml"
-grep -Fq 'scripts/go-tool.sh run golangci-lint' "$repo_root/Taskfile.yml"
+grep -Fq 'GO_TOOL:' "$repo_root/Taskfile.yml"
+grep -Fq '"{{.GO_TOOL}}" run staticcheck' "$repo_root/Taskfile.yml"
+grep -Fq '"{{.GO_TOOL}}" run golangci-lint' "$repo_root/Taskfile.yml"
 grep -Fq 'scripts/go-tool.sh run govulncheck' "$repo_root/docs/release-checklist.md"
 grep -Fq 'scripts/go-tool.sh run gosec' "$repo_root/docs/release-checklist.md"
+
+for workflow in actionlint.yml staticcheck.yml golangci-lint.yml; do
+  workflow_path="$repo_root/.github/workflows/$workflow"
+  grep -Fq -- "- 'scripts/go-tool-versions.sh'" "$workflow_path"
+  grep -Fq -- "- 'scripts/go-tool.sh'" "$workflow_path"
+done
 
 echo "Go tool helper tests passed"

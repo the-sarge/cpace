@@ -1,14 +1,16 @@
 # CI Policy
 
-This repository treats CI as release evidence for an unaudited crypto package. Required pull-request CI stays narrow because fork PRs run untrusted code on hosted runners.
+This repository treats CI as release evidence for an unaudited crypto package.
+Required pull-request CI stays narrow because fork PRs run untrusted code on
+hosted runners.
 
 ## When Tests Run
 
 Local validation uses `Taskfile.yml` as the command facade:
 
 - `task docs:check` validates tracked Markdown and whitespace.
-- `task quick` runs Go formatting checks, docs validation, CI change-classifier, Go-tool catalogue, and fuzz-input validator smoke tests, and `go test ./...`.
-- `task check` runs docs validation, release-helper, CI change-classifier, Go-tool catalogue, and fuzz-input validator smoke tests, release policy validation, nested release-policy and evidence-checker linting, evidence baseline validation, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for CycloneDX SBOM JSON validation.
+- `task quick` runs Go formatting checks, docs validation, CI change-classifier, Go-tool catalogue, and fuzz-input validator smoke tests, and `go test ./...`; it requires `jq` for fuzz-registry validation.
+- `task check` runs docs validation, release-helper, CI change-classifier, Go-tool catalogue, and fuzz-input validator smoke tests, release policy validation, nested release-policy and evidence-checker linting, evidence baseline validation, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for fuzz-registry and CycloneDX SBOM JSON validation.
 - `task lint:golangci` runs a pinned, curated advisory `golangci-lint` analyzer set; it is not part of the required local gate.
 - `task fuzz` runs every target from the fuzz-target registry (`.github/fuzz-targets.json`, with target function, package, and OSS-Fuzz-compatible binary name) using the caller-provided `FUZZTIME`, `PARALLEL`, `FUZZ_RACE`, `GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` settings. Both this local task and Autoscaled Fuzz enforce those settings through `scripts/validate-fuzz-inputs.sh`; only the workflow supplies `FUZZ_MAX_WALL_MINUTES=240`, so maintainer-controlled local long fuzzing remains available. `go test ./...` fails if the registry drifts from the defined fuzz functions or OSS-Fuzz-compatible build lines.
 

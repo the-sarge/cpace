@@ -10,6 +10,8 @@ on:
       - '.golangci.yml'
       - 'Taskfile.yml'
       - '.github/workflows/golangci-lint.yml'
+      - 'scripts/go-tool-versions.sh'
+      - 'scripts/go-tool.sh'
   schedule:
     - cron: '0 8 * * 2'
   workflow_dispatch:

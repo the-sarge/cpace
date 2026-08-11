@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/actionlint.yaml'
       - '.github/workflows/**'
+      - 'scripts/go-tool-versions.sh'
+      - 'scripts/go-tool.sh'
   workflow_dispatch:
 
 permissions:

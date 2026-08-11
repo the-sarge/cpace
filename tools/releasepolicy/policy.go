@@ -25,6 +25,7 @@ type releasePolicy struct {
 
 	jobs            []releaseJobPolicy
 	requiredScripts []string
+	requiredFiles   []string
 	requiredConfigs []releaseConfigPolicy
 	expectedSigners string
 }
@@ -493,6 +494,9 @@ var acceptedReleasePolicy = releasePolicy{
 		"scripts/release-tag-metadata.sh",
 		"scripts/validate-cyclonedx-sbom.sh",
 		"scripts/extract-release-notes.sh",
+	},
+	requiredFiles: []string{
+		"scripts/go-tool-versions.sh",
 	},
 	requiredConfigs: []releaseConfigPolicy{
 		{
