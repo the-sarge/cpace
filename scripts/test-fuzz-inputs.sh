@@ -10,10 +10,14 @@ valid_registry="$fixture_dir/valid.json"
 empty_registry="$fixture_dir/empty.json"
 invalid_registry="$fixture_dir/invalid.json"
 non_array_registry="$fixture_dir/non-array.json"
+false_registry="$fixture_dir/false.json"
+null_registry="$fixture_dir/null.json"
 printf '%s\n' '[{"target":"FuzzOne"},{"target":"FuzzTwo"},{"target":"FuzzThree"}]' >"$valid_registry"
 printf '%s\n' '[]' >"$empty_registry"
 printf '%s\n' '{' >"$invalid_registry"
 printf '%s\n' '{}' >"$non_array_registry"
+printf '%s\n' 'false' >"$false_registry"
+printf '%s\n' 'null' >"$null_registry"
 mkdir "$fixture_dir/no-jq"
 
 fail() {
@@ -88,6 +92,8 @@ assert_fails "wall cap reached" "must stay under 120 minutes" run_validator "$va
 assert_fails "empty registry" "contains no targets" run_validator "$empty_registry"
 assert_fails "invalid registry" "contains malformed JSON" run_validator "$invalid_registry"
 assert_fails "non-array registry" "must be a JSON array" run_validator "$non_array_registry"
+assert_fails "false registry" "must be a JSON array" run_validator "$false_registry"
+assert_fails "null registry" "must be a JSON array" run_validator "$null_registry"
 assert_fails "missing registry" "fuzz target registry not found" run_validator "$fixture_dir/missing.json"
 assert_fails "missing jq" "jq is required" run_without_jq
 

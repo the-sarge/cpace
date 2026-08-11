@@ -83,7 +83,7 @@ fi
 
 command -v jq >/dev/null 2>&1 || fail "jq is required to validate the fuzz target registry"
 [ -f "$registry" ] || fail "fuzz target registry not found: $registry"
-if ! jq -e . "$registry" >/dev/null; then
+if ! jq empty "$registry"; then
   fail "$registry contains malformed JSON"
 fi
 target_count=$(jq -er 'if type == "array" then length else empty end' "$registry") || fail "$registry must be a JSON array"

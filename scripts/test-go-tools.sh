@@ -58,17 +58,36 @@ if [ "$pin_count" -ne 6 ]; then
   exit 1
 fi
 
-direct_selector_pattern='go (install|run) [^[:space:]]+@[^[:space:]]+'
-for selector in '@v1.2.3' '@latest' '@main' '@deadbeef'; do
-  printf 'go install example.com/tool%s\n' "$selector" >"$tmpdir/direct-selector"
-  if ! grep -Eq "$direct_selector_pattern" "$tmpdir/direct-selector"; then
-    echo "direct selector guard missed $selector" >&2
+direct_go_tool_pattern='(^|[[:space:]])go[[:space:]]+(install|run)([[:space:]]|$)'
+scan_direct_go_tool_commands() {
+  grep -En "$direct_go_tool_pattern" "$@"
+}
+
+fixture_number=0
+for command in \
+  'go install example.com/tool@v1.2.3' \
+  'go  install example.com/tool@latest' \
+  'go run -mod=readonly example.com/tool@main' \
+  'go install -v example.com/tool@deadbeef'; do
+  fixture_number=$((fixture_number + 1))
+  printf '%s\n' "$command" >"$tmpdir/direct-command-$fixture_number"
+  if ! scan_direct_go_tool_commands "$tmpdir/direct-command-$fixture_number" >/dev/null; then
+    echo "direct Go tool guard missed: $command" >&2
     exit 1
   fi
 done
+printf 'go\tinstall example.com/tool@latest\n' >"$tmpdir/direct-command-tab"
+if ! scan_direct_go_tool_commands "$tmpdir/direct-command-tab" >/dev/null; then
+  echo "direct Go tool guard missed tab-separated command" >&2
+  exit 1
+fi
 
-if git -C "$repo_root" grep -nE "$direct_selector_pattern" -- Taskfile.yml .github/workflows docs/release-checklist.md tools/releasepolicy >"$tmpdir/raw-pins.out"; then
-  echo "active configuration contains direct Go tool pins:" >&2
+if scan_direct_go_tool_commands \
+  "$repo_root/Taskfile.yml" \
+  "$repo_root"/.github/workflows/*.yml \
+  "$repo_root/docs/release-checklist.md" \
+  "$repo_root"/tools/releasepolicy/*.go >"$tmpdir/raw-pins.out"; then
+  echo "active configuration contains a direct go install/run command:" >&2
   cat "$tmpdir/raw-pins.out" >&2
   exit 1
 fi
