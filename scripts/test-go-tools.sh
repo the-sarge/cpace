@@ -58,25 +58,8 @@ if [ "$pin_count" -ne 6 ]; then
   exit 1
 fi
 
-scan_direct_go_tool_commands() {
-  awk '
-    {
-      start_line = FNR
-      command = $0
-      while (command ~ /\\[[:space:]]*$/) {
-        sub(/\\[[:space:]]*$/, "", command)
-        if ((getline continuation) <= 0) {
-          break
-        }
-        command = command " " continuation
-      }
-      if (command ~ /(^|[^[:alnum:]_])go[[:space:]]+(install|run)[[:space:]]+[^#]*@[^[:space:]#]+/) {
-        printf "%s:%d:%s\n", FILENAME, start_line, command
-        found = 1
-      }
-    }
-    END { exit(found ? 0 : 1) }
-  ' "$@"
+scan_direct_go_module_selectors() {
+  grep -En '[[:alnum:]_.-]+\.[[:alpha:]][[:alnum:]-]*/[^[:space:]]+@[^[:space:]]+' "$@"
 }
 
 fixture_number=0
@@ -87,32 +70,34 @@ for command in \
   'go install -v example.com/tool@deadbeef'; do
   fixture_number=$((fixture_number + 1))
   printf '%s\n' "$command" >"$tmpdir/direct-command-$fixture_number"
-  if ! scan_direct_go_tool_commands "$tmpdir/direct-command-$fixture_number" >/dev/null; then
-    echo "direct Go tool guard missed: $command" >&2
+  if ! scan_direct_go_module_selectors "$tmpdir/direct-command-$fixture_number" >/dev/null; then
+    echo "direct Go module selector guard missed: $command" >&2
     exit 1
   fi
 done
 printf 'go\tinstall example.com/tool@latest\n' >"$tmpdir/direct-command-tab"
-if ! scan_direct_go_tool_commands "$tmpdir/direct-command-tab" >/dev/null; then
-  echo "direct Go tool guard missed tab-separated command" >&2
+if ! scan_direct_go_module_selectors "$tmpdir/direct-command-tab" >/dev/null; then
+  echo "direct Go module selector guard missed tab-separated command" >&2
   exit 1
 fi
 printf 'run: "go install example.com/tool@latest"\n' >"$tmpdir/direct-command-yaml"
 printf 'runLines: []string{`go run example.com/tool@main`},\n' >"$tmpdir/direct-command-policy"
 printf 'go \\\n  install example.com/tool@deadbeef\n' >"$tmpdir/direct-command-continuation"
-for fixture in "$tmpdir/direct-command-yaml" "$tmpdir/direct-command-policy" "$tmpdir/direct-command-continuation"; do
-  if ! scan_direct_go_tool_commands "$fixture" >/dev/null; then
-    echo "direct Go tool guard missed formatted fixture: $fixture" >&2
+printf '%s\n' 'run: >-' '  go install' '  example.com/tool@latest' >"$tmpdir/direct-command-folded-yaml"
+printf '%s\n' 'go -C . install example.com/tool@latest' >"$tmpdir/direct-command-go-c"
+for fixture in "$tmpdir/direct-command-yaml" "$tmpdir/direct-command-policy" "$tmpdir/direct-command-continuation" "$tmpdir/direct-command-folded-yaml" "$tmpdir/direct-command-go-c"; do
+  if ! scan_direct_go_module_selectors "$fixture" >/dev/null; then
+    echo "direct Go module selector guard missed formatted fixture: $fixture" >&2
     exit 1
   fi
 done
 
-if scan_direct_go_tool_commands \
+if scan_direct_go_module_selectors \
   "$repo_root/Taskfile.yml" \
   "$repo_root"/.github/workflows/*.yml \
   "$repo_root/docs/release-checklist.md" \
   "$repo_root"/tools/releasepolicy/*.go >"$tmpdir/raw-pins.out"; then
-  echo "active configuration contains a direct go install/run command:" >&2
+  echo "active configuration contains a direct Go module selector:" >&2
   cat "$tmpdir/raw-pins.out" >&2
   exit 1
 fi
