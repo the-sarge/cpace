@@ -2790,3 +2790,32 @@ Published the signed `v0.1.3` GitHub prerelease from commit `b4174c6bf4bae78f408
 
 - Land the post-release documentation and this journal entry through the maintainer-controlled PR path. Issue #238 remains open, and `main` has not been pushed directly.
 - The next live decision is whether to resume ADR-0010 consideration for a possible `v0.2.0`; repinning and sending external-review outreach for #29-#32 remains the separate production-readiness path.
+
+---
+
+## Convention baseline landed - 2026-08-11 03:00 EDT
+
+**Main:** `1c00edf327d6`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#260](https://github.com/the-sarge/cpace/pull/260), closing issue [#255](https://github.com/the-sarge/cpace/issues/255) with a documentation-only convention baseline and drift refresh. No public API, package behavior, wire format, error string, shell, Taskfile, or Go source changed.
+
+**Completed**
+
+- Added `docs/code-conventions.md` as the canonical source for unexported constructors, test diagnostics and helper roles, panic prefixes, shell invocation roles, Taskfile-embedded Bash strictness, and validation-tool package documentation; linked it from AGENTS.md and CONTRIBUTING.md.
+- Corrected the CI classifier descriptions, distinguished the single domain context from the repository's three Go modules while preserving the root-package map, and recorded the v0.1.3 caller-input `Input` implementation as shipped.
+- Renamed the live caller-input secret-lifetime audit to avoid collision with formal ADR-0009 while leaving append-only journal and frozen-evidence references historical.
+- Initial RAS review `20260811T063430-f0758255c717ba0411a4d439` produced three accepted documentation findings, all resolved and pinned by verification `20260811T063430-f0758255c717ba0411a4d439-verification-1786430984511400000` at `627849baacb80c41cd359641af6b076beb1e1f6c` with no open or new concerns.
+- Replacement review `20260811T065024-baed498820a31fd18c35c226` found one evidence-checker terminology ambiguity. Final head `067745f359bb2de9b485c2956d0dcdf8482c40c6` clarified that boundary; the bounded cheap-doc-fix policy required fresh local and hosted certification without a third RAS round.
+- Merge commit `1c00edf327d6a50d6b34ed9e5a5ccef7e33237ef` preserves the reviewed and certified head on `main`.
+
+**Validation**
+
+- Final exact-head `task docs:check` and full `task check` passed, including release helpers, CI classifier tests, evidence validation, unit and race tests, formatting/import checks, vet, Staticcheck, ast-grep, and `govulncheck` with no vulnerabilities.
+- Hosted `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed on exact head `067745f`; GitHub reported PR #260 clean and mergeable before merge.
+
+**Next**
+
+- The convention-dependent follow-up sweeps are [#256](https://github.com/the-sarge/cpace/issues/256) for the production package, [#257](https://github.com/the-sarge/cpace/issues/257) for the test suite, and [#258](https://github.com/the-sarge/cpace/issues/258) for the validation tools.
