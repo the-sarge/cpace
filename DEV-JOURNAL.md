@@ -2848,3 +2848,35 @@ Merged PR [#262](https://github.com/the-sarge/cpace/pull/262), closing issue [#2
 **Next**
 
 - Continue the approved sequential CI-hardening batch with [#259](https://github.com/the-sarge/cpace/issues/259), which centralizes Go-tool version pins and the Taskfile/autoscaled-fuzz input validator after this journal update lands.
+
+---
+
+## CI tool and fuzz policy consolidation landed - 2026-08-11 11:45 EDT
+
+**Main:** `bcdef0089c8b`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#266](https://github.com/the-sarge/cpace/pull/266), closing issue [#259](https://github.com/the-sarge/cpace/issues/259) by centralizing tracked Go CLI versions and fuzz-input validation behind maintained repository seams. No dependency, package behavior, public API, or stronger release-readiness claim changed.
+
+**Completed**
+
+- Added `scripts/go-tool-versions.sh` as the single version catalogue for Actionlint, golangci-lint, Gosec, Govulncheck, Staticcheck, and Task, with `scripts/go-tool.sh` providing install and run commands used by tracked workflows, Taskfile defaults, and release instructions.
+- Unified local and CI Staticcheck selection, guarded active configuration against direct Go-tool commands or module selectors, covered both tracked workflow extensions and catalogue-only workflow scheduling, and extended the release-policy oracle to require the helper plus its non-executable catalogue.
+- Added `scripts/validate-fuzz-inputs.sh` as the shared local and Autoscaled Fuzz policy owner, retaining uncapped maintainer-controlled local campaigns while enforcing the workflow's 240-minute bound, canonical fuzz worker counts, and exactly one nonempty registry array.
+- Added maintained shell suites to `task quick`, `task check`, and protected CI, including unconditional Go-tool validation for documentation-only release-instruction changes; updated `README.md`, `docs/ci-policy.md`, and `docs/release-checklist.md` to match.
+- Initial RAS review `20260811T141728-ef574f125e1cb32042d99b68` drove seven accepted hardening fixes. Replacement review `20260811T151034-c77da8e403a5ae09e57e5869` drove six additional bounded fixes; its final exact-head verification found no open or new concerns, and the approved review budget ended without a third review.
+- Merge commit `bcdef0089c8b6b9bc02505ab331e157ade5ed42c` preserves certified head `77eac30e2b9afb4bf8559113c838bf98915fefe0` on `main`.
+
+**Validation**
+
+- Final exact-head `task check` passed, including release-policy and evidence validation, unit and race tests, formatting/import checks, vet, shared Staticcheck, ast-grep, and `govulncheck` with no vulnerabilities; Actionlint and curated golangci-lint also passed.
+- A short all-target smoke `FUZZTIME=1s FUZZ_RACE=0 PARALLEL=16 FUZZ_TEST_PARALLEL=2 task fuzz` passed all 14 registered targets through the shared validator. Focused negative tests covered missing tools, malformed and multi-value registries, ambiguous Go flag integers, workflow wiring, direct-selector bypass forms, and helper symlinks.
+- The four lint paths passed through a checkout path containing spaces, and a disposable documentation-only mutation adding a direct versioned Go command to the release checklist was correctly rejected by `task check:changed`.
+- Hosted `Check`, `DCO`, `Dependency Gate`, `SAST Gate`, Actionlint, Staticcheck, GolangCI-Lint, CodeQL, and cross-platform smoke checks passed on exact head `77eac30e2b9afb4bf8559113c838bf98915fefe0`; GitHub reported the PR clean and mergeable before merge.
+
+**Next**
+
+- Follow-up hardening remains tracked in [#264](https://github.com/the-sarge/cpace/issues/264) for release-policy validation in `check:changed` and [#265](https://github.com/the-sarge/cpace/issues/265) for disabling Go test caching in the evidence-baseline wrapper.
+- Existing commit-pinned dependency, fuzz, and security evidence remains historical; refresh it only when a future change makes a stronger release claim or otherwise triggers the repository's evidence discipline.
