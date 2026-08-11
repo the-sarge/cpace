@@ -20,8 +20,6 @@ const (
 	maxScalarTries  = 128
 )
 
-var identityEncoding = make([]byte, pointSize)
-
 func generatorString(dsi, prs, ci, sid []byte, sInBytes int) []byte {
 	// The trailing subtraction accounts for the length byte of the zero-padding
 	// field. For this draft-21 suite, ZPAD is shorter than 128 bytes, so its

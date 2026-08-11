@@ -64,9 +64,14 @@ func scalarMultVFY(s *ristretto255.Scalar, encoded []byte) ([]byte, error) {
 	return scalarMultVFYElement(s, p)
 }
 
+func isIdentityEncoding(encoded []byte) bool {
+	var identity [pointSize]byte
+	return hmac.Equal(encoded, identity[:])
+}
+
 func scalarMultVFYElement(s *ristretto255.Scalar, p *ristretto255.Element) ([]byte, error) {
 	out := ristretto255.NewIdentityElement().ScalarMult(s, p).Bytes()
-	if hmac.Equal(out, identityEncoding) {
+	if isIdentityEncoding(out) {
 		// Unreachable in production for prime-order Ristretto255: every
 		// scalar sampleScalar can return is non-zero mod the group order, so
 		// s*p is non-identity for any decoded non-identity p. Kept as
@@ -87,7 +92,7 @@ func decodePublicShare(encoded []byte) (*ristretto255.Element, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrAbort, ErrPeerShareEncoding)
 	}
-	if hmac.Equal(p.Bytes(), identityEncoding) {
+	if isIdentityEncoding(p.Bytes()) {
 		return nil, fmt.Errorf("%w: %w", ErrAbort, ErrPeerShareIdentity)
 	}
 	return p, nil

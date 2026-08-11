@@ -315,7 +315,7 @@ func messageFuzzSeeds(spec messageSpec, valid, crossRole, invalidY []byte) [][]b
 		append(messageHeader(spec.role), 0x80, 0x00),
 	}
 	if pointIndex, ok := spec.exactFieldIndex(pointSize); ok {
-		seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, identityEncoding))
+		seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, make([]byte, pointSize)))
 		if invalidY != nil {
 			seeds = append(seeds, messageWithDecodedField(spec, valid, pointIndex, invalidY))
 		}
@@ -405,7 +405,7 @@ func classifyMessageAProtocolFuzzSeed(got, base messageA, invalidY []byte) messa
 	switch {
 	case bytes.Equal(got.sid, base.sid) && bytes.Equal(got.ya, base.ya) && bytes.Equal(got.ada, base.ada):
 		return messageAProtocolFuzzSeedValid
-	case bytes.Equal(got.ya, identityEncoding) && bytes.Equal(got.sid, base.sid) && bytes.Equal(got.ada, base.ada):
+	case bytes.Equal(got.ya, make([]byte, pointSize)) && bytes.Equal(got.sid, base.sid) && bytes.Equal(got.ada, base.ada):
 		return messageAProtocolFuzzSeedIdentityPoint
 	case bytes.Equal(got.ya, invalidY) && bytes.Equal(got.sid, base.sid) && bytes.Equal(got.ada, base.ada):
 		return messageAProtocolFuzzSeedInvalidPoint
@@ -505,7 +505,7 @@ func classifyMessageBFuzzSeed(got, base messageB, invalidY, tamperedTag []byte) 
 	switch {
 	case bytes.Equal(got.yb, base.yb) && bytes.Equal(got.adb, base.adb) && bytes.Equal(got.tag, base.tag):
 		return messageBFuzzSeedValid
-	case bytes.Equal(got.yb, identityEncoding) && bytes.Equal(got.adb, base.adb) && bytes.Equal(got.tag, base.tag):
+	case bytes.Equal(got.yb, make([]byte, pointSize)) && bytes.Equal(got.adb, base.adb) && bytes.Equal(got.tag, base.tag):
 		return messageBFuzzSeedIdentityPoint
 	case bytes.Equal(got.yb, invalidY) && bytes.Equal(got.adb, base.adb) && bytes.Equal(got.tag, base.tag):
 		return messageBFuzzSeedInvalidPoint
