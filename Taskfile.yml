@@ -159,9 +159,10 @@ tasks:
       - "{{.GOVULNCHECK}} -test ./..."
 
   gosec:
-    desc: Run advisory gosec scan
+    desc: Run gosec scan
     cmds:
-      - "{{.GOSEC}} ./..."
+      # Policy: this command owns scan-scope flags for every gosec lane.
+      - "{{.GOSEC}} -tests ./..."
 
   release:helpers:
     desc: Run release helper script smoke tests

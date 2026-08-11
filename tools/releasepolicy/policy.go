@@ -248,7 +248,7 @@ var acceptedReleasePolicy = releasePolicy{
 				{
 					name:            "Run gosec scan",
 					identity:        "Run gosec scan",
-					runLines:        []string{`task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'`},
+					runLines:        []string{acceptedGosecWorkflowCommand},
 					id:              "gosec",
 					continueOnError: "true",
 				},

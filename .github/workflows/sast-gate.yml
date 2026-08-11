@@ -40,13 +40,16 @@ jobs:
           go version
           go env GOTOOLCHAIN GOPROXY GOSUMDB
 
+      - name: Install task
+        run: scripts/go-tool.sh install task
+
       - name: Install gosec
         run: scripts/go-tool.sh install gosec
 
       - name: Run gosec
         id: gosec
         continue-on-error: true
-        run: gosec -tests -fmt sarif -out gosec.sarif ./...
+        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'
 
       - name: Upload gosec SARIF to code scanning
         if: always() && hashFiles('gosec.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)

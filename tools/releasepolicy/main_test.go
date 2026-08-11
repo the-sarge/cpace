@@ -25,6 +25,86 @@ func TestCurrentRepositoryReleasePolicy(t *testing.T) {
 	}
 }
 
+func TestReleasePolicyRejectsMultipleGosecTaskCommands(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	taskfile := replaceOnce(t, acceptedGosecTaskfile, `      - "{{.GOSEC}} -tests ./..."`, "      - \"{{.GOSEC}} -tests ./...\"\n      - echo unexpected")
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "gosec task must contain exactly one command")
+}
+
+func TestReleasePolicyAllowsGosecPolicyChangeAtTaskOwner(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	taskfile := replaceOnce(t, acceptedGosecTaskfile, `"{{.GOSEC}} -tests ./..."`, `"{{.GOSEC}} ./..."`)
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(findings) > 0 {
+		t.Fatalf("single-owner gosec policy change got findings %#v", findings)
+	}
+}
+
+func TestReleasePolicyRejectsDirectSASTGosecInvocation(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	workflow := replaceOnce(t, acceptedSASTGosecWorkflow, acceptedGosecWorkflowCommand, "gosec -tests -fmt sarif -out gosec.sarif ./...")
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "gosec lane command")
+}
+
+func TestReleasePolicyRejectsDirectAdvisoryGosecInvocation(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	workflow := replaceOnce(t, acceptedAdvisoryGosecWorkflow, acceptedGosecWorkflowCommand, "gosec -fmt sarif -out gosec.sarif ./...")
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "gosec.yml"), []byte(workflow), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "gosec lane command")
+}
+
+func TestReleasePolicyRejectsBlockingAdvisoryGosecJob(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	workflow := replaceOnce(t, acceptedAdvisoryGosecWorkflow, "    continue-on-error: true\n", "    continue-on-error: false\n")
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "gosec.yml"), []byte(workflow), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "advisory gosec job must remain non-blocking")
+}
+
+func TestReleasePolicyRejectsNonBlockingSASTReport(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	workflow := replaceOnce(t, acceptedSASTGosecWorkflow, "        run: exit 1\n", "        run: echo ignored\n")
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "SAST gosec report step must fail the job")
+}
+
 func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
 	if acceptedReleasePolicy.workflowName == "" {
 		t.Fatal("workflow name is empty")
@@ -945,8 +1025,55 @@ exclude:
   - './.ras/**'
 `
 
+const acceptedGosecTaskfile = `version: "3"
+
+vars:
+  GOSEC: '{{.GOSEC | default "gosec"}}'
+
+tasks:
+  gosec:
+    desc: Run gosec scan
+    cmds:
+      # Policy: this command owns scan-scope flags for every gosec lane.
+      - "{{.GOSEC}} -tests ./..."
+`
+
+const acceptedSASTGosecWorkflow = `name: SAST Gate
+
+jobs:
+  sast-gate:
+    steps:
+      - name: Install task
+        run: scripts/go-tool.sh install task
+      - name: Run gosec
+        id: gosec
+        continue-on-error: true
+        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'
+      - name: Report gosec result
+        if: steps.gosec.outcome == 'failure'
+        run: exit 1
+`
+
+const acceptedAdvisoryGosecWorkflow = `name: Gosec Advisory
+
+jobs:
+  gosec:
+    continue-on-error: true
+    steps:
+      - name: Run advisory gosec scan
+        id: gosec
+        continue-on-error: true
+        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'
+      - name: Report advisory gosec result
+        if: steps.gosec.outcome == 'failure'
+        run: exit 1
+`
+
 func writeReleasePolicyRepoFixture(t *testing.T, repoRoot string) {
 	t.Helper()
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(acceptedGosecTaskfile), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(acceptedSASTGosecWorkflow), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "gosec.yml"), []byte(acceptedAdvisoryGosecWorkflow), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "release.yml"), []byte(currentWorkflow(t)), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(acceptedReleasePolicy.expectedSigners), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "syft-release.yaml"), []byte(acceptedSyftReleaseConfig), 0o644)
