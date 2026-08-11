@@ -2819,3 +2819,32 @@ Merged PR [#260](https://github.com/the-sarge/cpace/pull/260), closing issue [#2
 **Next**
 
 - The convention-dependent follow-up sweeps are [#256](https://github.com/the-sarge/cpace/issues/256) for the production package, [#257](https://github.com/the-sarge/cpace/issues/257) for the test suite, and [#258](https://github.com/the-sarge/cpace/issues/258) for the validation tools.
+
+---
+
+## Release policy gate landed - 2026-08-11 09:58 EDT
+
+**Main:** `6e134b669c21`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#262](https://github.com/the-sarge/cpace/pull/262), closing issue [#251](https://github.com/the-sarge/cpace/issues/251) by giving the Release policy checker explicit local and protected-CI ownership on every pull request. No release-workflow policy, package behavior, dependency, or public API changed.
+
+**Completed**
+
+- Added `release:policy` and `release:lint` Taskfile targets and included both in `task check`; moved the checker invocation out of the unrelated release-helper smoke script so the gate has one explicit owner.
+- Made the existing protected `Check` job set up Go and run the release-policy checker, its module tests, `go vet`, and Staticcheck on every PR while preserving ordinary docs-only exclusion of root-module tests and other non-documentation checks.
+- Disabled Go test caching for the nested releasepolicy module because its tests read repository files outside the module, and updated `README.md` plus `docs/ci-policy.md` to match the resulting CI behavior.
+- Initial RAS review `20260811T132722-05b7b7c2171e19c4a5570059` produced two accepted findings, both resolved and pinned by verification `20260811T132722-05b7b7c2171e19c4a5570059-verification-1786455792037925000` at `402d360842a95c4aed9ff8b3c93a98b9fb699ef6`; replacement review `20260811T134352-bacfa9017ab9aceef70d1f65` found no actionable findings.
+- Merge commit `6e134b669c2194ac2c77cf3bcbcccd1f49401196` preserves certified head `402d360842a95c4aed9ff8b3c93a98b9fb699ef6` on `main`.
+
+**Validation**
+
+- Hosted mutation run [31496112887](https://github.com/the-sarge/cpace/actions/runs/31496112887) proved that a deliberate release-workflow drift passes the helper smoke step and fails the new `Run release policy checker` step; the isolated scratch branch was deleted and the mutation never entered the product PR.
+- Final exact-head `task release:helpers`, `task release:policy`, `task release:lint`, `task docs:check`, Actionlint, and full `task check` passed.
+- Protected `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed as pull-request runs bound to exact head `402d360842a95c4aed9ff8b3c93a98b9fb699ef6` and base `d7bde06fd8a413a717445d492649bf76be632f30`; GitHub reported the PR cleanly mergeable before merge.
+
+**Next**
+
+- Continue the approved sequential CI-hardening batch with [#259](https://github.com/the-sarge/cpace/issues/259), which centralizes Go-tool version pins and the Taskfile/autoscaled-fuzz input validator after this journal update lands.
