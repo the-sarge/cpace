@@ -2937,3 +2937,35 @@ Merged PR [#270](https://github.com/the-sarge/cpace/pull/270), closing issue [#2
 
 - After this journal update lands, revalidate the replacement-review deferrals against merged commit `f453c7dea1e239cd7e4f3ad9e0432dac7004e93c`, file only surviving follow-ups, and update the linked OmniFocus task.
 - Existing commit-pinned dependency, fuzz, and security evidence remains historical; refresh affected lanes only for a future exact candidate or stronger release claim.
+
+---
+
+## Mutable identity encoding hardening landed - 2026-08-11 15:11 EDT
+
+**Main:** `0ebb08cca631`
+**Actor:** Codex
+
+**Summary**
+
+PR [#274](https://github.com/the-sarge/cpace/pull/274) removed the mutable package-level `identityEncoding` slice from the Peer-share rejection trust base without changing public API, wire behavior, error identity, error text, validation order, or package-profile policy.
+
+**Completed**
+
+- Merged signed product head `e224720db7fa5917583f02e53738ca2e71e7afd0` as merge commit `0ebb08cca6315785c3d1e2e4757815f7523d52e2`; issue [#254](https://github.com/the-sarge/cpace/issues/254) closed automatically.
+- Centralized both production identity checks behind `isIdentityEncoding`, which compares with `hmac.Equal` against a function-local `[pointSize]byte` value and therefore has no shared mutable backing.
+- Mechanically replaced the former shared test fixture in draft-vector, fuzz-seed, and framing-catalogue coverage with independent zero encodings while preserving every assertion and expected diagnostic.
+
+**Decisions**
+
+- Kept identity detection at the encoded-byte seam and retained `hmac.Equal`; a package-level array was rejected because it would remain mutable, and element-level comparison was outside the approved representation contract.
+- RAS review `20260811T190327-0492d1945ee0c6662e9cc748` required no fixes. Two optional nits about fixture naming and a private-helper comment were rejected as non-behavioral polish outside the approved PR ceiling; no replacement review was needed.
+
+**Validation**
+
+- Focused peer-share rejection, exact sentinel/error, draft-vector, post-multiply identity-defense, and framing-seed tests passed before review and during exact-head recertification.
+- `task check` passed on final product head `e224720db7fa5917583f02e53738ca2e71e7afd0` against base `e34de6f6b817beaa72c2962389409eba70286a98`, covering tests, race tests, formatting/import checks, vet, Staticcheck, ast-grep, evidence checks, and `govulncheck`.
+- Required PR checks `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed on the exact product head; CodeQL, Staticcheck, GolangCI-Lint, and macOS/Windows advisory jobs also passed.
+
+**Next**
+
+- No product follow-up survived review. Because this was security-relevant hardening, pinned dependency, fuzz, Capslock, and security-audit evidence must still be refreshed before making any stronger release-readiness claim.
