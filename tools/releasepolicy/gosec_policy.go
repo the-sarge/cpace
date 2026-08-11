@@ -10,6 +10,7 @@ import (
 
 const (
 	acceptedGosecWorkflowCommand = "task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'"
+	acceptedTaskInstallCommand   = "scripts/go-tool.sh install task"
 )
 
 func checkGosecTaskPolicy(repoRoot string) ([]finding, error) {
@@ -51,9 +52,15 @@ func checkGosecWorkflowTaskRouting(repoRoot, filename, jobName string) ([]findin
 
 	job := mapping(mapping(root, "jobs"), jobName)
 	var gosecSteps []*yaml.Node
-	for _, step := range steps(job) {
+	gosecStepIndex := -1
+	var taskInstallIndices []int
+	for idx, step := range steps(job) {
 		if scalar(mapping(step, "id")) == "gosec" {
 			gosecSteps = append(gosecSteps, step)
+			gosecStepIndex = idx
+		}
+		if scalar(mapping(step, "run")) == acceptedTaskInstallCommand {
+			taskInstallIndices = append(taskInstallIndices, idx)
 		}
 	}
 	if len(gosecSteps) != 1 {
@@ -62,6 +69,9 @@ func checkGosecWorkflowTaskRouting(repoRoot, filename, jobName string) ([]findin
 	}
 	if got := scalar(mapping(gosecSteps[0], "run")); got != acceptedGosecWorkflowCommand {
 		c.fail("jobs."+jobName+".steps.gosec.run", fmt.Sprintf("gosec lane command got %q want %q", got, acceptedGosecWorkflowCommand))
+	}
+	if len(taskInstallIndices) != 1 || taskInstallIndices[0] >= gosecStepIndex {
+		c.fail("jobs."+jobName+".steps", "gosec lane must install task before scanning")
 	}
 	return c.findings, nil
 }
@@ -86,14 +96,29 @@ func checkSASTGosecFailurePolicy(repoRoot string) ([]finding, error) {
 		return nil, err
 	}
 	job := mapping(mapping(root, "jobs"), "sast-gate")
-	for _, step := range steps(job) {
-		if scalar(mapping(step, "name")) != "Report gosec result" {
-			continue
-		}
-		if scalar(mapping(step, "if")) == "steps.gosec.outcome == 'failure'" && scalar(mapping(step, "run")) == "exit 1" {
-			return nil, nil
-		}
-		break
+	if continueOnError := mapping(job, "continue-on-error"); continueOnError != nil && scalar(continueOnError) != "false" {
+		return []finding{{path: path + ":jobs.sast-gate.continue-on-error", msg: "SAST gosec job must remain blocking"}}, nil
 	}
-	return []finding{{path: path + ":jobs.sast-gate.steps", msg: "SAST gosec report step must fail the job when the scan fails"}}, nil
+	scanIndex := -1
+	reportIndex := -1
+	var reportStep *yaml.Node
+	for idx, step := range steps(job) {
+		if scalar(mapping(step, "id")) == "gosec" {
+			scanIndex = idx
+		}
+		if scalar(mapping(step, "name")) == "Report gosec result" {
+			reportIndex = idx
+			reportStep = step
+		}
+	}
+	if reportStep == nil || scalar(mapping(reportStep, "if")) != "steps.gosec.outcome == 'failure'" || scalar(mapping(reportStep, "run")) != "exit 1" {
+		return []finding{{path: path + ":jobs.sast-gate.steps", msg: "SAST gosec report step must fail the job when the scan fails"}}, nil
+	}
+	if continueOnError := mapping(reportStep, "continue-on-error"); continueOnError != nil && scalar(continueOnError) != "false" {
+		return []finding{{path: path + ":jobs.sast-gate.steps.Report gosec result.continue-on-error", msg: "SAST gosec report step must remain blocking"}}, nil
+	}
+	if scanIndex < 0 || reportIndex <= scanIndex {
+		return []finding{{path: path + ":jobs.sast-gate.steps", msg: "SAST gosec report step must follow the scan"}}, nil
+	}
+	return nil, nil
 }
