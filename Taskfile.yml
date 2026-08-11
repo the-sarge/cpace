@@ -65,7 +65,18 @@ tasks:
     desc: Check gofmt formatting
     cmds:
       - |
-        unformatted="$({{.GOFMT}} -l $(git ls-files '*.go'))"
+        set -euo pipefail
+        go_files="$(git ls-files '*.go')"
+        if [ -z "$go_files" ]; then
+          exit 0
+        fi
+        set --
+        while IFS= read -r go_file; do
+          set -- "$@" "$go_file"
+        done <<EOF
+        $go_files
+        EOF
+        unformatted="$({{.GOFMT}} -l "$@")"
         if [ -n "$unformatted" ]; then
           echo "gofmt check failed. Run gofmt on:"
           echo "$unformatted"
@@ -81,7 +92,18 @@ tasks:
           exit 1
         }
       - |
-        unformatted="$({{.GOIMPORTS}} -l $(git ls-files '*.go'))"
+        set -euo pipefail
+        go_files="$(git ls-files '*.go')"
+        if [ -z "$go_files" ]; then
+          exit 0
+        fi
+        set --
+        while IFS= read -r go_file; do
+          set -- "$@" "$go_file"
+        done <<EOF
+        $go_files
+        EOF
+        unformatted="$({{.GOIMPORTS}} -l "$@")"
         if [ -n "$unformatted" ]; then
           echo "goimports check failed. Run goimports on:"
           echo "$unformatted"
@@ -114,6 +136,7 @@ tasks:
     cmds:
       - git diff --check
       - |
+        set -euo pipefail
         md_files="$(git ls-files '*.md')"
         if [ -z "$md_files" ]; then
           exit 0
@@ -122,7 +145,13 @@ tasks:
           echo "{{.CMARK}} not found; install cmark or set CMARK=/path/to/cmark"
           exit 1
         }
-        {{.CMARK}} --validate-utf8 $md_files >/dev/null
+        set --
+        while IFS= read -r md_file; do
+          set -- "$@" "$md_file"
+        done <<EOF
+        $md_files
+        EOF
+        {{.CMARK}} --validate-utf8 "$@" >/dev/null
 
   vuln:
     desc: Run govulncheck
