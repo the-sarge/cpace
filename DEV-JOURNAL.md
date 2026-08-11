@@ -2880,3 +2880,31 @@ Merged PR [#266](https://github.com/the-sarge/cpace/pull/266), closing issue [#2
 
 - Follow-up hardening remains tracked in [#264](https://github.com/the-sarge/cpace/issues/264) for release-policy validation in `check:changed` and [#265](https://github.com/the-sarge/cpace/issues/265) for disabling Go test caching in the evidence-baseline wrapper.
 - Existing commit-pinned dependency, fuzz, and security evidence remains historical; refresh it only when a future change makes a stronger release claim or otherwise triggers the repository's evidence discipline.
+
+---
+
+## Taskfile lint failure propagation landed - 2026-08-11 13:05 EDT
+
+**Main:** `1186502b9bc2`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#268](https://github.com/the-sarge/cpace/pull/268), closing issue [#252](https://github.com/the-sarge/cpace/issues/252) by making the `lint:gofmt`, `lint:goimports`, and `docs:check` Taskfile blocks explicitly fail when file enumeration or validation tools fail. No package behavior, public API, workflow, dependency, or release-evidence surface changed.
+
+**Completed**
+
+- Added `set -euo pipefail` to the three named embedded Bash blocks in line with the repository's code conventions.
+- Replaced unquoted file-list word splitting with quoted positional arguments while preserving the existing empty-file-set behavior, configurable tools, missing-tool diagnostics, and unformatted-file reporting.
+- Initial RAS review `20260811T160723-53aa4372c2ef0e759f023b0c` completed with its two-reviewer quorum and no accepted `fix-now` or deferred findings. The run recorded one malformed reviewer response and one reviewer timeout before synthesizing from quorum.
+- Merge commit `1186502b9bc23f6e57dab9971e030bd0d8740f8c` preserves certified head `718da5521cbae49e8d6feeb97f55f3fedc596521` on `main`.
+
+**Validation**
+
+- Injected failing `GOFMT`, `GOIMPORTS`, and `CMARK` commands each failed their lane; an isolated failing `git ls-files` call also terminated the strict documentation block.
+- Final exact-head `task lint`, `task docs:check`, `git diff --check`, and full `task check` passed with an unchanged head/base and clean worktree.
+- PR-associated `Check`, `DCO`, `Dependency Gate`, `SAST Gate`, and advisory GolangCI-Lint runs passed on exact head `718da5521cbae49e8d6feeb97f55f3fedc596521` against base `7736c7af43c9ca28ace690a75cc305705a09cec1`; GitHub reported the PR cleanly mergeable before merge.
+
+**Next**
+
+- No review follow-up survived independent disposition. Issue #252 is closed; remaining audit work stays on its existing GitHub and OmniFocus trackers.
