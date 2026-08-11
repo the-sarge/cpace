@@ -51,7 +51,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Set up Go
-        if: steps.changes.outputs.docs_only != 'true' || steps.changes.outputs.evidence_changed == 'true'
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
@@ -92,6 +91,15 @@ jobs:
         run: |
           scripts/test-release-helpers.sh
           scripts/test-ci-classifier.sh
+
+      - name: Run release policy checker
+        run: scripts/check-release-policy.sh
+
+      - name: Run release policy checker lint
+        working-directory: tools/releasepolicy
+        run: |
+          go vet ./...
+          go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...
 
       - name: Run evidence checker lint
         if: steps.changes.outputs.docs_only != 'true'

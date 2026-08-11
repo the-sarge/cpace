@@ -10,13 +10,13 @@ Local validation uses `Taskfile.yml` as the command facade:
 
 - `task docs:check` validates tracked Markdown and whitespace.
 - `task quick` runs Go formatting checks, docs validation, CI change-classifier smoke tests, and `go test ./...`.
-- `task check` runs docs validation, release-helper and CI change-classifier smoke tests, evidence baseline validation, nested evidence-checker linting, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for CycloneDX SBOM JSON validation.
+- `task check` runs docs validation, release-helper and CI change-classifier smoke tests, release policy validation, nested release-policy and evidence-checker linting, evidence baseline validation, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for CycloneDX SBOM JSON validation.
 - `task lint:golangci` runs a pinned, curated advisory `golangci-lint` analyzer set; it is not part of the required local gate.
 - `task fuzz` runs every target from the fuzz-target registry (`.github/fuzz-targets.json`, with target function, package, and OSS-Fuzz-compatible binary name) using the caller-provided `FUZZTIME`, `PARALLEL`, `FUZZ_RACE`, `GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` settings; `go test ./...` fails if the registry drifts from the defined fuzz functions or OSS-Fuzz-compatible build lines.
 
 Repository CI runs on these events:
 
-- Pull requests to `main`: required `Check` runs for every PR. Code changes set up Go, run `go test ./...`, and run the evidence baseline validator. Docs-only PRs run whitespace and Markdown validation without Go unless they touch `docs/evidence-baseline.md`, `docs/evidence-baseline-summary-docs.txt`, `docs/evidence/**`, or any summary doc listed in `docs/evidence-baseline-summary-docs.txt`, in which case the job also sets up Go and runs the evidence baseline validator. The DCO workflow checks every PR commit for a `Signed-off-by` trailer.
+- Pull requests to `main`: required `Check` runs for every PR. Every run sets up Go, runs the release policy checker and its module tests, and runs `go vet` and Staticcheck for `tools/releasepolicy`. Code changes also run `go test ./...` and the evidence baseline validator. Docs-only PRs run whitespace and Markdown validation without root-module tests unless they touch `docs/evidence-baseline.md`, `docs/evidence-baseline-summary-docs.txt`, `docs/evidence/**`, or any summary doc listed in `docs/evidence-baseline-summary-docs.txt`, in which case the job also runs the evidence baseline validator. The DCO workflow checks every PR commit for a `Signed-off-by` trailer.
   `Dependency Gate` runs blocking SCA tooling, and `SAST Gate` runs blocking
   `gosec`.
 - Pull requests that touch Go code or Go module files: CodeQL and Staticcheck
@@ -41,7 +41,7 @@ docs.
 
 The intended required PR gates are:
 
-- `Check` in `.github/workflows/ci.yml`. It runs on GitHub-hosted Ubuntu runners with read-only repository permissions. Code changes set up Go, run `go test ./...`, and run the evidence baseline validator. Docs-only PRs run whitespace and Markdown validation without Go unless they touch `docs/evidence-baseline.md`, `docs/evidence-baseline-summary-docs.txt`, `docs/evidence/**`, or any summary doc listed in `docs/evidence-baseline-summary-docs.txt`, in which case the job also sets up Go and runs the evidence baseline validator.
+- `Check` in `.github/workflows/ci.yml`. It runs on GitHub-hosted Ubuntu runners with read-only repository permissions. Every run sets up Go, runs the release policy checker and its module tests, and runs `go vet` and Staticcheck for `tools/releasepolicy`. Code changes also run `go test ./...` and the evidence baseline validator. Docs-only PRs run whitespace and Markdown validation without root-module tests unless they touch `docs/evidence-baseline.md`, `docs/evidence-baseline-summary-docs.txt`, `docs/evidence/**`, or any summary doc listed in `docs/evidence-baseline-summary-docs.txt`, in which case the job also runs the evidence baseline validator.
 - `DCO` in `.github/workflows/dco.yml`. It checks every PR commit for a
   `Signed-off-by` trailer.
 - `Dependency Gate` in `.github/workflows/dependency-gate.yml`. It runs GitHub
