@@ -28,4 +28,4 @@ These conventions record the repository's established implementation dialect so 
 Give each Go module under `tools/` a package comment that names its module using the exact terminology from `CONTEXT.md` and states its validation-only boundary.
 
 - `tools/releasepolicy` names the **Release policy checker** and explains that it validates accepted release-pipeline policy without generating workflows or querying live GitHub state.
-- `tools/evidencebaseline` names the **Evidence baseline** and explains that it validates committed evidence references and freshness metadata without refreshing evidence or making a production-readiness claim; maintaining its derived summary-doc manifest remains within that boundary.
+- `tools/evidencebaseline` is the checker for the **Evidence baseline** documentation module; its package comment names that module and explains that the tool validates committed evidence references and freshness metadata without refreshing evidence or making a production-readiness claim, with derived summary-doc manifest maintenance inside that boundary.
