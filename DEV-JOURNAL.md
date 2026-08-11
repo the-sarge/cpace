@@ -2908,3 +2908,32 @@ Merged PR [#268](https://github.com/the-sarge/cpace/pull/268), closing issue [#2
 **Next**
 
 - No review follow-up survived independent disposition. Issue #252 is closed; remaining audit work stays on its existing GitHub and OmniFocus trackers.
+
+---
+
+## Gosec policy routing landed - 2026-08-11 14:06 EDT
+
+**Main:** `f453c7dea1e2`
+**Actor:** Codex
+
+**Summary**
+
+Merged PR [#270](https://github.com/the-sarge/cpace/pull/270), closing issue [#253](https://github.com/the-sarge/cpace/issues/253) by making `task gosec` the single scan-policy owner for the blocking PR gate, weekly advisory lane, and release gate. No package behavior, public API, dependency, tool version, or stronger release-readiness claim changed.
+
+**Completed**
+
+- Kept package and test code in scope through the Taskfile-owned `-tests` policy while routing the SAST Gate through the same target already used by the advisory and release workflows.
+- Extended the Release policy checker over the finite Taskfile and workflow domain to enforce the shared route, pinned Task prerequisites, PR failure propagation and ordering, and weekly job-level non-blocking behavior without duplicating the Taskfile's owner-local scan-scope choice.
+- Initial RAS review `20260811T172859-ae05605f1af600dd7e20b4a3` produced three accepted findings covering non-blocking bypasses, report-before-scan ordering, and missing Task prerequisites. Exact-head verification at `c8ee7b38796d8650bca04e92187bc544b133fe9c` resolved all three with no new concerns.
+- Replacement review `20260811T175507-2fee8e36e820dbdd1738abd2` identified conditional-skip and Task-level failure-suppression guards as later non-critical verification-aid strengthening opportunities. Both were deferred under the approved review-round budget because the checked-in Taskfile and workflows are safe and satisfy issue #253.
+- Merge commit `f453c7dea1e239cd7e4f3ad9e0432dac7004e93c` preserves certified head `c8ee7b38796d8650bca04e92187bc544b133fe9c` on `main`.
+
+**Validation**
+
+- Final exact-head `task check`, Actionlint, and `task gosec GOSEC='scripts/go-tool.sh run gosec'` passed against base `1468f96ad8184d4b90131cddcd8aed0946e97f0c`; the centralized test-inclusive scan covered 38 files with zero findings.
+- Required hosted `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed on exact head `c8ee7b38796d8650bca04e92187bc544b133fe9c`; Actionlint, CodeQL, Staticcheck, GolangCI-Lint, and both cross-platform smoke jobs also completed successfully.
+
+**Next**
+
+- After this journal update lands, revalidate the replacement-review deferrals against merged commit `f453c7dea1e239cd7e4f3ad9e0432dac7004e93c`, file only surviving follow-ups, and update the linked OmniFocus task.
+- Existing commit-pinned dependency, fuzz, and security evidence remains historical; refresh affected lanes only for a future exact candidate or stronger release claim.
