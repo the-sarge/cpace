@@ -62,6 +62,10 @@ scan_direct_go_module_selectors() {
   grep -En '[[:alnum:]_.-]+\.[[:alpha:]][[:alnum:]-]*/[^[:space:]]+@[^[:space:]]+' "$@"
 }
 
+tracked_workflow_files() {
+  git -C "$1" ls-files -- '.github/workflows/*.yml' '.github/workflows/*.yaml'
+}
+
 scan_direct_go_tool_commands() {
   found=1
   for path in "$@"; do
@@ -116,11 +120,26 @@ if ! scan_direct_go_tool_commands "$tmpdir/workflow.yaml" >/dev/null; then
   exit 1
 fi
 
+workflow_fixture_repo="$tmpdir/workflow-repo"
+mkdir -p "$workflow_fixture_repo/.github/workflows"
+git -C "$workflow_fixture_repo" init -q
+printf '%s\n' 'run: go install example.com/tool@v1.2.3' >"$workflow_fixture_repo/.github/workflows/direct.yaml"
+git -C "$workflow_fixture_repo" add .github/workflows/direct.yaml
+fixture_workflow_files=$(tracked_workflow_files "$workflow_fixture_repo")
+if [ "$fixture_workflow_files" != ".github/workflows/direct.yaml" ]; then
+  echo "tracked workflow discovery missed .yaml fixture" >&2
+  exit 1
+fi
+if ! scan_direct_go_tool_commands "$workflow_fixture_repo/$fixture_workflow_files" >/dev/null; then
+  echo "tracked .yaml workflow escaped direct Go tool scanning" >&2
+  exit 1
+fi
+
 set -- \
   "$repo_root/Taskfile.yml" \
   "$repo_root/docs/release-checklist.md" \
   "$repo_root"/tools/releasepolicy/*.go
-workflow_files=$(git -C "$repo_root" ls-files -- '.github/workflows/*.yml' '.github/workflows/*.yaml')
+workflow_files=$(tracked_workflow_files "$repo_root")
 [ -n "$workflow_files" ] || {
   echo "no tracked GitHub workflows found" >&2
   exit 1
