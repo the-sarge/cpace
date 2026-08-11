@@ -64,6 +64,10 @@ task check
 For release-oriented changes, also follow `docs/ci-policy.md` and record
 evidence in the relevant docs.
 
+## Code Conventions
+
+Follow `docs/code-conventions.md` for repository-wide Go naming, test diagnostics and helper roles, panic prefixes, shell strictness, and validation-tool package documentation.
+
 ## Tests For Major Changes
 
 Major changes should add or update automated tests for the affected behavior.
