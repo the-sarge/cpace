@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/actionlint.yaml'
       - '.github/workflows/**'
+      - 'scripts/go-tool-versions.sh'
+      - 'scripts/go-tool.sh'
   workflow_dispatch:
 
 permissions:
@@ -41,7 +43,7 @@ jobs:
           go env GOTOOLCHAIN GOPROXY GOSUMDB
 
       - name: Install actionlint
-        run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+        run: scripts/go-tool.sh install actionlint
 
       - name: Run actionlint
         run: actionlint

@@ -91,6 +91,10 @@ jobs:
         run: |
           scripts/test-release-helpers.sh
           scripts/test-ci-classifier.sh
+          scripts/test-fuzz-inputs.sh
+
+      - name: Validate Go tool catalogue and routing
+        run: scripts/test-go-tools.sh
 
       - name: Run release policy checker
         run: scripts/check-release-policy.sh
@@ -99,14 +103,14 @@ jobs:
         working-directory: tools/releasepolicy
         run: |
           go vet ./...
-          go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...
+          ../../scripts/go-tool.sh run staticcheck ./...
 
       - name: Run evidence checker lint
         if: steps.changes.outputs.docs_only != 'true'
         working-directory: tools/evidencebaseline
         run: |
           go vet ./...
-          go run honnef.co/go/tools/cmd/staticcheck@v0.7.0 ./...
+          ../../scripts/go-tool.sh run staticcheck ./...
 
       - name: Run evidence baseline checker
         if: steps.changes.outputs.docs_only != 'true' || steps.changes.outputs.evidence_changed == 'true'

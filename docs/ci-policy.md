@@ -9,10 +9,12 @@ hosted runners.
 Local validation uses `Taskfile.yml` as the command facade:
 
 - `task docs:check` validates tracked Markdown and whitespace.
-- `task quick` runs Go formatting checks, docs validation, CI change-classifier smoke tests, and `go test ./...`.
-- `task check` runs docs validation, release-helper and CI change-classifier smoke tests, release policy validation, nested release-policy and evidence-checker linting, evidence baseline validation, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for CycloneDX SBOM JSON validation.
+- `task quick` runs Go formatting checks, docs validation, CI change-classifier, Go-tool catalogue, and fuzz-input validator smoke tests, and `go test ./...`; it requires `jq` for fuzz-registry validation.
+- `task check` runs docs validation, release-helper, CI change-classifier, Go-tool catalogue, and fuzz-input validator smoke tests, release policy validation, nested release-policy and evidence-checker linting, evidence baseline validation, tests, race tests, formatting/import checks, `go vet`, Staticcheck, ast-grep rules, and `govulncheck`; it requires `jq` for fuzz-registry and CycloneDX SBOM JSON validation.
 - `task lint:golangci` runs a pinned, curated advisory `golangci-lint` analyzer set; it is not part of the required local gate.
-- `task fuzz` runs every target from the fuzz-target registry (`.github/fuzz-targets.json`, with target function, package, and OSS-Fuzz-compatible binary name) using the caller-provided `FUZZTIME`, `PARALLEL`, `FUZZ_RACE`, `GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` settings; `go test ./...` fails if the registry drifts from the defined fuzz functions or OSS-Fuzz-compatible build lines.
+- `task fuzz` runs every target from the fuzz-target registry (`.github/fuzz-targets.json`, with target function, package, and OSS-Fuzz-compatible binary name) using the caller-provided `FUZZTIME`, `PARALLEL`, `FUZZ_RACE`, `GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` settings. Both this local task and Autoscaled Fuzz enforce those settings through `scripts/validate-fuzz-inputs.sh`; only the workflow supplies `FUZZ_MAX_WALL_MINUTES=240`, so maintainer-controlled local long fuzzing remains available. `go test ./...` fails if the registry drifts from the defined fuzz functions or OSS-Fuzz-compatible build lines.
+
+Pinned Go CLI modules used by tracked workflows and the Taskfile Staticcheck and golangci-lint defaults are catalogued in `scripts/go-tool-versions.sh` and invoked through `scripts/go-tool.sh`. Updating one catalogue entry changes the version used by both local Taskfile defaults and CI; in particular, `task lint:go`, `task release:lint`, `task evidence:lint`, and the CI nested-module lint steps use the same Staticcheck pin.
 
 Repository CI runs on these events:
 
@@ -77,15 +79,7 @@ The hosted scheduled fuzz lane is a short 5-minute-per-target regression run.
 It can catch crashes and upload new failure corpus files, but it is not
 long-fuzz release evidence by itself.
 
-The autoscaled fuzz lane is a longer 10-minute-per-target background run.
-Scheduled runs default to `FUZZ_RACE=0`, `PARALLEL=1`, `GOMAXPROCS=1`, and
-`FUZZ_TEST_PARALLEL=1` so the self-hosted Mac remains responsive while fuzzing
-runs. Race coverage remains owned by `task check` and can be requested on this
-lane only by trusted main-branch manual dispatch. The preflight job rejects
-manual inputs unless `FUZZTIME` matches `[0-9]+[smh]`, `PARALLEL`,
-`GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` are positive integers, `FUZZ_RACE` is
-`0` or `1`, and `ceil(targets/PARALLEL) * FUZZTIME` stays below the 240-minute
-fuzz job timeout.
+The autoscaled fuzz lane is a longer 10-minute-per-target background run. Scheduled runs default to `FUZZ_RACE=0`, `PARALLEL=1`, `GOMAXPROCS=1`, and `FUZZ_TEST_PARALLEL=1` so the self-hosted Mac remains responsive while fuzzing runs. Race coverage remains owned by `task check` and can be requested on this lane only by trusted main-branch manual dispatch. The shared validator rejects inputs unless `FUZZTIME` matches `[0-9]+[smh]`, `PARALLEL`, `GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` are positive integers, `FUZZ_RACE` is `0` or `1`, the fuzz-target registry is a nonempty JSON array, and, when the workflow bound is supplied, `ceil(targets/PARALLEL) * FUZZTIME` stays below the 240-minute fuzz job timeout.
 
 ## Long Fuzzing And Release Evidence
 

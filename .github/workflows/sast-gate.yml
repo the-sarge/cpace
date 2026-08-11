@@ -41,7 +41,7 @@ jobs:
           go env GOTOOLCHAIN GOPROXY GOSUMDB
 
       - name: Install gosec
-        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.26.1
+        run: scripts/go-tool.sh install gosec
 
       - name: Run gosec
         id: gosec

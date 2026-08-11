@@ -43,6 +43,7 @@ env:
   FUZZ_RACE: ${{ inputs.fuzz_race || '0' }}
   GOMAXPROCS: ${{ inputs.gomaxprocs || '1' }}
   FUZZ_TEST_PARALLEL: ${{ inputs.fuzz_test_parallel || '1' }}
+  FUZZ_MAX_WALL_MINUTES: "240"
 
 jobs:
   validate_inputs:
@@ -56,122 +57,7 @@ jobs:
           persist-credentials: false
 
       - name: Validate dispatch inputs
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          fail() {
-            echo "::error::$1"
-            exit 1
-          }
-
-          fuzztime="${FUZZTIME}"
-          parallel="${PARALLEL}"
-          fuzz_race="${FUZZ_RACE}"
-          gomaxprocs="${GOMAXPROCS}"
-          fuzz_test_parallel="${FUZZ_TEST_PARALLEL}"
-
-          case "$fuzztime" in
-            *[smh])
-              fuzztime_value="${fuzztime%?}"
-              fuzztime_unit="${fuzztime: -1}"
-              ;;
-            *)
-              fail "FUZZTIME must match ^[0-9]+[smh]$ (got: '$fuzztime')"
-              ;;
-          esac
-          case "$fuzztime_value" in
-            ''|*[!0-9]*)
-              fail "FUZZTIME must match ^[0-9]+[smh]$ (got: '$fuzztime')"
-              ;;
-          esac
-          case "$fuzztime_value" in
-            *[1-9]*) ;;
-            *)
-              fail "FUZZTIME must be positive (got: '$fuzztime')"
-              ;;
-          esac
-          if [ "${#fuzztime_value}" -gt 6 ]; then
-            fail "FUZZTIME value is too large (got: '$fuzztime')"
-          fi
-
-          case "$parallel" in
-            ''|*[!0-9]*)
-              fail "PARALLEL must match ^[0-9]+$ (got: '$parallel')"
-              ;;
-          esac
-          case "$parallel" in
-            *[1-9]*) ;;
-            *)
-              fail "PARALLEL must be positive (got: '$parallel')"
-              ;;
-          esac
-          if [ "${#parallel}" -gt 6 ]; then
-            fail "PARALLEL value is too large (got: '$parallel')"
-          fi
-
-          case "$fuzz_race" in
-            0|1) ;;
-            *)
-              fail "FUZZ_RACE must match ^[01]$ (got: '$fuzz_race')"
-              ;;
-          esac
-          case "$gomaxprocs" in
-            ''|*[!0-9]*)
-              fail "GOMAXPROCS must match ^[0-9]+$ (got: '$gomaxprocs')"
-              ;;
-          esac
-          case "$gomaxprocs" in
-            *[1-9]*) ;;
-            *)
-              fail "GOMAXPROCS must be positive (got: '$gomaxprocs')"
-              ;;
-          esac
-          if [ "${#gomaxprocs}" -gt 6 ]; then
-            fail "GOMAXPROCS value is too large (got: '$gomaxprocs')"
-          fi
-          case "$fuzz_test_parallel" in
-            ''|*[!0-9]*)
-              fail "FUZZ_TEST_PARALLEL must match ^[0-9]+$ (got: '$fuzz_test_parallel')"
-              ;;
-          esac
-          case "$fuzz_test_parallel" in
-            *[1-9]*) ;;
-            *)
-              fail "FUZZ_TEST_PARALLEL must be positive (got: '$fuzz_test_parallel')"
-              ;;
-          esac
-          if [ "${#fuzz_test_parallel}" -gt 6 ]; then
-            fail "FUZZ_TEST_PARALLEL value is too large (got: '$fuzz_test_parallel')"
-          fi
-
-          fuzztime_number=$((10#$fuzztime_value))
-          parallel_number=$((10#$parallel))
-          case "$fuzztime_unit" in
-            s) fuzztime_seconds=$fuzztime_number ;;
-            m) fuzztime_seconds=$((fuzztime_number * 60)) ;;
-            h) fuzztime_seconds=$((fuzztime_number * 3600)) ;;
-          esac
-
-          target_count="$(jq -r 'length' .github/fuzz-targets.json)"
-          case "$target_count" in
-            ''|*[!0-9]*)
-              fail ".github/fuzz-targets.json length is not numeric"
-              ;;
-          esac
-          if [ "$target_count" -lt 1 ]; then
-            fail ".github/fuzz-targets.json contains no targets"
-          fi
-
-          waves=$(((target_count + parallel_number - 1) / parallel_number))
-          estimated_seconds=$((waves * fuzztime_seconds))
-          timeout_seconds=$((240 * 60))
-          if [ "$estimated_seconds" -ge "$timeout_seconds" ]; then
-            estimated_minutes=$(((estimated_seconds + 59) / 60))
-            fail "ceil(targets/PARALLEL) * FUZZTIME must stay under 240 minutes (got about ${estimated_minutes}m)"
-          fi
-
-          echo "Validated FUZZTIME=${fuzztime}, PARALLEL=${parallel}, FUZZ_RACE=${fuzz_race}, GOMAXPROCS=${gomaxprocs}, FUZZ_TEST_PARALLEL=${fuzz_test_parallel}"
+        run: scripts/validate-fuzz-inputs.sh
 
   fuzz:
     name: Autoscaled fuzz (${{ matrix.arch }})
@@ -236,7 +122,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          GOBIN="$(go env GOPATH)/bin" go install github.com/go-task/task/v3/cmd/task@v3.50.0
+          GOBIN="$(go env GOPATH)/bin" scripts/go-tool.sh install task
 
       - name: Report fuzz plan
         shell: bash

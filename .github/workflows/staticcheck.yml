@@ -8,6 +8,8 @@ on:
       - 'go.mod'
       - 'go.sum'
       - '.github/workflows/staticcheck.yml'
+      - 'scripts/go-tool-versions.sh'
+      - 'scripts/go-tool.sh'
   schedule:
     - cron: '0 9 * * 3'
   workflow_dispatch:
@@ -46,7 +48,7 @@ jobs:
           go env GOTOOLCHAIN GOPROXY GOSUMDB
 
       - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
+        run: scripts/go-tool.sh install staticcheck
 
       - name: Run staticcheck
         run: staticcheck ./...
