@@ -58,9 +58,25 @@ if [ "$pin_count" -ne 6 ]; then
   exit 1
 fi
 
-direct_go_tool_pattern='(^|[[:space:]])go[[:space:]]+(install|run)([[:space:]]|$)'
 scan_direct_go_tool_commands() {
-  grep -En "$direct_go_tool_pattern" "$@"
+  awk '
+    {
+      start_line = FNR
+      command = $0
+      while (command ~ /\\[[:space:]]*$/) {
+        sub(/\\[[:space:]]*$/, "", command)
+        if ((getline continuation) <= 0) {
+          break
+        }
+        command = command " " continuation
+      }
+      if (command ~ /(^|[^[:alnum:]_])go[[:space:]]+(install|run)[[:space:]]+[^#]*@[^[:space:]#]+/) {
+        printf "%s:%d:%s\n", FILENAME, start_line, command
+        found = 1
+      }
+    }
+    END { exit(found ? 0 : 1) }
+  ' "$@"
 }
 
 fixture_number=0
@@ -81,6 +97,15 @@ if ! scan_direct_go_tool_commands "$tmpdir/direct-command-tab" >/dev/null; then
   echo "direct Go tool guard missed tab-separated command" >&2
   exit 1
 fi
+printf 'run: "go install example.com/tool@latest"\n' >"$tmpdir/direct-command-yaml"
+printf 'runLines: []string{`go run example.com/tool@main`},\n' >"$tmpdir/direct-command-policy"
+printf 'go \\\n  install example.com/tool@deadbeef\n' >"$tmpdir/direct-command-continuation"
+for fixture in "$tmpdir/direct-command-yaml" "$tmpdir/direct-command-policy" "$tmpdir/direct-command-continuation"; do
+  if ! scan_direct_go_tool_commands "$fixture" >/dev/null; then
+    echo "direct Go tool guard missed formatted fixture: $fixture" >&2
+    exit 1
+  fi
+done
 
 if scan_direct_go_tool_commands \
   "$repo_root/Taskfile.yml" \
