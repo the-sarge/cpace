@@ -20,7 +20,7 @@ cpace_go_tool_resolve() {
       ;;
     staticcheck)
       cpace_go_tool_module=honnef.co/go/tools/cmd/staticcheck
-      cpace_go_tool_version=v0.7.0
+      cpace_go_tool_version=v0.8.0
       ;;
     task)
       cpace_go_tool_module=github.com/go-task/task/v3/cmd/task
