@@ -7,3 +7,4 @@ dist/
 bin/
 /.ras/data/
 /.ras/worktrees/
+*.sarif

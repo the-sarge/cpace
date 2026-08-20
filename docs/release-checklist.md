@@ -37,7 +37,7 @@ For release-oriented changes, also run:
 
 ```sh
 go test -race ./...
-scripts/go-tool.sh run staticcheck ./...
+task lint:golangci
 scripts/go-tool.sh run govulncheck -test -show verbose ./...
 scripts/go-tool.sh run gosec -tests ./...
 ```
@@ -142,7 +142,7 @@ Before tagging, confirm:
 
 - required `Check` is passing on `main`;
 - CodeQL has no unexpected open alerts;
-- advisory gosec and vulnerability-scan lanes have no unresolved findings;
+- the `SAST Gate` golangci-lint lane and the vulnerability-scan lane have no unresolved findings;
 - Scorecard results are current enough for the release posture being claimed;
 - branch and tag protections are active.
 

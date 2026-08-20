@@ -169,10 +169,14 @@ grep -Fq '"{{.GO_TOOL}}" run golangci-lint' "$repo_root/Taskfile.yml"
 grep -Fq 'scripts/go-tool.sh run govulncheck' "$repo_root/docs/release-checklist.md"
 grep -Fq 'scripts/go-tool.sh run gosec' "$repo_root/docs/release-checklist.md"
 
-for workflow in actionlint.yml staticcheck.yml golangci-lint.yml; do
+for workflow in actionlint.yml; do
   workflow_path="$repo_root/.github/workflows/$workflow"
   grep -Fq -- "- 'scripts/go-tool-versions.sh'" "$workflow_path"
   grep -Fq -- "- 'scripts/go-tool.sh'" "$workflow_path"
 done
+
+# The SAST gate has no paths filter, so it cannot be checked by the loop above.
+# Assert instead that it routes golangci-lint through the pinned tool helper.
+grep -Fq -- "scripts/go-tool.sh install golangci-lint" "$repo_root/.github/workflows/sast-gate.yml"
 
 echo "Go tool helper tests passed"

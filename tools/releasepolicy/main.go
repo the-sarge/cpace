@@ -55,26 +55,21 @@ func checkRepo(repoRoot string) ([]finding, error) {
 		return nil, err
 	}
 	findings = append(findings, gosecFindings...)
-	gosecFindings, err = checkGosecWorkflowTaskRouting(repoRoot, "sast-gate.yml", "sast-gate")
+	golangciFindings, err := checkGolangciTaskPolicy(repoRoot)
 	if err != nil {
 		return nil, err
 	}
-	findings = append(findings, gosecFindings...)
-	gosecFindings, err = checkGosecWorkflowTaskRouting(repoRoot, "gosec.yml", "gosec")
+	findings = append(findings, golangciFindings...)
+	sastFindings, err := checkScanWorkflowTaskRouting(repoRoot, "sast-gate.yml", "sast-gate", "sast", acceptedSASTWorkflowCommand)
 	if err != nil {
 		return nil, err
 	}
-	findings = append(findings, gosecFindings...)
-	gosecFindings, err = checkAdvisoryGosecFailurePolicy(repoRoot)
+	findings = append(findings, sastFindings...)
+	sastFindings, err = checkSASTFailurePolicy(repoRoot)
 	if err != nil {
 		return nil, err
 	}
-	findings = append(findings, gosecFindings...)
-	gosecFindings, err = checkSASTGosecFailurePolicy(repoRoot)
-	if err != nil {
-		return nil, err
-	}
-	findings = append(findings, gosecFindings...)
+	findings = append(findings, sastFindings...)
 	findings = append(findings, checkAllowedSigners(repoRoot)...)
 	findings = append(findings, checkRequiredScripts(repoRoot)...)
 	findings = append(findings, checkRequiredFiles(repoRoot)...)

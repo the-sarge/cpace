@@ -20,10 +20,7 @@ Additional automated signal:
 
 - CodeQL runs on Go pull requests, pushes to `main`, schedule, and manual
   dispatch;
-- Staticcheck Advisory runs on Go pull requests, schedule, and manual dispatch;
 - Vulnerability Scan runs `govulncheck` on schedule and manual dispatch;
-- Gosec Advisory runs on schedule and manual dispatch and uploads SARIF to Code
-  Scanning;
 - Release Validation verifies signed annotated tag refs, runs tests, race tests, `govulncheck`, and `gosec`, generates and validates the CycloneDX SBOM, emits the SBOM attestation bundle, and publishes the GitHub Release only for `v*` tag pushes; manual dispatch is a non-publishing tag rehearsal, and branch dispatch fails closed with an explanatory job.
 
 The `Dependency Gate` and `SAST Gate` workflows intentionally do not use
@@ -59,9 +56,10 @@ vulnerabilities found by `govulncheck`.
 ## SAST Threshold
 
 SAST covers CodeQL, `gosec`, ast-grep security rules, and manual review of
-security-sensitive code paths. Staticcheck is treated as quality and
-maintainability signal unless a maintainer determines that a finding affects
-security behavior.
+security-sensitive code paths. `gosec` runs inside the curated `golangci-lint`
+analyzer set rather than as a standalone lane. Staticcheck, which runs in the
+same `golangci-lint` invocation, is treated as quality and maintainability
+signal unless a maintainer determines that a finding affects security behavior.
 
 The following findings are violations:
 
@@ -80,10 +78,15 @@ must be fixed before release unless they are documented as false positives or
 non-exploitable. Suppressions should be narrow, reviewable, and linked to the
 evidence explaining why they are safe.
 
-The required `SAST Gate` status check runs `gosec -tests ./...` on pull
-requests and blocks merge when gosec reports a security weakness. Same-repo
-runs also upload SARIF to Code Scanning for triage; fork PRs skip SARIF upload
-to avoid granting write permissions to untrusted code.
+The required `SAST Gate` status check runs the curated `golangci-lint` analyzer
+set on pull requests and blocks merge when any enabled analyzer, `gosec`
+included, reports a finding. The canonical config scans test code as well as
+package code; only the `G301`, `G302`, and `G306` file and directory permission
+rules are dropped in `_test.go` files, because those findings describe test
+fixtures rather than shipped behavior. Same-repo runs also upload the
+`golangci-lint` SARIF to Code Scanning under the `sast-gate` category for
+triage; fork PRs skip SARIF upload to avoid granting write permissions to
+untrusted code.
 
 ## Pre-Release Policy
 

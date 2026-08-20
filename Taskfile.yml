@@ -20,6 +20,7 @@ vars:
   AST_GREP: '{{.AST_GREP | default "ast-grep"}}'
   CMARK: '{{.CMARK | default "cmark"}}'
   GOSEC: '{{.GOSEC | default "gosec"}}'
+  GOLANGCI_ARGS: '{{.GOLANGCI_ARGS | default ""}}'
   GOFMT: '{{.GOFMT | default "gofmt"}}'
   GOIMPORTS: '{{.GOIMPORTS | default "goimports"}}'
   GO_TOOL: '{{.GO_TOOL | default (printf "%s/scripts/go-tool.sh" .ROOT_DIR)}}'
@@ -57,10 +58,9 @@ tasks:
   lint:
     desc: Run formatting, Go, and structural linters
     cmds:
-      - task: lint:config-check
       - task: lint:gofmt
       - task: lint:goimports
-      - task: lint:go
+      - task: lint:golangci
       - task: lint-ast-grep
 
   lint:config-check:
@@ -124,12 +124,6 @@ tasks:
           exit 1
         fi
 
-  lint:go:
-    desc: Run Go vet and staticcheck
-    cmds:
-      - go vet ./...
-      - '{{if .STATICCHECK}}{{.STATICCHECK}} ./...{{else}}"{{.GO_TOOL}}" run staticcheck ./...{{end}}'
-
   lint-ast-grep:
     desc: Run ast-grep structural linting rules
     cmds:
@@ -141,10 +135,11 @@ tasks:
       - "{{.AST_GREP}} scan --error"
 
   lint:golangci:
-    desc: Run curated golangci-lint advisory analyzers
+    desc: Run the curated golangci-lint analyzer set, including gosec and staticcheck
     cmds:
       - task: lint:config-check
-      - '{{if .GOLANGCI_LINT}}{{.GOLANGCI_LINT}} run{{else}}"{{.GO_TOOL}}" run golangci-lint run{{end}}'
+      # Policy: this command owns scan-scope and output flags for every golangci-lint lane.
+      - '{{if .GOLANGCI_LINT}}{{.GOLANGCI_LINT}} run {{.GOLANGCI_ARGS}}{{else}}"{{.GO_TOOL}}" run golangci-lint run {{.GOLANGCI_ARGS}}{{end}}'
 
   docs:check:
     desc: Validate tracked Markdown and whitespace
