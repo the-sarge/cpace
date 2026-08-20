@@ -28,7 +28,7 @@ func TestCurrentRepositoryReleasePolicy(t *testing.T) {
 func TestReleasePolicyRejectsMultipleGosecTaskCommands(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
-	taskfile := replaceOnce(t, acceptedGosecTaskfile, `      - "{{.GOSEC}} -tests ./..."`, "      - \"{{.GOSEC}} -tests ./...\"\n      - echo unexpected")
+	taskfile := replaceOnce(t, acceptedScanTaskfile, `      - "{{.GOSEC}} -tests ./..."`, "      - \"{{.GOSEC}} -tests ./...\"\n      - echo unexpected")
 	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
 
 	findings, err := checkRepo(repoRoot)
@@ -41,7 +41,7 @@ func TestReleasePolicyRejectsMultipleGosecTaskCommands(t *testing.T) {
 func TestReleasePolicyAllowsGosecPolicyChangeAtTaskOwner(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
-	taskfile := replaceOnce(t, acceptedGosecTaskfile, `"{{.GOSEC}} -tests ./..."`, `"{{.GOSEC}} ./..."`)
+	taskfile := replaceOnce(t, acceptedScanTaskfile, `"{{.GOSEC}} -tests ./..."`, `"{{.GOSEC}} ./..."`)
 	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
 
 	findings, err := checkRepo(repoRoot)
@@ -53,137 +53,142 @@ func TestReleasePolicyAllowsGosecPolicyChangeAtTaskOwner(t *testing.T) {
 	}
 }
 
-func TestReleasePolicyRejectsDirectSASTGosecInvocation(t *testing.T) {
+func TestReleasePolicyAllowsGolangciArgsChangeAtTaskOwner(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
-	workflow := replaceOnce(t, acceptedSASTGosecWorkflow, acceptedGosecWorkflowCommand, "gosec -tests -fmt sarif -out gosec.sarif ./...")
+	taskfile := replaceOnce(t, acceptedScanTaskfile,
+		`  GOLANGCI_ARGS: '{{.GOLANGCI_ARGS | default ""}}'`,
+		`  GOLANGCI_ARGS: '{{.GOLANGCI_ARGS | default "--timeout 10m"}}'`)
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(findings) > 0 {
+		t.Fatalf("single-owner golangci-lint policy change got findings %#v", findings)
+	}
+}
+
+func TestReleasePolicyRejectsGolangciTaskBypassingArgs(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	taskfile := replaceOnce(t, acceptedScanTaskfile,
+		`{{if .GOLANGCI_LINT}}{{.GOLANGCI_LINT}} run {{.GOLANGCI_ARGS}}{{else}}"{{.GO_TOOL}}" run golangci-lint run {{.GOLANGCI_ARGS}}{{end}}`,
+		`{{if .GOLANGCI_LINT}}{{.GOLANGCI_LINT}} run{{else}}"{{.GO_TOOL}}" run golangci-lint run{{end}}`)
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "must route both branches through {{.GOLANGCI_ARGS}}")
+}
+
+func TestReleasePolicyRejectsMultipleGolangciTaskCommands(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	taskfile := acceptedScanTaskfile + "      - echo unexpected\n"
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	requireFinding(t, findings, "lint:golangci task must contain the config check and exactly one lint command")
+}
+
+func TestReleasePolicyRejectsDirectSASTLintInvocation(t *testing.T) {
+	repoRoot := t.TempDir()
+	writeReleasePolicyRepoFixture(t, repoRoot)
+	workflow := replaceOnce(t, acceptedSASTWorkflow, acceptedSASTWorkflowCommand, "golangci-lint run --output.sarif.path golangci.sarif")
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "gosec lane command")
-}
-
-func TestReleasePolicyRejectsDirectAdvisoryGosecInvocation(t *testing.T) {
-	repoRoot := t.TempDir()
-	writeReleasePolicyRepoFixture(t, repoRoot)
-	workflow := replaceOnce(t, acceptedAdvisoryGosecWorkflow, acceptedGosecWorkflowCommand, "gosec -fmt sarif -out gosec.sarif ./...")
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "gosec.yml"), []byte(workflow), 0o644)
-
-	findings, err := checkRepo(repoRoot)
-	if err != nil {
-		t.Fatal(err)
-	}
-	requireFinding(t, findings, "gosec lane command")
-}
-
-func TestReleasePolicyRejectsBlockingAdvisoryGosecJob(t *testing.T) {
-	repoRoot := t.TempDir()
-	writeReleasePolicyRepoFixture(t, repoRoot)
-	workflow := replaceOnce(t, acceptedAdvisoryGosecWorkflow, "    continue-on-error: true\n", "    continue-on-error: false\n")
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "gosec.yml"), []byte(workflow), 0o644)
-
-	findings, err := checkRepo(repoRoot)
-	if err != nil {
-		t.Fatal(err)
-	}
-	requireFinding(t, findings, "advisory gosec job must remain non-blocking")
+	requireFinding(t, findings, "scan lane command")
 }
 
 func TestReleasePolicyRejectsNonBlockingSASTReport(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
-	workflow := replaceOnce(t, acceptedSASTGosecWorkflow, "        run: exit 1\n", "        run: echo ignored\n")
+	workflow := replaceOnce(t, acceptedSASTWorkflow, "        run: exit 1\n", "        run: echo ignored\n")
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "SAST gosec report step must fail the job")
+	requireFinding(t, findings, "SAST report step must fail the job")
 }
 
 func TestReleasePolicyRejectsNonBlockingSASTJob(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
-	workflow := replaceOnce(t, acceptedSASTGosecWorkflow, "  sast-gate:\n    steps:\n", "  sast-gate:\n    continue-on-error: true\n    steps:\n")
+	workflow := replaceOnce(t, acceptedSASTWorkflow, "  sast-gate:\n    steps:\n", "  sast-gate:\n    continue-on-error: true\n    steps:\n")
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "SAST gosec job must remain blocking")
+	requireFinding(t, findings, "SAST job must remain blocking")
 }
 
 func TestReleasePolicyRejectsNonBlockingSASTReportStep(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
-	workflow := replaceOnce(t, acceptedSASTGosecWorkflow, "      - name: Report gosec result\n        if:", "      - name: Report gosec result\n        continue-on-error: true\n        if:")
+	workflow := replaceOnce(t, acceptedSASTWorkflow, "      - name: Report golangci-lint result\n        if:", "      - name: Report golangci-lint result\n        continue-on-error: true\n        if:")
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "SAST gosec report step must remain blocking")
+	requireFinding(t, findings, "SAST report step must remain blocking")
 }
 
 func TestReleasePolicyRejectsSASTReportBeforeScan(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
-	scanThenReport := `      - name: Run gosec
-        id: gosec
+	scanThenReport := `      - name: Run golangci-lint
+        id: sast
         continue-on-error: true
-        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'
-      - name: Report gosec result
-        if: steps.gosec.outcome == 'failure'
+        run: ` + acceptedSASTWorkflowCommand + `
+      - name: Report golangci-lint result
+        if: steps.sast.outcome == 'failure'
         run: exit 1`
-	reportThenScan := `      - name: Report gosec result
-        if: steps.gosec.outcome == 'failure'
+	reportThenScan := `      - name: Report golangci-lint result
+        if: steps.sast.outcome == 'failure'
         run: exit 1
-      - name: Run gosec
-        id: gosec
+      - name: Run golangci-lint
+        id: sast
         continue-on-error: true
-        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'`
-	workflow := replaceOnce(t, acceptedSASTGosecWorkflow, scanThenReport, reportThenScan)
+        run: ` + acceptedSASTWorkflowCommand
+	workflow := replaceOnce(t, acceptedSASTWorkflow, scanThenReport, reportThenScan)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "SAST gosec report step must follow the scan")
+	requireFinding(t, findings, "SAST report step must follow the scan")
 }
 
 func TestReleasePolicyRejectsSASTWithoutTaskPrerequisite(t *testing.T) {
 	repoRoot := t.TempDir()
 	writeReleasePolicyRepoFixture(t, repoRoot)
 	installTask := "      - name: Install task\n        run: scripts/go-tool.sh install task\n"
-	workflow := replaceOnce(t, acceptedSASTGosecWorkflow, installTask, "")
+	workflow := replaceOnce(t, acceptedSASTWorkflow, installTask, "")
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "gosec lane must install task before scanning")
-}
-
-func TestReleasePolicyRejectsAdvisoryWithoutTaskPrerequisite(t *testing.T) {
-	repoRoot := t.TempDir()
-	writeReleasePolicyRepoFixture(t, repoRoot)
-	installTask := "      - name: Install task\n        run: scripts/go-tool.sh install task\n"
-	workflow := replaceOnce(t, acceptedAdvisoryGosecWorkflow, installTask, "")
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "gosec.yml"), []byte(workflow), 0o644)
-
-	findings, err := checkRepo(repoRoot)
-	if err != nil {
-		t.Fatal(err)
-	}
-	requireFinding(t, findings, "gosec lane must install task before scanning")
+	requireFinding(t, findings, "scan lane must install task before scanning")
 }
 
 func TestAcceptedReleasePolicyCatalogueIsComplete(t *testing.T) {
@@ -1106,10 +1111,11 @@ exclude:
   - './.ras/**'
 `
 
-const acceptedGosecTaskfile = `version: "3"
+const acceptedScanTaskfile = `version: "3"
 
 vars:
   GOSEC: '{{.GOSEC | default "gosec"}}'
+  GOLANGCI_ARGS: '{{.GOLANGCI_ARGS | default ""}}'
 
 tasks:
   gosec:
@@ -1117,46 +1123,35 @@ tasks:
     cmds:
       # Policy: this command owns scan-scope flags for every gosec lane.
       - "{{.GOSEC}} -tests ./..."
+
+  lint:golangci:
+    desc: Run the curated golangci-lint analyzer set, including gosec and staticcheck
+    cmds:
+      - task: lint:config-check
+      # Policy: this command owns scan-scope and output flags for every golangci-lint lane.
+      - '{{if .GOLANGCI_LINT}}{{.GOLANGCI_LINT}} run {{.GOLANGCI_ARGS}}{{else}}"{{.GO_TOOL}}" run golangci-lint run {{.GOLANGCI_ARGS}}{{end}}'
 `
 
-const acceptedSASTGosecWorkflow = `name: SAST Gate
+const acceptedSASTWorkflow = `name: SAST Gate
 
 jobs:
   sast-gate:
     steps:
       - name: Install task
         run: scripts/go-tool.sh install task
-      - name: Run gosec
-        id: gosec
+      - name: Run golangci-lint
+        id: sast
         continue-on-error: true
-        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'
-      - name: Report gosec result
-        if: steps.gosec.outcome == 'failure'
-        run: exit 1
-`
-
-const acceptedAdvisoryGosecWorkflow = `name: Gosec Advisory
-
-jobs:
-  gosec:
-    continue-on-error: true
-    steps:
-      - name: Install task
-        run: scripts/go-tool.sh install task
-      - name: Run advisory gosec scan
-        id: gosec
-        continue-on-error: true
-        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'
-      - name: Report advisory gosec result
-        if: steps.gosec.outcome == 'failure'
+        run: task lint:golangci GOLANGCI_LINT=golangci-lint GOLANGCI_ARGS='--output.text.path stdout --output.sarif.path golangci.sarif'
+      - name: Report golangci-lint result
+        if: steps.sast.outcome == 'failure'
         run: exit 1
 `
 
 func writeReleasePolicyRepoFixture(t *testing.T, repoRoot string) {
 	t.Helper()
-	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(acceptedGosecTaskfile), 0o644)
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(acceptedSASTGosecWorkflow), 0o644)
-	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "gosec.yml"), []byte(acceptedAdvisoryGosecWorkflow), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(acceptedScanTaskfile), 0o644)
+	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(acceptedSASTWorkflow), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "release.yml"), []byte(currentWorkflow(t)), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "allowed_signers"), []byte(acceptedReleasePolicy.expectedSigners), 0o644)
 	mustWriteFile(t, filepath.Join(repoRoot, ".github", "syft-release.yaml"), []byte(acceptedSyftReleaseConfig), 0o644)

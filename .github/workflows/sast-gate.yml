@@ -43,23 +43,23 @@ jobs:
       - name: Install task
         run: scripts/go-tool.sh install task
 
-      - name: Install gosec
-        run: scripts/go-tool.sh install gosec
+      - name: Install golangci-lint
+        run: scripts/go-tool.sh install golangci-lint
 
-      - name: Run gosec
-        id: gosec
+      - name: Run golangci-lint
+        id: sast
         continue-on-error: true
-        run: task gosec GOSEC='gosec -fmt sarif -out gosec.sarif'
+        run: task lint:golangci GOLANGCI_LINT=golangci-lint GOLANGCI_ARGS='--output.text.path stdout --output.sarif.path golangci.sarif'
 
-      - name: Upload gosec SARIF to code scanning
-        if: always() && hashFiles('gosec.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      - name: Upload golangci-lint SARIF to code scanning
+        if: always() && hashFiles('golangci.sarif') != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
         with:
-          sarif_file: gosec.sarif
+          sarif_file: golangci.sarif
           category: sast-gate
 
-      - name: Report gosec result
-        if: steps.gosec.outcome == 'failure'
+      - name: Report golangci-lint result
+        if: steps.sast.outcome == 'failure'
         run: exit 1
 
       - name: Install ast-grep
