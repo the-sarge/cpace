@@ -16,6 +16,7 @@ version: "3"
 output: group
 
 vars:
+  LINT_STANDARD_SHA256: a18cfc4fcdbc03b2c2e40c658f3b1cf27066b8ff62816786283663226d910dc8
   AST_GREP: '{{.AST_GREP | default "ast-grep"}}'
   CMARK: '{{.CMARK | default "cmark"}}'
   GOSEC: '{{.GOSEC | default "gosec"}}'
@@ -56,10 +57,23 @@ tasks:
   lint:
     desc: Run formatting, Go, and structural linters
     cmds:
+      - task: lint:config-check
       - task: lint:gofmt
       - task: lint:goimports
       - task: lint:go
       - task: lint-ast-grep
+
+  lint:config-check:
+    desc: Verify .golangci.yml matches the portfolio lint standard
+    cmds:
+      - |
+        set -euo pipefail
+        got="$(shasum -a 256 .golangci.yml | awk '{print $1}')"
+        if [ "$got" != "{{.LINT_STANDARD_SHA256}}" ]; then
+          echo "lint config drift: .golangci.yml sha256 $got does not match portfolio standard {{.LINT_STANDARD_SHA256}}" >&2
+          echo "canonical copy: the-sarge/infra config/golangci/.golangci.yml" >&2
+          exit 1
+        fi
 
   lint:gofmt:
     desc: Check gofmt formatting
@@ -129,6 +143,7 @@ tasks:
   lint:golangci:
     desc: Run curated golangci-lint advisory analyzers
     cmds:
+      - task: lint:config-check
       - '{{if .GOLANGCI_LINT}}{{.GOLANGCI_LINT}} run{{else}}"{{.GO_TOOL}}" run golangci-lint run{{end}}'
 
   docs:check:

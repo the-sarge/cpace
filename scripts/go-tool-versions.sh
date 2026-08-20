@@ -8,7 +8,7 @@ cpace_go_tool_resolve() {
       ;;
     golangci-lint)
       cpace_go_tool_module=github.com/golangci/golangci-lint/v2/cmd/golangci-lint
-      cpace_go_tool_version=v2.12.2
+      cpace_go_tool_version=v2.13.1
       ;;
     gosec)
       cpace_go_tool_module=github.com/securego/gosec/v2/cmd/gosec

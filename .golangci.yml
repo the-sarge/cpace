@@ -1,13 +1,106 @@
+# Portfolio Go lint standard v1.0.0 — byte-identical in every portfolio repo.
+# Canonical copy: the-sarge/infra config/golangci/.golangci.yml (see STANDARD.md).
+# Do not edit in consuming repos; exceptions use `//nolint:<linter> // reason`.
 version: "2"
 
 run:
   timeout: 5m
+  tests: true
 
 linters:
   default: none
   enable:
+    - asciicheck
     - bidichk
+    - bodyclose
+    - copyloopvar
+    - durationcheck
     - errcheck
+    - errchkjson
+    - errname
     - errorlint
     - exhaustive
+    - fatcontext
+    - forcetypeassert
+    - gocheckcompilerdirectives
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - intrange
+    - makezero
+    - mirror
+    - misspell
+    - nilerr
+    - nilnesserr
+    - nilnil
+    - noctx
     - nolintlint
+    - nosprintfhostport
+    - predeclared
+    - reassign
+    - recvcheck
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - testifylint
+    - unconvert
+    - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+  settings:
+    errcheck:
+      exclude-functions:
+        - (net.Conn).Close
+        - (net.Listener).Close
+        - (io.Closer).Close
+    exhaustive:
+      default-signifies-exhaustive: true
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    staticcheck:
+      checks:
+        - all
+        - -QF1011
+        - -ST1000
+  exclusions:
+    generated: lax
+    presets:
+      - common-false-positives
+      - std-error-handling
+    rules:
+      # Tests may use direct type assertions and context-free requests; a
+      # panic or leaked request in a test is a test failure, not a prod bug.
+      - path: _test\.go
+        linters:
+          - forcetypeassert
+          - noctx
+      # File/dir permission findings are meaningless on test fixtures. All
+      # other gosec rules (secrets, crypto, injection) still cover tests.
+      - path: _test\.go
+        linters:
+          - gosec
+        text: "^G30[126]"
+
+formatters:
+  enable:
+    - gofumpt
+    - gci
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+  exclusions:
+    generated: lax
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
