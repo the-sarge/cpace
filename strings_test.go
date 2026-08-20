@@ -23,6 +23,7 @@ func testTranscriptOC(ya, ada, yb, adb []byte) []byte {
 }
 
 func TestStringUtilitiesDraftVectors(t *testing.T) {
+	transcriptIR := newIRTranscript([]byte("123"), []byte("PartyA"), []byte("234"), []byte("PartyB"))
 	tests := []struct {
 		name string
 		got  []byte
@@ -33,7 +34,7 @@ func TestStringUtilitiesDraftVectors(t *testing.T) {
 		{"lv_cat", lvCat([]byte("1234"), []byte("5"), nil, []byte("678")), "043132333401350003363738"},
 		{"o_cat first", testOCat([]byte("ABCD"), []byte("BCD")), "6f6342434441424344"},
 		{"o_cat second", testOCat([]byte("BCD"), []byte("ABCDE")), "6f634243444142434445"},
-		{"transcript_ir", newIRTranscript([]byte("123"), []byte("PartyA"), []byte("234"), []byte("PartyB")).bytes(), "03313233065061727479410332333406506172747942"},
+		{"transcript_ir", transcriptIR.bytes(), "03313233065061727479410332333406506172747942"},
 		{"transcript_oc", testTranscriptOC([]byte("123"), []byte("PartyA"), []byte("234"), []byte("PartyB")), "6f6303323334065061727479420331323306506172747941"},
 	}
 	for _, tt := range tests {

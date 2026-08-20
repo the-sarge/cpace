@@ -63,7 +63,7 @@ func TestPackageOwnedCapPolicyFeedsMessageFramingSpecs(t *testing.T) {
 	}
 	got := messageFramingCatalogue()
 	if len(got) != len(want) {
-		t.Fatalf("message framing catalogue length=%d want %d", len(got), len(want))
+		t.Fatalf("messageFramingCatalogue length=%d want %d", len(got), len(want))
 	}
 	for i, tc := range want {
 		spec := got[i]

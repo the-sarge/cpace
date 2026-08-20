@@ -1436,11 +1436,12 @@ func TestStateReuseAndConcurrentFinish(t *testing.T) {
 	var ok int
 	var msgC []byte
 	for err := range errs {
-		if errors.Is(err, ErrStateUsed) {
+		switch {
+		case errors.Is(err, ErrStateUsed):
 			used++
-		} else if err == nil {
+		case err == nil:
 			ok++
-		} else {
+		default:
 			t.Fatalf("unexpected err %v", err)
 		}
 	}
