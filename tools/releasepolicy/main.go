@@ -449,7 +449,7 @@ func checkRequiredScripts(repoRoot string) []finding {
 			findings = append(findings, finding{path: full, msg: err.Error()})
 		case !info.Mode().IsRegular():
 			findings = append(findings, finding{path: full, msg: "required release helper must be a regular file"})
-		case info.Mode().Perm()&0111 == 0:
+		case info.Mode().Perm()&0o111 == 0:
 			findings = append(findings, finding{path: full, msg: "required release helper must be executable"})
 		}
 	}

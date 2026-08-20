@@ -611,7 +611,7 @@ func (spec messageSpec) exactFieldIndex(length int) (int, bool) {
 func exactMessageFieldBytes(spec messageSpec, length int, fill byte, delta int) []byte {
 	i, ok := spec.exactFieldIndex(length)
 	if !ok {
-		panic("cpace test: exact message field missing from catalogue")
+		panic("cpace test: exact message field missing from messageFramingCatalogue")
 	}
 	n := max(spec.fields[i].length+delta, 0)
 	return bytes.Repeat([]byte{fill}, n)
@@ -670,7 +670,7 @@ func messageHeader(role byte) []byte {
 
 func decodeMessageFromCatalogue(msg []byte) error {
 	if len(msg) < messageHeaderSize {
-		return fmt.Errorf("cpace test: message framing catalogue case has short header")
+		return fmt.Errorf("cpace test: messageFramingCatalogue case has short header")
 	}
 	for _, spec := range messageFramingCatalogue() {
 		if msg[2] != spec.role {
@@ -679,7 +679,7 @@ func decodeMessageFromCatalogue(msg []byte) error {
 		_, err := spec.decode(msg)
 		return err
 	}
-	return fmt.Errorf("cpace test: message framing catalogue case has unexpected role %#x", msg[2])
+	return fmt.Errorf("cpace test: messageFramingCatalogue case has unexpected role %#x", msg[2])
 }
 
 func withMessageHeader(msg []byte, format, suite, role byte) []byte {

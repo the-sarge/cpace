@@ -26,22 +26,22 @@ func newIRTranscript(ya, ada, yb, adb []byte) irTranscript {
 	}
 }
 
-func (t irTranscript) bytes() []byte {
+func (t *irTranscript) bytes() []byte {
 	return clone(t.transcript)
 }
 
-func (t irTranscript) transcriptID() []byte {
+func (t *irTranscript) transcriptID() []byte {
 	return transcriptID(t.transcript)
 }
 
-func (t irTranscript) deriveISK(sid, k []byte) []byte {
+func (t *irTranscript) deriveISK(sid, k []byte) []byte {
 	return deriveISK(sid, k, t.transcript)
 }
 
 // initiatorAD returns a copy of the initiator's associated data bound into the
 // transcript. The responder uses it to populate the confirmed Session's peer
 // associated data without retaining a decomposed field of its own.
-func (t irTranscript) initiatorAD() []byte {
+func (t *irTranscript) initiatorAD() []byte {
 	return clone(t.ada)
 }
 
@@ -65,11 +65,11 @@ func (t *irTranscript) clear() {
 	t.adb = nil
 }
 
-func (t irTranscript) initiatorConfirmationTag(isk, sid []byte) []byte {
+func (t *irTranscript) initiatorConfirmationTag(isk, sid []byte) []byte {
 	return confirmationTag(isk, sid, t.ya, t.ada)
 }
 
-func (t irTranscript) responderConfirmationTag(isk, sid []byte) []byte {
+func (t *irTranscript) responderConfirmationTag(isk, sid []byte) []byte {
 	return confirmationTag(isk, sid, t.yb, t.adb)
 }
 
