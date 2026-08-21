@@ -2969,3 +2969,14 @@ PR [#274](https://github.com/the-sarge/cpace/pull/274) removed the mutable packa
 **Next**
 
 - No product follow-up survived review. Because this was security-relevant hardening, pinned dependency, fuzz, Capslock, and security-audit evidence must still be refreshed before making any stronger release-readiness claim.
+
+---
+
+## Self-hosted CI cache disabled - 2026-08-21 17:17 EDT
+
+**Main:** `7dfb428`
+**Actor:** Claude (0017 rollout)
+
+### Summary
+
+Merged [PR #281](https://github.com/the-sarge/cpace/pull/281) (squash `7dfb428`), cpace's slice of the infra decision 0017 cache sweep: `autoscaled-fuzz.yml::fuzz` flips `cache: true` to `false` — the fuzz matrix runs on self-hosted GARM fuzz labels (`self-hosted, linux, ${{ matrix.runner_label }}`) where cache entries are write-only. The hosted `validate_inputs` job is untouched. Pattern reviewed once on [GridSwarm/wiremux#1228](https://github.com/GridSwarm/wiremux/pull/1228); `actionlint` and the post-ready CI run (including DCO) at the exact head are the evidence.
