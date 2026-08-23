@@ -16,7 +16,7 @@ version: "3"
 output: group
 
 vars:
-  LINT_STANDARD_SHA256: a18cfc4fcdbc03b2c2e40c658f3b1cf27066b8ff62816786283663226d910dc8
+  LINT_STANDARD_SHA256: 8cf0f2f41b314c369145b997f4e80aa5b0f3477a7132b4aa06a47bbef7b11000
   AST_GREP: '{{.AST_GREP | default "ast-grep"}}'
   CMARK: '{{.CMARK | default "cmark"}}'
   GOSEC: '{{.GOSEC | default "gosec"}}'
