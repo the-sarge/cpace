@@ -72,9 +72,19 @@ linters:
   exclusions:
     generated: lax
     presets:
-      - common-false-positives
       - std-error-handling
     rules:
+      # v1.1: the common-false-positives preset is gone so gosec G103 (audit
+      # use of unsafe) applies again; unsafe is rare enough here that every
+      # site deserves a //nolint with a reason. The preset's two other members
+      # are kept verbatim (upstream EXC0007/EXC0010): parametrized exec and
+      # variable file paths drown real findings in idiomatic Go.
+      - linters:
+          - gosec
+        text: "G204: Subprocess launched with variable"
+      - linters:
+          - gosec
+        text: "G304: Potential file inclusion via variable"
       # Tests may use direct type assertions and context-free requests; a
       # panic or leaked request in a test is a test failure, not a prod bug.
       - path: _test\.go
