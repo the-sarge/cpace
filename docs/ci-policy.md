@@ -58,9 +58,11 @@ Repository CI runs on these events:
   signal.
 - Pushes to `main`: required `Check` runs again, and CodeQL analyzes the main
   branch.
-- Scheduled or manual runs: Vulnerability Scan, Nightly Fuzz, Autoscaled Fuzz,
-  CodeQL, Scorecard, and cross-platform smoke workflows provide background and
-  release-posture signal.
+- Scheduled or manual runs: Vulnerability Scan, Nightly Fuzz, CodeQL, Scorecard,
+  and cross-platform smoke workflows provide background and release-posture
+  signal.
+- Manual runs from `main`: Autoscaled Fuzz provides the longer self-hosted fuzz
+  campaign without holding exclusive runner Hosts on a schedule.
 - Release tags matching `v*`: Release Validation verifies the signed annotated tag first, runs tests, race tests, `govulncheck`, and `gosec` with SARIF upload, then generates, validates, attests, and publishes the GitHub Release with SBOM assets. `v0.x` and SemVer prerelease tags are published as GitHub prereleases and are explicitly not marked latest.
 
 Maintainer-controlled long fuzzing is run outside the required PR gate and
@@ -98,10 +100,11 @@ required gate.
 `Vulnerability Scan` and `Nightly Fuzz` run on GitHub-hosted runners through
 both `workflow_dispatch` and scheduled triggers. `Autoscaled Fuzz` validates inputs on a GitHub-hosted preflight job,
 then runs fuzzing on the self-hosted GARM `cpace-garm-linux-fuzz-arm64` and
-`cpace-garm-linux-fuzz-amd64` runner labels through scheduled triggers and
-trusted main-branch manual dispatch. These lanes provide scheduled drift
-detection, Code Scanning history, and fuzz regression signal in addition to the
-PR gates.
+`cpace-garm-linux-fuzz-amd64` runner labels only through trusted main-branch
+manual dispatch. The GitHub-hosted lanes provide scheduled drift detection,
+Code Scanning history, and fuzz regression signal in addition to the PR gates;
+the self-hosted lane provides an operator-triggered longer campaign without
+holding exclusive runner Hosts every night.
 
 Manual `Dependency Gate` dispatch runs module verification and `govulncheck`;
 GitHub Dependency Review runs only on pull requests because it compares the PR
@@ -111,7 +114,7 @@ The hosted scheduled fuzz lane is a short 5-minute-per-target regression run.
 It can catch crashes and upload new failure corpus files, but it is not
 long-fuzz release evidence by itself.
 
-The autoscaled fuzz lane is a longer 10-minute-per-target background run. Scheduled runs default to `FUZZ_RACE=0`, `PARALLEL=1`, `GOMAXPROCS=1`, and `FUZZ_TEST_PARALLEL=1` so the self-hosted Mac remains responsive while fuzzing runs. Race coverage remains owned by `task check` and can be requested on this lane only by trusted main-branch manual dispatch. The shared validator rejects inputs unless `FUZZTIME` matches `[0-9]+[smh]`, `PARALLEL`, `GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` are positive integers, `FUZZ_RACE` is `0` or `1`, the fuzz-target registry is a nonempty JSON array, and, when the workflow bound is supplied, `ceil(targets/PARALLEL) * FUZZTIME` stays below the 240-minute fuzz job timeout.
+The autoscaled fuzz lane is a longer, operator-triggered background run. Manual dispatch defaults to `FUZZTIME=10m`, `FUZZ_RACE=0`, `PARALLEL=1`, `GOMAXPROCS=1`, and `FUZZ_TEST_PARALLEL=1`. Race coverage remains owned by `task check` and can be requested on this lane only by trusted main-branch manual dispatch. The shared validator rejects inputs unless `FUZZTIME` matches `[0-9]+[smh]`, `PARALLEL`, `GOMAXPROCS`, and `FUZZ_TEST_PARALLEL` are positive integers, `FUZZ_RACE` is `0` or `1`, the fuzz-target registry is a nonempty JSON array, and, when the workflow bound is supplied, `ceil(targets/PARALLEL) * FUZZTIME` stays below the 240-minute fuzz job timeout.
 
 ## Long Fuzzing And Release Evidence
 
@@ -142,11 +145,10 @@ not run code from untrusted fork PRs.
 
 The current self-hosted lane is `Autoscaled Fuzz`, which uses separate
 `cpace-garm-linux-fuzz-arm64` and `cpace-garm-linux-fuzz-amd64` GitHub runner
-labels. Its job-level guard skips the checked-in fuzz job except for scheduled
-runs and manual dispatches from `refs/heads/main`. Treat that guard as workflow
-hygiene and defense in depth: the trust boundary is that fork PRs cannot
-schedule or dispatch this workflow, and manual dispatch requires repository
-write access.
+labels. Its job-level guard skips the checked-in fuzz job except for manual
+dispatches from `refs/heads/main`. Treat that guard as workflow hygiene and
+defense in depth: the trust boundary is that fork PRs cannot dispatch this
+workflow, and manual dispatch requires repository write access.
 
 The autoscaled runner image must provide a POSIX/GNU userland and a working C
 compiler for Linux race-detector fuzz builds. At minimum the workflow checks

@@ -23,8 +23,6 @@ on:
         description: Go fuzz worker cap per target
         required: false
         default: "1"
-  schedule:
-    - cron: '0 7 * * *'
 
 permissions:
   contents: read
@@ -35,11 +33,9 @@ concurrency:
 
 env:
   GOTOOLCHAIN: local
-  # Keep these fallbacks in sync with the workflow_dispatch defaults above;
-  # scheduled events do not provide inputs.
+  # Keep these fallbacks in sync with the workflow_dispatch defaults above.
   FUZZTIME: ${{ inputs.fuzztime || '10m' }}
   PARALLEL: ${{ inputs.parallel || '1' }}
-  # Keep scheduled runs host-friendly; use workflow_dispatch to opt into race fuzzing.
   FUZZ_RACE: ${{ inputs.fuzz_race || '0' }}
   GOMAXPROCS: ${{ inputs.gomaxprocs || '1' }}
   FUZZ_TEST_PARALLEL: ${{ inputs.fuzz_test_parallel || '1' }}
@@ -62,7 +58,7 @@ jobs:
   fuzz:
     name: Autoscaled fuzz (${{ matrix.arch }})
     needs: validate_inputs
-    if: (github.event_name == 'schedule' || github.ref == 'refs/heads/main') && needs.validate_inputs.result == 'success'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && needs.validate_inputs.result == 'success'
     strategy:
       fail-fast: false
       matrix:

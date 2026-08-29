@@ -107,6 +107,11 @@ assert_fails "missing jq" "jq is required" run_without_jq
 
 grep -Fq 'FUZZ_MAX_WALL_MINUTES: "240"' "$repo_root/.github/workflows/autoscaled-fuzz.yml"
 grep -Fq 'run: scripts/validate-fuzz-inputs.sh' "$repo_root/.github/workflows/autoscaled-fuzz.yml"
+grep -Fq '  workflow_dispatch:' "$repo_root/.github/workflows/autoscaled-fuzz.yml"
+grep -Fq "if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'" "$repo_root/.github/workflows/autoscaled-fuzz.yml"
+if grep -Eq '^[[:space:]]+schedule:' "$repo_root/.github/workflows/autoscaled-fuzz.yml"; then
+  fail "Autoscaled Fuzz must remain manual-only"
+fi
 grep -Fq 'scripts/validate-fuzz-inputs.sh' "$repo_root/Taskfile.yml"
 
 printf '%s\n' "Fuzz input validator tests passed"
