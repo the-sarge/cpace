@@ -2,7 +2,7 @@ module github.com/the-sarge/cpace
 
 go 1.27
 
-toolchain go1.27.0
+toolchain go1.27.1
 
 require github.com/gtank/ristretto255 v0.2.0
 
