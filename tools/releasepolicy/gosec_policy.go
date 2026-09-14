@@ -16,8 +16,8 @@ const (
 )
 
 func checkGosecTaskPolicy(repoRoot string) ([]finding, error) {
-	path := filepath.Join(repoRoot, "Taskfile.yml")
-	root, err := loadYAML(path)
+	const path = "Taskfile.yml"
+	root, err := loadYAML(filepath.Join(repoRoot, path))
 	if err != nil {
 		return nil, err
 	}
@@ -41,8 +41,8 @@ func checkGosecTaskPolicy(repoRoot string) ([]finding, error) {
 }
 
 func checkScanWorkflowTaskRouting(repoRoot, filename, jobName, stepID, wantCommand string) ([]finding, error) {
-	path := filepath.Join(repoRoot, ".github", "workflows", filename)
-	root, err := loadYAML(path)
+	path := ".github/workflows/" + filename
+	root, err := loadYAML(filepath.Join(repoRoot, path))
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +82,8 @@ func checkScanWorkflowTaskRouting(repoRoot, filename, jobName, stepID, wantComma
 // scan-scope and output flags, mirroring the gosec task policy. Workflow lanes
 // may only pass GOLANGCI_LINT and GOLANGCI_ARGS through the task facade.
 func checkGolangciTaskPolicy(repoRoot string) ([]finding, error) {
-	path := filepath.Join(repoRoot, "Taskfile.yml")
-	root, err := loadYAML(path)
+	const path = "Taskfile.yml"
+	root, err := loadYAML(filepath.Join(repoRoot, path))
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +108,8 @@ func checkGolangciTaskPolicy(repoRoot string) ([]finding, error) {
 }
 
 func checkSASTFailurePolicy(repoRoot string) ([]finding, error) {
-	path := filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml")
-	root, err := loadYAML(path)
+	const path = ".github/workflows/sast-gate.yml"
+	root, err := loadYAML(filepath.Join(repoRoot, path))
 	if err != nil {
 		return nil, err
 	}

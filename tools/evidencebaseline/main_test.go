@@ -31,7 +31,7 @@ func TestCurrentRepositoryEvidenceBaseline(t *testing.T) {
 }
 
 func TestEvidenceBaselineAcceptsValidFixture(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
@@ -88,42 +88,42 @@ func TestSummaryDocClassifierRefsMatchBaselineParser(t *testing.T) {
 }
 
 func TestEvidenceBaselineRejectsMissingSummaryDoc(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	remove(t, filepath.Join(repoRoot, "docs", "dependency-review.md"))
+	repoRoot := mustFixtureRepo(t)
+	mustRemove(t, filepath.Join(repoRoot, "docs", "dependency-review.md"))
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "referenced summary doc does not exist")
+	assertFinding(t, findings, "docs/evidence-baseline.md:Dependency review", "referenced summary doc does not exist")
 }
 
 func TestEvidenceBaselineRejectsMissingSummaryDocsManifest(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	remove(t, filepath.Join(repoRoot, summaryDocsManifestRef))
+	repoRoot := mustFixtureRepo(t)
+	mustRemove(t, filepath.Join(repoRoot, summaryDocsManifestRef))
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "summary-doc manifest is missing")
+	assertFinding(t, findings, "docs/evidence-baseline-summary-docs.txt", "summary-doc manifest is missing")
 }
 
 func TestEvidenceBaselineRejectsStaleSummaryDocsManifest(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), "docs/dependency-review.md\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), "docs/dependency-review.md\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "summary-doc manifest got")
-	requireFinding(t, findings, "docs/fuzz-evidence.md")
+	assertFinding(t, findings, "docs/evidence-baseline-summary-docs.txt", "summary-doc manifest got")
+	assertFinding(t, findings, "docs/evidence-baseline-summary-docs.txt", "docs/fuzz-evidence.md")
 }
 
 func TestEvidenceBaselineRejectsSummaryDocsManifestWhitespace(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), strings.Join([]string{
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), strings.Join([]string{
 		"# Generated from docs/evidence-baseline.md by tools/evidencebaseline --write-summary-docs.",
 		" docs/dependency-review.md ",
 		"docs/fuzz-evidence.md",
@@ -134,13 +134,13 @@ func TestEvidenceBaselineRejectsSummaryDocsManifestWhitespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, summaryDocsManifestRef+":2")
-	requireFinding(t, findings, "leading or trailing whitespace")
+	assertFinding(t, findings, "docs/evidence-baseline-summary-docs.txt:2", "summary-doc manifest entries must not have leading or trailing whitespace")
+	assertFinding(t, findings, "docs/evidence-baseline-summary-docs.txt:2", "leading or trailing whitespace")
 }
 
 func TestEvidenceBaselineWriteSummaryDocsFlagRoundTrip(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), "stale\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), "stale\n")
 
 	cmd := exec.Command("go", "run", ".", "--repo-root", repoRoot, "--write-summary-docs")
 	out, err := cmd.CombinedOutput()
@@ -162,12 +162,12 @@ func TestEvidenceBaselineWriteSummaryDocsFlagRoundTrip(t *testing.T) {
 }
 
 func TestEvidenceBaselineWriteSummaryDocsRejectsManifestSymlink(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	outside := filepath.Join(repoRoot, "outside-summary-docs.txt")
 	outsideContent := "outside target\n"
-	writeFile(t, outside, outsideContent)
+	mustWriteTextFile(t, outside, outsideContent)
 	manifest := filepath.Join(repoRoot, summaryDocsManifestRef)
-	remove(t, manifest)
+	mustRemove(t, manifest)
 	if err := os.Symlink(outside, manifest); err != nil {
 		t.Skipf("symlink unavailable: %v", err)
 	}
@@ -191,7 +191,7 @@ func TestEvidenceBaselineWriteSummaryDocsRejectsManifestSymlink(t *testing.T) {
 
 func TestEvidenceBaselineWriteSummaryDocsRejectsUnsafeManifestPaths(t *testing.T) {
 	t.Run("symlinked parent", func(t *testing.T) {
-		repoRoot := validFixtureRepo(t)
+		repoRoot := mustFixtureRepo(t)
 		docs := filepath.Join(repoRoot, "docs")
 		realDocs := filepath.Join(repoRoot, "real-docs")
 		if err := os.Rename(docs, realDocs); err != nil {
@@ -211,9 +211,9 @@ func TestEvidenceBaselineWriteSummaryDocsRejectsUnsafeManifestPaths(t *testing.T
 	})
 
 	t.Run("non-regular manifest", func(t *testing.T) {
-		repoRoot := validFixtureRepo(t)
+		repoRoot := mustFixtureRepo(t)
 		manifest := filepath.Join(repoRoot, summaryDocsManifestRef)
-		remove(t, manifest)
+		mustRemove(t, manifest)
 		if err := os.Mkdir(manifest, 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -240,11 +240,11 @@ func TestEvidenceBaselineRejectsMutuallyExclusiveSummaryDocFlags(t *testing.T) {
 }
 
 func TestEvidenceBaselineRejectsSymlinkedSummaryDoc(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	outside := filepath.Join(repoRoot, "outside-summary.md")
-	writeFile(t, outside, "# Outside Summary\n")
+	mustWriteTextFile(t, outside, "# Outside Summary\n")
 	summary := filepath.Join(repoRoot, "docs", "dependency-review.md")
-	remove(t, summary)
+	mustRemove(t, summary)
 	if err := os.Symlink(outside, summary); err != nil {
 		t.Skipf("symlink unavailable: %v", err)
 	}
@@ -253,18 +253,18 @@ func TestEvidenceBaselineRejectsSymlinkedSummaryDoc(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "referenced summary doc is a symlink")
+	assertFinding(t, findings, "docs/evidence-baseline.md:Dependency review", "referenced summary doc is a symlink")
 }
 
 func TestEvidenceBaselineRejectsMissingRawArtifact(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	remove(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "analysis.log"))
+	repoRoot := mustFixtureRepo(t)
+	mustRemove(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "analysis.log"))
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "referenced raw artifact does not exist")
+	assertFinding(t, findings, "docs/evidence-baseline.md:Dependency review", "referenced raw artifact does not exist")
 }
 
 func TestEvidenceBaselineRejectsMissingBundleFiles(t *testing.T) {
@@ -278,109 +278,109 @@ func TestEvidenceBaselineRejectsMissingBundleFiles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repoRoot := validFixtureRepo(t)
-			remove(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", tt.file))
+			repoRoot := mustFixtureRepo(t)
+			mustRemove(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", tt.file))
 
 			findings, err := checkRepo(repoRoot)
 			if err != nil {
 				t.Fatal(err)
 			}
-			requireFinding(t, findings, tt.want)
+			assertFinding(t, findings, "docs/evidence/candidate", tt.want)
 		})
 	}
 }
 
 func TestEvidenceBaselineChecksUnreferencedBundles(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "historical", "README.md"), "# Historical\n")
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "historical", "old.log"), "old\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "historical", "README.md"), "# Historical\n")
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "historical", "old.log"), "old\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "missing SHA256SUMS")
+	assertFinding(t, findings, "docs/evidence/historical", "missing SHA256SUMS")
 }
 
 func TestEvidenceBaselineRejectsBadChecksum(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "analysis.log"), "changed\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "analysis.log"), "changed\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "hash mismatch")
+	assertFinding(t, findings, "docs/evidence/candidate/analysis.log", "hash mismatch")
 }
 
 func TestEvidenceBaselineRejectsUncoveredRawFile(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "uncovered.log"), "not covered\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "uncovered.log"), "not covered\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "not covered by SHA256SUMS")
+	assertFinding(t, findings, "docs/evidence/candidate/uncovered.log", "not covered by SHA256SUMS")
 }
 
 func TestEvidenceBaselineRejectsNestedUncoveredRawFile(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "nested", "uncovered.log"), "not covered\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "nested", "uncovered.log"), "not covered\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "nested/uncovered.log")
-	requireFinding(t, findings, "not covered by SHA256SUMS")
+	assertFinding(t, findings, "docs/evidence/candidate/nested/uncovered.log", "raw evidence file is not covered by SHA256SUMS")
+	assertFinding(t, findings, "docs/evidence/candidate/nested/uncovered.log", "not covered by SHA256SUMS")
 }
 
 func TestEvidenceBaselineRejectsSymlinkedChecksumEntry(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	outside := filepath.Join(repoRoot, "outside.log")
-	writeFile(t, outside, "outside\n")
+	mustWriteTextFile(t, outside, "outside\n")
 	link := filepath.Join(repoRoot, "docs", "evidence", "candidate", "linked.log")
 	if err := os.Symlink(outside, link); err != nil {
 		t.Skipf("symlink unavailable: %v", err)
 	}
-	appendSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "linked.log", "outside\n")
+	mustAppendSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "linked.log", "outside\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "checksum references symlink")
+	assertFinding(t, findings, "docs/evidence/candidate/linked.log", "checksum references symlink")
 }
 
 func TestEvidenceBaselineRejectsChecksumEntryUnderSymlinkedParentBeforeHashing(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	outside := filepath.Join(repoRoot, "outside")
-	writeFile(t, filepath.Join(outside, "secret.log"), "external secret\n")
+	mustWriteTextFile(t, filepath.Join(outside, "secret.log"), "external secret\n")
 	link := filepath.Join(repoRoot, "docs", "evidence", "candidate", "nested")
 	if err := os.Symlink(outside, link); err != nil {
 		t.Skipf("symlink unavailable: %v", err)
 	}
-	appendSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "nested/secret.log", "different content\n")
+	mustAppendSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "nested/secret.log", "different content\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "symlinked parent")
-	rejectFinding(t, findings, "hash mismatch")
+	assertFinding(t, findings, "docs/evidence/candidate/nested/secret.log", "symlinked parent")
+	assertNoFinding(t, findings, "hash mismatch")
 }
 
 func TestEvidenceBaselineRejectsSymlinkedBundleRoot(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	outside := filepath.Join(repoRoot, "outside-evidence")
-	writeFile(t, filepath.Join(outside, "README.md"), "# Outside Evidence\n")
-	writeFile(t, filepath.Join(outside, "analysis.log"), "analysis\n")
-	writeFile(t, filepath.Join(outside, "fuzz.log"), "fuzz\n")
-	writeSHA256SUMS(t, outside, "analysis.log", "fuzz.log")
+	mustWriteTextFile(t, filepath.Join(outside, "README.md"), "# Outside Evidence\n")
+	mustWriteTextFile(t, filepath.Join(outside, "analysis.log"), "analysis\n")
+	mustWriteTextFile(t, filepath.Join(outside, "fuzz.log"), "fuzz\n")
+	mustWriteSHA256SUMS(t, outside, "analysis.log", "fuzz.log")
 
 	bundle := filepath.Join(repoRoot, "docs", "evidence", "candidate")
-	removeAll(t, bundle)
+	mustRemoveAll(t, bundle)
 	if err := os.Symlink(outside, bundle); err != nil {
 		t.Skipf("symlink unavailable: %v", err)
 	}
@@ -389,19 +389,19 @@ func TestEvidenceBaselineRejectsSymlinkedBundleRoot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "evidence bundle root must not be a symlink")
+	assertFinding(t, findings, "docs/evidence/candidate", "evidence bundle root must not be a symlink")
 }
 
 func TestEvidenceBaselineRejectsSymlinkedEvidenceDirectory(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	outside := filepath.Join(repoRoot, "outside-evidence", "candidate")
-	writeFile(t, filepath.Join(outside, "README.md"), "# Outside Evidence\n")
-	writeFile(t, filepath.Join(outside, "analysis.log"), "analysis\n")
-	writeFile(t, filepath.Join(outside, "fuzz.log"), "fuzz\n")
-	writeSHA256SUMS(t, outside, "analysis.log", "fuzz.log")
+	mustWriteTextFile(t, filepath.Join(outside, "README.md"), "# Outside Evidence\n")
+	mustWriteTextFile(t, filepath.Join(outside, "analysis.log"), "analysis\n")
+	mustWriteTextFile(t, filepath.Join(outside, "fuzz.log"), "fuzz\n")
+	mustWriteSHA256SUMS(t, outside, "analysis.log", "fuzz.log")
 
 	evidenceDir := filepath.Join(repoRoot, "docs", "evidence")
-	removeAll(t, evidenceDir)
+	mustRemoveAll(t, evidenceDir)
 	if err := os.Symlink(filepath.Join(repoRoot, "outside-evidence"), evidenceDir); err != nil {
 		t.Skipf("symlink unavailable: %v", err)
 	}
@@ -410,8 +410,8 @@ func TestEvidenceBaselineRejectsSymlinkedEvidenceDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "docs/evidence")
-	requireFinding(t, findings, "symlink")
+	assertFinding(t, findings, "docs/evidence", "evidence directory must not be a symlink")
+	assertFinding(t, findings, "docs/evidence", "symlink")
 }
 
 func TestEvidenceBaselineRejectsSymlinkedControlFiles(t *testing.T) {
@@ -424,11 +424,11 @@ func TestEvidenceBaselineRejectsSymlinkedControlFiles(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repoRoot := validFixtureRepo(t)
+			repoRoot := mustFixtureRepo(t)
 			outside := filepath.Join(repoRoot, "outside-"+tt.file)
-			writeFile(t, outside, "outside\n")
+			mustWriteTextFile(t, outside, "outside\n")
 			link := filepath.Join(repoRoot, "docs", "evidence", "candidate", tt.file)
-			remove(t, link)
+			mustRemove(t, link)
 			if err := os.Symlink(outside, link); err != nil {
 				t.Skipf("symlink unavailable: %v", err)
 			}
@@ -437,16 +437,15 @@ func TestEvidenceBaselineRejectsSymlinkedControlFiles(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			requireFinding(t, findings, tt.file)
-			requireFinding(t, findings, "control file must not be a symlink")
+			assertFinding(t, findings, "docs/evidence/candidate/"+tt.file, "evidence bundle control file must not be a symlink")
 		})
 	}
 }
 
 func TestEvidenceBaselineRejectsSymlinkedChecksumSignature(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	outside := filepath.Join(repoRoot, "outside-SHA256SUMS.sig")
-	writeFile(t, outside, "outside\n")
+	mustWriteTextFile(t, outside, "outside\n")
 	link := filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS.sig")
 	if err := os.Symlink(outside, link); err != nil {
 		t.Skipf("symlink unavailable: %v", err)
@@ -456,31 +455,31 @@ func TestEvidenceBaselineRejectsSymlinkedChecksumSignature(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "SHA256SUMS.sig")
-	requireFinding(t, findings, "control file must not be a symlink")
+	assertFinding(t, findings, "docs/evidence/candidate/SHA256SUMS.sig", "evidence bundle control file must not be a symlink")
+	assertFinding(t, findings, "docs/evidence/candidate/SHA256SUMS.sig", "control file must not be a symlink")
 }
 
 func TestEvidenceBaselineRejectsUnsafeBaselineRef(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
 	content, err := os.ReadFile(baseline)
 	if err != nil {
 		t.Fatal(err)
 	}
 	updated := strings.Replace(string(content), "docs/evidence/candidate/analysis.log", "docs/evidence/candidate/../outside.log", 1)
-	writeFile(t, baseline, updated)
+	mustWriteTextFile(t, baseline, updated)
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "unsafe baseline ref")
+	assertFinding(t, findings, "docs/evidence-baseline.md:Dependency review", "unsafe baseline ref")
 }
 
 func TestEvidenceBaselineAllowsNonRepoBacktickURLContainingDocsPath(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
-	replaceInFile(t, baseline, "`docs/evidence/candidate/analysis.log`", "`docs/evidence/candidate/analysis.log`, `https://example.invalid/archive/docs/run`")
+	mustReplaceInFile(t, baseline, "`docs/evidence/candidate/analysis.log`", "`docs/evidence/candidate/analysis.log`, `https://example.invalid/archive/docs/run`")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
@@ -492,47 +491,47 @@ func TestEvidenceBaselineAllowsNonRepoBacktickURLContainingDocsPath(t *testing.T
 }
 
 func TestEvidenceBaselineParserRejectsMalformedBaselineHeader(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
-	replaceInFile(t, baseline, "| Evidence lane | Pinned baseline | Raw artifacts | Summary docs | Freshness rule |", "| Lane | Pinned baseline | Raw artifacts | Summary docs | Freshness rule |")
+	mustReplaceInFile(t, baseline, "| Evidence lane | Pinned baseline | Raw artifacts | Summary docs | Freshness rule |", "| Lane | Pinned baseline | Raw artifacts | Summary docs | Freshness rule |")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "Baseline Index header got")
+	assertFinding(t, findings, "docs/evidence-baseline.md", "Baseline Index header got")
 }
 
 func TestEvidenceBaselineParserRejectsMissingSeparatorWithoutSkippingFirstRow(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
-	remove(t, filepath.Join(repoRoot, "docs", "dependency-review.md"))
-	replaceInFile(t, baseline, "| --- | --- | --- | --- | --- |\n", "")
+	mustRemove(t, filepath.Join(repoRoot, "docs", "dependency-review.md"))
+	mustReplaceInFile(t, baseline, "| --- | --- | --- | --- | --- |\n", "")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "Baseline Index separator")
-	requireFinding(t, findings, "referenced summary doc does not exist")
+	assertFinding(t, findings, "docs/evidence-baseline.md", "Baseline Index separator")
+	assertFinding(t, findings, "docs/evidence-baseline.md:Dependency review", "referenced summary doc does not exist")
 }
 
 func TestEvidenceBaselineParserRejectsDuplicateLane(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
-	replaceInFile(t, baseline, "| Fuzzing | `abc123` |", "| Dependency review | `abc123` |")
+	mustReplaceInFile(t, baseline, "| Fuzzing | `abc123` |", "| Dependency review | `abc123` |")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "duplicate evidence lane")
+	assertFinding(t, findings, "docs/evidence-baseline.md:Dependency review", "duplicate evidence lane")
 }
 
 func TestEvidenceBaselineParserRejectsSummaryDocDirectory(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	summary := filepath.Join(repoRoot, "docs", "dependency-review.md")
-	remove(t, summary)
+	mustRemove(t, summary)
 	if err := os.Mkdir(summary, 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -541,12 +540,12 @@ func TestEvidenceBaselineParserRejectsSummaryDocDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "referenced summary doc is a directory")
+	assertFinding(t, findings, "docs/evidence-baseline.md:Dependency review", "referenced summary doc is a directory")
 }
 
 func TestEvidenceBaselineIgnoresLocalDSStore(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", ".DS_Store"), "local metadata\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", ".DS_Store"), "local metadata\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
@@ -558,95 +557,95 @@ func TestEvidenceBaselineIgnoresLocalDSStore(t *testing.T) {
 }
 
 func TestEvidenceBaselineRejectsHiddenRawFile(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", ".hidden.log"), "hidden evidence\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", ".hidden.log"), "hidden evidence\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, ".hidden.log")
-	requireFinding(t, findings, "not covered by SHA256SUMS")
+	assertFinding(t, findings, "docs/evidence/candidate/.hidden.log", "raw evidence file is not covered by SHA256SUMS")
+	assertFinding(t, findings, "docs/evidence/candidate/.hidden.log", "not covered by SHA256SUMS")
 }
 
 func TestEvidenceBaselineRejectsUnsafeChecksumPath(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	appendFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  ../outside.log\n")
+	repoRoot := mustFixtureRepo(t)
+	mustAppendFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  ../outside.log\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "safe bundle-relative path")
+	assertFinding(t, findings, "docs/evidence/candidate/SHA256SUMS:3", "safe bundle-relative path")
 }
 
 func TestEvidenceBaselineRejectsMalformedChecksumHash(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), strings.Repeat("z", 64)+"  analysis.log\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), strings.Repeat("z", 64)+"  analysis.log\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "checksum hash must be 64 lowercase hex characters")
+	assertFinding(t, findings, "docs/evidence/candidate/SHA256SUMS:1", "checksum hash must be 64 lowercase hex characters")
 }
 
 func TestEvidenceBaselineRejectsBinaryModeChecksumEntry(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	sum := sha256.Sum256([]byte("analysis\n"))
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), fmt.Sprintf("%x *analysis.log\n", sum))
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), fmt.Sprintf("%x *analysis.log\n", sum))
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "text-mode SHA256SUMS format")
+	assertFinding(t, findings, "docs/evidence/candidate/SHA256SUMS:1", "text-mode SHA256SUMS format")
 }
 
 func TestEvidenceBaselineRejectsChecksumPathWithSpaces(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
+	repoRoot := mustFixtureRepo(t)
 	sum := sha256.Sum256([]byte("analysis\n"))
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), fmt.Sprintf("%x  analysis log\n", sum))
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), fmt.Sprintf("%x  analysis log\n", sum))
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "checksum path must not contain whitespace")
+	assertFinding(t, findings, "docs/evidence/candidate/SHA256SUMS:1", "checksum path must not contain whitespace")
 }
 
 func TestEvidenceBaselineRejectsDuplicateChecksumPath(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	appendSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "analysis.log", "analysis\n")
+	repoRoot := mustFixtureRepo(t)
+	mustAppendSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "analysis.log", "analysis\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "duplicate checksum path")
+	assertFinding(t, findings, "docs/evidence/candidate/SHA256SUMS:3", "duplicate checksum path")
 }
 
 func TestEvidenceBaselineRejectsEmptyChecksumFile(t *testing.T) {
-	repoRoot := validFixtureRepo(t)
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), "\n")
+	repoRoot := mustFixtureRepo(t)
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "SHA256SUMS"), "\n")
 
 	findings, err := checkRepo(repoRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	requireFinding(t, findings, "contains no checksum entries")
+	assertFinding(t, findings, "docs/evidence/candidate/SHA256SUMS", "contains no checksum entries")
 }
 
-func validFixtureRepo(t *testing.T) string {
+func mustFixtureRepo(t *testing.T) string {
 	t.Helper()
 	repoRoot := t.TempDir()
-	writeFile(t, filepath.Join(repoRoot, "docs", "dependency-review.md"), "# Dependency Review\n")
-	writeFile(t, filepath.Join(repoRoot, "docs", "fuzz-evidence.md"), "# Fuzz Evidence\n")
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "README.md"), "# Candidate Evidence\n")
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "analysis.log"), "analysis\n")
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "fuzz.log"), "fuzz\n")
-	writeSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "analysis.log", "fuzz.log")
-	writeFile(t, filepath.Join(repoRoot, "docs", "evidence-baseline.md"), strings.Join([]string{
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "dependency-review.md"), "# Dependency Review\n")
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "fuzz-evidence.md"), "# Fuzz Evidence\n")
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "README.md"), "# Candidate Evidence\n")
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "analysis.log"), "analysis\n")
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence", "candidate", "fuzz.log"), "fuzz\n")
+	mustWriteSHA256SUMS(t, filepath.Join(repoRoot, "docs", "evidence", "candidate"), "analysis.log", "fuzz.log")
+	mustWriteTextFile(t, filepath.Join(repoRoot, "docs", "evidence-baseline.md"), strings.Join([]string{
 		"# Evidence Baseline",
 		"",
 		"## Baseline Index",
@@ -661,7 +660,7 @@ func validFixtureRepo(t *testing.T) string {
 		"Keep this short in fixtures.",
 		"",
 	}, "\n"))
-	writeFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), fixtureSummaryDocsManifest())
+	mustWriteTextFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), fixtureSummaryDocsManifest())
 	return repoRoot
 }
 
@@ -682,7 +681,7 @@ func outputLines(out []byte) []string {
 	return strings.Split(text, "\n")
 }
 
-func writeSHA256SUMS(t *testing.T, dir string, files ...string) {
+func mustWriteSHA256SUMS(t *testing.T, dir string, files ...string) {
 	t.Helper()
 	var lines []string
 	for _, name := range files {
@@ -693,26 +692,29 @@ func writeSHA256SUMS(t *testing.T, dir string, files ...string) {
 		sum := sha256.Sum256(in)
 		lines = append(lines, fmt.Sprintf("%x  %s", sum, name))
 	}
-	writeFile(t, filepath.Join(dir, "SHA256SUMS"), strings.Join(lines, "\n")+"\n")
+	mustWriteTextFile(t, filepath.Join(dir, "SHA256SUMS"), strings.Join(lines, "\n")+"\n")
 }
 
-func appendSHA256SUMS(t *testing.T, dir, name, content string) {
+func mustAppendSHA256SUMS(t *testing.T, dir, name, content string) {
 	t.Helper()
 	sum := sha256.Sum256([]byte(content))
-	appendFile(t, filepath.Join(dir, "SHA256SUMS"), fmt.Sprintf("%x  %s\n", sum, name))
+	mustAppendFile(t, filepath.Join(dir, "SHA256SUMS"), fmt.Sprintf("%x  %s\n", sum, name))
 }
 
-func requireFinding(t *testing.T, findings []finding, want string) {
+func assertFinding(t *testing.T, findings []finding, wantPath, wantMsg string) {
 	t.Helper()
-	for _, finding := range findings {
-		if strings.Contains(finding.path, want) || strings.Contains(finding.msg, want) {
+	if wantPath == "" || wantMsg == "" {
+		t.Fatalf("finding expectation requires a path and message")
+	}
+	for _, f := range findings {
+		if f.path == wantPath && strings.Contains(f.msg, wantMsg) {
 			return
 		}
 	}
-	t.Fatalf("missing finding containing %q; got %#v", want, findings)
+	t.Fatalf("finding got %#v want path %q with message containing %q", findings, wantPath, wantMsg)
 }
 
-func rejectFinding(t *testing.T, findings []finding, unwanted string) {
+func assertNoFinding(t *testing.T, findings []finding, unwanted string) {
 	t.Helper()
 	for _, finding := range findings {
 		if strings.Contains(finding.path, unwanted) || strings.Contains(finding.msg, unwanted) {
@@ -721,7 +723,7 @@ func rejectFinding(t *testing.T, findings []finding, unwanted string) {
 	}
 }
 
-func writeFile(t *testing.T, path, content string) {
+func mustWriteTextFile(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
@@ -731,7 +733,7 @@ func writeFile(t *testing.T, path, content string) {
 	}
 }
 
-func appendFile(t *testing.T, path, content string) {
+func mustAppendFile(t *testing.T, path, content string) {
 	t.Helper()
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
 	if err != nil {
@@ -743,7 +745,7 @@ func appendFile(t *testing.T, path, content string) {
 	}
 }
 
-func replaceInFile(t *testing.T, path, old, new string) {
+func mustReplaceInFile(t *testing.T, path, old, new string) {
 	t.Helper()
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -753,17 +755,17 @@ func replaceInFile(t *testing.T, path, old, new string) {
 	if updated == string(content) {
 		t.Fatalf("did not find %q in %s", old, path)
 	}
-	writeFile(t, path, updated)
+	mustWriteTextFile(t, path, updated)
 }
 
-func remove(t *testing.T, path string) {
+func mustRemove(t *testing.T, path string) {
 	t.Helper()
 	if err := os.Remove(path); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func removeAll(t *testing.T, path string) {
+func mustRemoveAll(t *testing.T, path string) {
 	t.Helper()
 	if err := os.RemoveAll(path); err != nil {
 		t.Fatal(err)

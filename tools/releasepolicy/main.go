@@ -28,12 +28,7 @@ func main() {
 		os.Exit(2)
 	}
 	if len(findings) > 0 {
-		sort.Slice(findings, func(i, j int) bool {
-			if findings[i].path == findings[j].path {
-				return findings[i].msg < findings[j].msg
-			}
-			return findings[i].path < findings[j].path
-		})
+		sortFindings(findings)
 		for _, f := range findings {
 			fmt.Fprintf(os.Stderr, "%s: %s\n", f.path, f.msg)
 		}
@@ -43,13 +38,14 @@ func main() {
 }
 
 func checkRepo(repoRoot string) ([]finding, error) {
+	policy := newAcceptedReleasePolicy()
 	workflowPath := filepath.Join(repoRoot, ".github", "workflows", "release.yml")
 	workflow, err := loadYAML(workflowPath)
 	if err != nil {
 		return nil, err
 	}
 	var findings []finding
-	findings = append(findings, checkWorkflow(workflowPath, workflow)...)
+	findings = append(findings, checkWorkflowAgainstPolicy(".github/workflows/release.yml", workflow, policy)...)
 	gosecFindings, err := checkGosecTaskPolicy(repoRoot)
 	if err != nil {
 		return nil, err
@@ -70,10 +66,10 @@ func checkRepo(repoRoot string) ([]finding, error) {
 		return nil, err
 	}
 	findings = append(findings, sastFindings...)
-	findings = append(findings, checkAllowedSigners(repoRoot)...)
-	findings = append(findings, checkRequiredScripts(repoRoot)...)
-	findings = append(findings, checkRequiredFiles(repoRoot)...)
-	findings = append(findings, checkRequiredConfigs(repoRoot)...)
+	findings = append(findings, checkAllowedSigners(repoRoot, policy)...)
+	findings = append(findings, checkRequiredScripts(repoRoot, policy)...)
+	findings = append(findings, checkRequiredFiles(repoRoot, policy)...)
+	findings = append(findings, checkRequiredConfigs(repoRoot, policy)...)
 	return findings, nil
 }
 
@@ -90,10 +86,6 @@ func loadYAML(path string) (*yaml.Node, error) {
 		return nil, fmt.Errorf("%s: expected one YAML document", path)
 	}
 	return doc.Content[0], nil
-}
-
-func checkWorkflow(path string, root *yaml.Node) []finding {
-	return checkWorkflowAgainstPolicy(path, root, acceptedReleasePolicy)
 }
 
 func checkWorkflowAgainstPolicy(path string, root *yaml.Node, policy releasePolicy) []finding {
@@ -328,7 +320,7 @@ func (c *checker) checkAcceptedJobSteps(jobPath string, job *yaml.Node, policy r
 		gotStepIdentities = append(gotStepIdentities, stepIdentity(step))
 	}
 	wantStepIdentities := policy.stepIdentities()
-	if !sameStringSlice(gotStepIdentities, wantStepIdentities) {
+	if !slices.Equal(gotStepIdentities, wantStepIdentities) {
 		c.fail(jobPath+".steps", fmt.Sprintf("steps must exactly match accepted release policy: got %q, want %q", gotStepIdentities, wantStepIdentities))
 		return
 	}
@@ -420,83 +412,85 @@ func (c *checker) checkNoRunExpressions(jobs *yaml.Node) {
 	}
 }
 
-func checkAllowedSigners(repoRoot string) []finding {
-	path := filepath.Join(repoRoot, ".github", "allowed_signers")
-	in, err := os.ReadFile(path)
+func checkAllowedSigners(repoRoot string, policy releasePolicy) []finding {
+	const path = ".github/allowed_signers"
+	in, err := os.ReadFile(filepath.Join(repoRoot, path))
 	if err != nil {
 		return []finding{{path: path, msg: err.Error()}}
 	}
-	if strings.ReplaceAll(string(in), "\r\n", "\n") != acceptedReleasePolicy.expectedSigners {
+	if strings.ReplaceAll(string(in), "\r\n", "\n") != policy.expectedSigners {
 		return []finding{{path: path, msg: "allowed_signers must exactly match the accepted maintainer signing keys"}}
 	}
 	return nil
 }
 
-func checkRequiredScripts(repoRoot string) []finding {
+func checkRequiredScripts(repoRoot string, policy releasePolicy) []finding {
 	var findings []finding
-	for _, path := range acceptedReleasePolicy.requiredScripts {
+	for _, path := range policy.requiredScripts {
 		full := filepath.Join(repoRoot, path)
 		info, err := os.Lstat(full)
 		switch {
 		case errors.Is(err, os.ErrNotExist):
-			findings = append(findings, finding{path: full, msg: "missing required release helper"})
+			findings = append(findings, finding{path: path, msg: "missing required release helper"})
 		case err != nil:
-			findings = append(findings, finding{path: full, msg: err.Error()})
+			findings = append(findings, finding{path: path, msg: err.Error()})
+		case info.Mode()&os.ModeSymlink != 0:
+			findings = append(findings, finding{path: path, msg: "required release helper must be a regular file"})
 		case !info.Mode().IsRegular():
-			findings = append(findings, finding{path: full, msg: "required release helper must be a regular file"})
+			findings = append(findings, finding{path: path, msg: "required release helper must be a regular file"})
 		case info.Mode().Perm()&0o111 == 0:
-			findings = append(findings, finding{path: full, msg: "required release helper must be executable"})
+			findings = append(findings, finding{path: path, msg: "required release helper must be executable"})
 		}
 	}
 	return findings
 }
 
-func checkRequiredFiles(repoRoot string) []finding {
+func checkRequiredFiles(repoRoot string, policy releasePolicy) []finding {
 	var findings []finding
-	for _, path := range acceptedReleasePolicy.requiredFiles {
+	for _, path := range policy.requiredFiles {
 		full := filepath.Join(repoRoot, path)
 		info, err := os.Lstat(full)
 		switch {
 		case errors.Is(err, os.ErrNotExist):
-			findings = append(findings, finding{path: full, msg: "missing required release support file"})
+			findings = append(findings, finding{path: path, msg: "missing required release support file"})
 		case err != nil:
-			findings = append(findings, finding{path: full, msg: err.Error()})
+			findings = append(findings, finding{path: path, msg: err.Error()})
 		case !info.Mode().IsRegular():
-			findings = append(findings, finding{path: full, msg: "required release support file must be a regular file"})
+			findings = append(findings, finding{path: path, msg: "required release support file must be a regular file"})
 		}
 	}
 	return findings
 }
 
-func checkRequiredConfigs(repoRoot string) []finding {
+func checkRequiredConfigs(repoRoot string, policy releasePolicy) []finding {
 	var findings []finding
-	for _, config := range acceptedReleasePolicy.requiredConfigs {
+	for _, config := range policy.requiredConfigs {
 		full := filepath.Join(repoRoot, config.path)
 		info, err := os.Lstat(full)
 		switch {
 		case errors.Is(err, os.ErrNotExist):
-			findings = append(findings, finding{path: full, msg: "missing required release config"})
+			findings = append(findings, finding{path: config.path, msg: "missing required release config"})
 			continue
 		case err != nil:
-			findings = append(findings, finding{path: full, msg: err.Error()})
+			findings = append(findings, finding{path: config.path, msg: err.Error()})
 			continue
 		case info.Mode()&os.ModeSymlink != 0:
-			findings = append(findings, finding{path: full, msg: "required release config must not be a symlink"})
+			findings = append(findings, finding{path: config.path, msg: "required release config must not be a symlink"})
 			continue
 		case info.IsDir():
-			findings = append(findings, finding{path: full, msg: "expected file, got directory"})
+			findings = append(findings, finding{path: config.path, msg: "expected file, got directory"})
 			continue
 		case !info.Mode().IsRegular():
-			findings = append(findings, finding{path: full, msg: "required release config must be a regular file"})
+			findings = append(findings, finding{path: config.path, msg: "required release config must be a regular file"})
 			continue
 		}
 
 		root, err := loadYAML(full)
 		if err != nil {
-			findings = append(findings, finding{path: full, msg: err.Error()})
+			findings = append(findings, finding{path: config.path, msg: err.Error()})
 			continue
 		}
-		findings = append(findings, checkSyftReleaseConfig(full, root, config)...)
+		findings = append(findings, checkSyftReleaseConfig(config.path, root, config)...)
 	}
 	return findings
 }
@@ -535,7 +529,7 @@ func expectExactStringSequence(c *checker, nodePath string, n *yaml.Node, want [
 		}
 		got = append(got, value)
 	}
-	if !sameStringSlice(got, want) {
+	if !slices.Equal(got, want) {
 		c.fail(nodePath, fmt.Sprintf("sequence must exactly match accepted release policy: got %q, want %q", got, want))
 	}
 }
@@ -618,7 +612,7 @@ func expectOnlyKeys(c *checker, nodePath string, n *yaml.Node, want []string) {
 
 func requireExactScriptLines(c *checker, nodePath, run string, want []string) {
 	lines := scriptLines(run)
-	if sameStringSlice(lines, want) {
+	if slices.Equal(lines, want) {
 		return
 	}
 	c.fail(nodePath, fmt.Sprintf("script lines must exactly match accepted release policy: got %q, want %q", lines, want))
@@ -675,10 +669,14 @@ func runSteps(jobs *yaml.Node) []runRef {
 }
 
 func stepIdentity(step *yaml.Node) string {
-	if name := scalar(mapping(step, "name")); name != "" {
+	return stepIdentityFromFields(scalar(mapping(step, "name")), scalar(mapping(step, "uses")))
+}
+
+func stepIdentityFromFields(name, uses string) string {
+	if name != "" {
 		return name
 	}
-	if uses := scalar(mapping(step, "uses")); uses != "" {
+	if uses != "" {
 		action, _, _ := strings.Cut(uses, "@")
 		return "uses:" + action
 	}
@@ -782,14 +780,11 @@ func sameStringSet(got, want []string) bool {
 	return true
 }
 
-func sameStringSlice(got, want []string) bool {
-	if len(got) != len(want) {
-		return false
-	}
-	for i := range got {
-		if got[i] != want[i] {
-			return false
+func sortFindings(findings []finding) {
+	sort.Slice(findings, func(i, j int) bool {
+		if findings[i].path == findings[j].path {
+			return findings[i].msg < findings[j].msg
 		}
-	}
-	return true
+		return findings[i].path < findings[j].path
+	})
 }
