@@ -186,7 +186,7 @@ func TestEmbeddedDraftConfirmationTagGoldens(t *testing.T) {
 	}
 	for _, key := range []string{"tagA", "tagB"} {
 		if len(tags[key]) != tagSize {
-			t.Fatalf("%s length=%d want %d", key, len(tags[key]), tagSize)
+			t.Fatalf("%s length got %d want %d", key, len(tags[key]), tagSize)
 		}
 	}
 }
@@ -449,10 +449,10 @@ func TestScalarMultVFYDraftInvalidVectors(t *testing.T) {
 	} {
 		got, err := scalarMultVFY(s, tc.encoded)
 		if got != nil {
-			t.Fatalf("%s: invalid scalar_mult_vfy out=%x want nil", tc.name, got)
+			t.Fatalf("%s: invalid scalar_mult_vfy out got %x want nil", tc.name, got)
 		}
 		if !errors.Is(err, ErrAbort) || !errors.Is(err, tc.sentinel) {
-			t.Fatalf("%s: invalid scalar_mult_vfy err=%v want ErrAbort and %v", tc.name, err, tc.sentinel)
+			t.Fatalf("%s: invalid scalar_mult_vfy err got %v want ErrAbort and %v", tc.name, err, tc.sentinel)
 		}
 	}
 }

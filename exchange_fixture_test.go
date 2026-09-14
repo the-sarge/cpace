@@ -2,6 +2,7 @@ package cpace
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"testing"
 
@@ -118,9 +119,9 @@ func (x *exchangeFixture) complete() (*Session, *Session) {
 }
 
 // The secret snapshots below are the only place hygiene tests may learn the
-// cores' field layout. Snapshot before the terminal operation (the aliases
-// must be captured while the secrets are still live), then assertCleared
-// after it.
+// cores' and sessions' field layout. Snapshot before the terminal operation
+// (the aliases must be captured while the secrets are still live), then
+// assertCleared after it.
 
 type initiatorSecretSnapshot struct {
 	tb        testing.TB
@@ -186,5 +187,79 @@ func (s responderSecretSnapshot) assertCleared() {
 		if !allZero(b) {
 			s.tb.Fatal("responder-owned transcript backing array was not cleared")
 		}
+	}
+}
+
+func mustLoadDraftInvalidVector(tb testing.TB) draftInvalidVector {
+	tb.Helper()
+	v, err := loadDraftInvalidVectorJSON(draft21RistrettoInvalidJSON)
+	if err != nil {
+		tb.Fatal(err)
+	}
+	return v
+}
+
+func completeExchange(tb testing.TB, initCfg, respCfg Input) (*Session, *Session) {
+	tb.Helper()
+	return newExchange(tb, initCfg, respCfg).complete()
+}
+
+func allZero(in []byte) bool {
+	for _, b := range in {
+		if b != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// assertConcurrentFinishResult runs after the workers join, in the test goroutine.
+func assertConcurrentFinishResult(tb testing.TB, session *Session, err error) {
+	tb.Helper()
+	switch {
+	case err == nil:
+		if session == nil {
+			tb.Fatal("successful Finish returned nil Session")
+		}
+		if err := session.Close(); err != nil {
+			tb.Fatal(err)
+		}
+	case errors.Is(err, ErrStateUsed):
+		if session != nil {
+			tb.Fatal("ErrStateUsed Finish returned Session")
+		}
+	default:
+		tb.Fatalf("Finish error got %v want nil or ErrStateUsed", err)
+	}
+}
+
+type sessionSecretSnapshot struct {
+	tb      testing.TB
+	session *Session
+	isk     []byte
+}
+
+// Snapshot only before concurrent operations start; assert after workers join.
+func snapshotSessionSecrets(tb testing.TB, session *Session) sessionSecretSnapshot {
+	tb.Helper()
+	s := sessionSecretSnapshot{tb: tb, session: session, isk: session.state.isk}
+	s.assertLive()
+	return s
+}
+
+func (s sessionSecretSnapshot) assertLive() {
+	s.tb.Helper()
+	if len(s.session.state.isk) == 0 || allZero(s.isk) {
+		s.tb.Fatal("session ISK was cleared or missing")
+	}
+}
+
+func (s sessionSecretSnapshot) assertCleared() {
+	s.tb.Helper()
+	if s.session.state.isk != nil {
+		s.tb.Fatal("session retained ISK reference after Close")
+	}
+	if !allZero(s.isk) {
+		s.tb.Fatal("session ISK backing array was not cleared")
 	}
 }

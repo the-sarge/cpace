@@ -72,7 +72,7 @@ func loadDraftInvalidVectorJSON(in []byte) (draftInvalidVector, error) {
 func FuzzDecodeMessageA(f *testing.F) {
 	initInput, respInput := defaultExchangeInputs()
 	exchange := newExchange(f, initInput, respInput)
-	invalid := fuzzDraftInvalidVector(f)
+	invalid := mustLoadDraftInvalidVector(f)
 	for _, seed := range messageAFuzzSeeds(exchange.msgA, exchange.msgB, invalid.InvalidY1) {
 		f.Add(seed)
 	}
@@ -85,7 +85,7 @@ func FuzzDecodeMessageB(f *testing.F) {
 	initInput, respInput := defaultExchangeInputs()
 	exchange := newExchange(f, initInput, respInput)
 	msgC, _ := exchange.finishInitiator()
-	invalid := fuzzDraftInvalidVector(f)
+	invalid := mustLoadDraftInvalidVector(f)
 	for _, seed := range messageBFuzzSeeds(exchange.msgB, msgC, invalid.InvalidY1) {
 		f.Add(seed)
 	}
@@ -127,22 +127,14 @@ func FuzzProtocolConsistency(f *testing.F) {
 		if len(sid) == 0 || len(sid) > sessionIDCap.length || len(ctx) > contextCap.length || len(ada) > 1024 || len(adb) > 1024 {
 			t.Skip()
 		}
-		initCfg := Input{
-			Password:            []byte("password"),
-			SelfID:              []byte("initiator"),
-			PeerID:              []byte("responder"),
-			Context:             ctx,
-			SessionID:           sid,
-			LocalAssociatedData: ada,
-		}
-		respCfg := Input{
-			Password:            []byte("password"),
-			SelfID:              []byte("responder"),
-			PeerID:              []byte("initiator"),
-			Context:             ctx,
-			SessionID:           sid,
-			LocalAssociatedData: adb,
-		}
+		initCfg := testInitiatorInput()
+		initCfg.Context = ctx
+		initCfg.SessionID = sid
+		initCfg.LocalAssociatedData = ada
+		respCfg := testResponderInput()
+		respCfg.Context = ctx
+		respCfg.SessionID = sid
+		respCfg.LocalAssociatedData = adb
 		initiator, msgA, err := startTestInitiator(initCfg)
 		if err != nil {
 			t.Fatalf("Start failed for bounded valid input: %v", err)
@@ -173,22 +165,14 @@ func FuzzProtocolMismatch(f *testing.F) {
 		if len(sid) == 0 || len(sid) > sessionIDCap.length || len(ctx) >= contextCap.length || len(ada) > 1024 || len(adb) > 1024 {
 			t.Skip()
 		}
-		initCfg := Input{
-			Password:            []byte("password"),
-			SelfID:              []byte("initiator"),
-			PeerID:              []byte("responder"),
-			Context:             ctx,
-			SessionID:           sid,
-			LocalAssociatedData: ada,
-		}
-		respCfg := Input{
-			Password:            []byte("password"),
-			SelfID:              []byte("responder"),
-			PeerID:              []byte("initiator"),
-			Context:             append(clone(ctx), 0xff),
-			SessionID:           sid,
-			LocalAssociatedData: adb,
-		}
+		initCfg := testInitiatorInput()
+		initCfg.Context = ctx
+		initCfg.SessionID = sid
+		initCfg.LocalAssociatedData = ada
+		respCfg := testResponderInput()
+		respCfg.Context = append(clone(ctx), 0xff)
+		respCfg.SessionID = sid
+		respCfg.LocalAssociatedData = adb
 		initiator, msgA, err := startTestInitiator(initCfg)
 		if err != nil {
 			t.Fatalf("Start failed for bounded valid input: %v", err)
@@ -206,7 +190,7 @@ func FuzzProtocolMismatch(f *testing.F) {
 func FuzzRespondWithFuzzedMessageA(f *testing.F) {
 	initInput, respInput := defaultExchangeInputs()
 	exchange := newExchange(f, initInput, respInput)
-	invalid := fuzzDraftInvalidVector(f)
+	invalid := mustLoadDraftInvalidVector(f)
 	for _, seed := range messageAProtocolFuzzSeeds(exchange.msgA, exchange.msgB, invalid.InvalidY1) {
 		f.Add(seed)
 	}
@@ -228,7 +212,7 @@ func FuzzInitiatorFinishWithFuzzedMessageB(f *testing.F) {
 	initInput, respInput := defaultExchangeInputs()
 	exchange := newExchange(f, initInput, respInput)
 	msgC, _ := exchange.finishInitiator()
-	invalid := fuzzDraftInvalidVector(f)
+	invalid := mustLoadDraftInvalidVector(f)
 	for _, seed := range messageBFuzzSeeds(exchange.msgB, msgC, invalid.InvalidY1) {
 		f.Add(seed)
 	}
@@ -274,7 +258,7 @@ func FuzzResponderFinishWithFuzzedMessageC(f *testing.F) {
 }
 
 func FuzzScalarMultVFY(f *testing.F) {
-	invalid := fuzzDraftInvalidVector(f)
+	invalid := mustLoadDraftInvalidVector(f)
 	validX := invalid.Valid["X"]
 	if len(validX) == pointSize {
 		f.Add(validX)
@@ -308,7 +292,7 @@ func FuzzScalarMultVFY(f *testing.F) {
 			return
 		}
 		if out != nil {
-			t.Fatalf("scalarMultVFY rejection out=%x want nil", out)
+			t.Fatalf("scalarMultVFY rejection out got %x want nil", out)
 		}
 		if !errors.Is(err, ErrAbort) {
 			t.Fatalf("scalarMultVFY rejection err=%v does not wrap ErrAbort", err)
@@ -327,11 +311,11 @@ func FuzzScalarMultVFY(f *testing.F) {
 			}
 		case bytes.Equal(encoded, make([]byte, pointSize)):
 			if !errors.Is(err, ErrPeerShareIdentity) || errors.Is(err, ErrPeerShareEncoding) {
-				t.Fatalf("identity rejection err=%v want ErrPeerShareIdentity only", err)
+				t.Fatalf("identity rejection err got %v want ErrPeerShareIdentity only", err)
 			}
 		default:
 			if !errors.Is(err, ErrPeerShareEncoding) || errors.Is(err, ErrPeerShareIdentity) {
-				t.Fatalf("encoding rejection err=%v want ErrPeerShareEncoding only", err)
+				t.Fatalf("encoding rejection err got %v want ErrPeerShareEncoding only", err)
 			}
 		}
 	})
@@ -410,13 +394,4 @@ func FuzzMessageCRoundTrip(f *testing.F) {
 			t.Fatalf("message C round trip mismatch")
 		}
 	})
-}
-
-func fuzzDraftInvalidVector(tb testing.TB) draftInvalidVector {
-	tb.Helper()
-	v, err := loadDraftInvalidVectorJSON(draft21RistrettoInvalidJSON)
-	if err != nil {
-		tb.Fatalf("invalid vector fixture failed to load: %v", err)
-	}
-	return v
 }

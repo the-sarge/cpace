@@ -7,7 +7,7 @@ import (
 )
 
 func TestLengthValueEncodingBoundaries(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name       string
 		length     int
 		wantPrefix string
@@ -19,29 +19,29 @@ func TestLengthValueEncodingBoundaries(t *testing.T) {
 		{"three byte min", 0x4000, "808001"},
 		{"associated data cap", maxAssociatedDataLength, "808004"},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			payload := bytes.Repeat([]byte{0xaa}, tt.length)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			payload := bytes.Repeat([]byte{0xaa}, tc.length)
 			got := prependLen(payload)
-			wantPrefix, err := hex.DecodeString(tt.wantPrefix)
+			wantPrefix, err := hex.DecodeString(tc.wantPrefix)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if !bytes.HasPrefix(got, wantPrefix) {
-				t.Fatalf("prefix=%x want %x", got[:len(wantPrefix)], wantPrefix)
+				t.Fatalf("prefix got %x want %x", got[:len(wantPrefix)], wantPrefix)
 			}
 			if !bytes.Equal(got[len(wantPrefix):], payload) {
-				t.Fatalf("payload=%x want %x", got[len(wantPrefix):], payload)
+				t.Fatalf("payload got %x want %x", got[len(wantPrefix):], payload)
 			}
-			if len(got) != len(wantPrefix)+tt.length {
-				t.Fatalf("encoded len=%d want %d", len(got), len(wantPrefix)+tt.length)
+			if len(got) != len(wantPrefix)+tc.length {
+				t.Fatalf("encoded len got %d want %d", len(got), len(wantPrefix)+tc.length)
 			}
 		})
 	}
 }
 
 func TestLEB128CanonicalDecode(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name     string
 		encoded  []byte
 		off      int
@@ -56,17 +56,17 @@ func TestLEB128CanonicalDecode(t *testing.T) {
 		{"associated data cap", []byte{0x80, 0x80, 0x04, 0xff}, 0, maxAssociatedDataLength, 3},
 		{"offset", []byte{0xaa, 0x80, 0x01, 0xff}, 1, 0x80, 3},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, next, err := readLEB128(tt.encoded, tt.off, maxLEB128BytesForField)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, next, err := readLEB128(tc.encoded, tc.off, maxLEB128BytesForField)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got != tt.want {
-				t.Fatalf("readLEB128 value=%d want %d", got, tt.want)
+			if got != tc.want {
+				t.Fatalf("readLEB128 value got %d want %d", got, tc.want)
 			}
-			if next != tt.wantNext {
-				t.Fatalf("readLEB128 next=%d want %d", next, tt.wantNext)
+			if next != tc.wantNext {
+				t.Fatalf("readLEB128 next got %d want %d", next, tc.wantNext)
 			}
 		})
 	}
@@ -81,11 +81,11 @@ func TestLVCatBoundaryComposition(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.HasPrefix(got, wantPrefix) {
-		t.Fatalf("first prefix=%x want %x", got[:len(wantPrefix)], wantPrefix)
+		t.Fatalf("first prefix got %x want %x", got[:len(wantPrefix)], wantPrefix)
 	}
 	wantSecond := append([]byte{0x01}, second...)
 	if !bytes.Equal(got[len(wantPrefix)+len(first):], wantSecond) {
-		t.Fatalf("second field=%x want %x", got[len(wantPrefix)+len(first):], wantSecond)
+		t.Fatalf("second field got %x want %x", got[len(wantPrefix)+len(first):], wantSecond)
 	}
 }
 

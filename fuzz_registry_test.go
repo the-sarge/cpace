@@ -42,12 +42,12 @@ func TestFuzzTargetRegistrySchema(t *testing.T) {
 			t.Errorf("entry %d has empty target", i)
 		}
 		if entry.Package != "." {
-			t.Errorf("entry %d target %q package = %q, want .", i, entry.Target, entry.Package)
+			t.Errorf("entry %d target %q package got %q want .", i, entry.Target, entry.Package)
 		}
 		if entry.Binary == "" {
 			t.Errorf("entry %d target %q has empty binary", i, entry.Target)
 		} else if !fuzzTargetBinaryPattern.MatchString(entry.Binary) {
-			t.Errorf("entry %d target %q binary = %q, want match %s", i, entry.Target, entry.Binary, fuzzTargetBinaryPattern)
+			t.Errorf("entry %d target %q binary got %q want match %s", i, entry.Target, entry.Binary, fuzzTargetBinaryPattern)
 		}
 
 		if _, ok := seenTargets[entry.Target]; ok {
@@ -89,7 +89,7 @@ func TestFuzzTargetRegistryMatchesOSSFuzzBuild(t *testing.T) {
 	module := readModulePath(t)
 	for i, target := range buildTargets {
 		if target.Module != module {
-			t.Errorf("ossfuzz/build.sh compile line %d module = %q, want %q", i, target.Module, module)
+			t.Errorf("ossfuzz/build.sh compile line %d module got %q want %q", i, target.Module, module)
 		}
 	}
 
@@ -198,7 +198,7 @@ func readOSSFuzzBuildTargets(tb testing.TB) []ossFuzzBuildTarget {
 		}
 		fields := strings.Fields(line)
 		if len(fields) != 4 {
-			tb.Fatalf("ossfuzz/build.sh compile line %q has %d fields, want 4", line, len(fields))
+			tb.Fatalf("ossfuzz/build.sh compile line %q field count got %d want 4", line, len(fields))
 		}
 		targets = append(targets, ossFuzzBuildTarget{
 			Module: fields[1],

@@ -29,19 +29,19 @@ func TestPackageOwnedCapPolicyPinsShippedValues(t *testing.T) {
 	}
 	got := shippedPackageCapPolicy()
 	if len(got) != len(want) {
-		t.Fatalf("shipped cap policy length=%d want %d", len(got), len(want))
+		t.Fatalf("shipped cap policy length got %d want %d", len(got), len(want))
 	}
 	for i, tc := range want {
 		t.Run(tc.name, func(t *testing.T) {
 			field := got[i]
 			if field.name != tc.wantName {
-				t.Fatalf("name=%q want %q", field.name, tc.wantName)
+				t.Fatalf("name got %q want %q", field.name, tc.wantName)
 			}
 			if field.length != tc.wantLength {
-				t.Fatalf("length=%d want %d", field.length, tc.wantLength)
+				t.Fatalf("length got %d want %d", field.length, tc.wantLength)
 			}
 			if field.exact != tc.wantExact {
-				t.Fatalf("exact=%t want %t", field.exact, tc.wantExact)
+				t.Fatalf("exact got %t want %t", field.exact, tc.wantExact)
 			}
 		})
 	}
@@ -63,19 +63,19 @@ func TestPackageOwnedCapPolicyFeedsMessageFramingSpecs(t *testing.T) {
 	}
 	got := messageFramingCatalogue()
 	if len(got) != len(want) {
-		t.Fatalf("messageFramingCatalogue length=%d want %d", len(got), len(want))
+		t.Fatalf("messageFramingCatalogue length got %d want %d", len(got), len(want))
 	}
 	for i, tc := range want {
 		spec := got[i]
 		t.Run(tc.name, func(t *testing.T) {
 			if spec.name != tc.name {
-				t.Fatalf("name=%q want %q", spec.name, tc.name)
+				t.Fatalf("name got %q want %q", spec.name, tc.name)
 			}
 			if spec.role != tc.roleByte {
-				t.Fatalf("role=%#x want %#x", spec.role, tc.roleByte)
+				t.Fatalf("role got %#x want %#x", spec.role, tc.roleByte)
 			}
 			if !slices.Equal(spec.fields, tc.fields) {
-				t.Fatalf("fields=%#v want %#v", spec.fields, tc.fields)
+				t.Fatalf("fields got %#v want %#v", spec.fields, tc.fields)
 			}
 			for _, field := range spec.fields {
 				policyField, ok := capPolicy[field.name]
@@ -83,7 +83,7 @@ func TestPackageOwnedCapPolicyFeedsMessageFramingSpecs(t *testing.T) {
 					t.Fatalf("message field %q is missing from shipped cap policy", field.name)
 				}
 				if field != policyField {
-					t.Fatalf("message field=%#v want cap policy field %#v", field, policyField)
+					t.Fatalf("message field got %#v want cap policy field %#v", field, policyField)
 				}
 			}
 		})
