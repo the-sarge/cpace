@@ -47,10 +47,23 @@ changed=false
 docs_only=true
 evidence_changed=false
 evidence_checker_changed=false
+release_policy_changed=false
 
 while IFS= read -r path; do
   [ -n "$path" ] || continue
   changed=true
+
+  case "$path" in
+    .github/workflows/release.yml|.github/workflows/sast-gate.yml|\
+    .github/allowed_signers|.github/syft-release.yaml|Taskfile.yml|\
+    scripts/check-release-policy.sh|tools/releasepolicy/*|\
+    scripts/classify-check-changes.sh|scripts/test-ci-classifier.sh|\
+    scripts/go-tool.sh|scripts/go-tool-versions.sh|scripts/release-tag-policy.sh|\
+    scripts/release-metadata.sh|scripts/release-tag-metadata.sh|\
+    scripts/validate-cyclonedx-sbom.sh|scripts/extract-release-notes.sh)
+      release_policy_changed=true
+      ;;
+  esac
 
   case "$path" in
     docs/evidence-baseline.md|docs/evidence-baseline-summary-docs.txt|docs/evidence/*)
@@ -82,3 +95,4 @@ fi
 printf 'docs_only=%s\n' "$docs_only"
 printf 'evidence_changed=%s\n' "$evidence_changed"
 printf 'evidence_checker_changed=%s\n' "$evidence_checker_changed"
+printf 'release_policy_changed=%s\n' "$release_policy_changed"

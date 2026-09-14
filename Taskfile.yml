@@ -229,7 +229,7 @@ tasks:
       - task: quick-test
 
   check:changed:
-    desc: Run docs-only validation when only docs changed, otherwise run quick
+    desc: Run docs or quick validation plus relevant release and evidence checks
     cmds:
       - |
         set -euo pipefail
@@ -263,6 +263,11 @@ tasks:
         if [ "$evidence_checker_changed" = "true" ]; then
           echo "Evidence checker changes detected; running evidence checker lint."
           task evidence:lint
+        fi
+        if [ "$release_policy_changed" = "true" ]; then
+          echo "Release policy changes detected; running release policy validation and lint."
+          task release:policy
+          task release:lint
         fi
 
   check:
