@@ -3064,3 +3064,23 @@ Merged [PR #294](https://github.com/the-sarge/cpace/pull/294) as `1c68ef606c6736
 - Required Check, DCO, Dependency Gate, and SAST Gate checks passed before squash merge. After marking the PR ready, [CI run 34882446872](https://github.com/the-sarge/cpace/actions/runs/34882446872) passed on the same exact candidate through the existing manual trigger.
 
 This tool-maintenance change does not refresh pinned dependency, security-audit, or long-fuzz evidence and makes no stronger release-readiness claim.
+
+---
+
+## Incremental release-policy validation landed - 2026-09-14 15:16 EDT
+
+**Main:** `b3c66dac0a7e`
+**Actor:** Codex
+
+### Summary
+
+Merged [PR #296](https://github.com/the-sarge/cpace/pull/296) as `b3c66dac0a7e474d76444bf86e6f8d5b26e91ed6`, closing [issue #264](https://github.com/the-sarge/cpace/issues/264). The central changed-path classifier now selects release-policy validation and its dedicated lint lane for release checker inputs, helpers, and dispatch infrastructure. Unrelated code/docs retain their lightweight validation, and existing evidence routing and failure propagation are preserved.
+
+### Validation
+
+- Focused classifier and actual Taskfile dispatch regressions passed, including relevant, unrelated, empty, and mixed changes plus checker/lint failure propagation. Missing classification and dispatch were observed failing before their implementations. The real `task check:changed` run selected the expected quick, evidence, release-policy, and release-lint lanes and passed.
+- Final `task check` passed on exact head `a7cbad7a31c3e4e47132dc9c87bfafe694ef0a08` against base `2649509009784f4d77dcd817f5536449ab557cb5`, with a clean worktree and unchanged HEAD. This included normal/race tests, release/evidence validators and lint, structural analysis, and vulnerability scanning.
+- RAS review `20260914T190621-2ade4410606907685506cf32` completed with four successful reviewers and successful synthesis, with no findings or follow-ups. Both Claude reviewers failed at startup and were not counted as successful evidence. No verification or replacement review was needed.
+- Required Check, DCO, Dependency Gate, and SAST Gate checks passed. After the PR was marked ready, [CI run 34885549148](https://github.com/the-sarge/cpace/actions/runs/34885549148) passed on the same exact candidate through the existing manual trigger before squash merge.
+
+This incremental tooling change does not refresh pinned dependency, security-audit, or long-fuzz evidence and makes no stronger release-readiness claim.
