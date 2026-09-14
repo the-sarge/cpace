@@ -2980,3 +2980,20 @@ PR [#274](https://github.com/the-sarge/cpace/pull/274) removed the mutable packa
 ### Summary
 
 Merged [PR #281](https://github.com/the-sarge/cpace/pull/281) (squash `7dfb428`), cpace's slice of the infra decision 0017 cache sweep: `autoscaled-fuzz.yml::fuzz` flips `cache: true` to `false` — the fuzz matrix runs on self-hosted GARM fuzz labels (`self-hosted, linux, ${{ matrix.runner_label }}`) where cache entries are write-only. The hosted `validate_inputs` job is untouched. Pattern reviewed once on [GridSwarm/wiremux#1228](https://github.com/GridSwarm/wiremux/pull/1228); `actionlint` and the post-ready CI run (including DCO) at the exact head are the evidence.
+
+---
+
+## Go 1.27.1 toolchain update landed - 2026-09-14 10:52 EDT
+
+**Main:** `8d7cf396fafb`
+**Actor:** Codex
+
+### Summary
+
+Merged the GitHub Actions maintenance update [#285](https://github.com/the-sarge/cpace/pull/285) and Go toolchain update [#286](https://github.com/the-sarge/cpace/pull/286). The root module and both validation-helper modules now declare `toolchain go1.27.1`; the minimum `go 1.27` directives and module dependencies are unchanged.
+
+### Validation
+
+- RAS review `20260914T144011-f7561a343423230a378f8607` completed with eight reviewers and eight adjudicators. Its single low-priority finding was resolved by correcting the PR description: with `GOTOOLCHAIN=local`, the pinned setup-go action selects from the unchanged Go 1.27 range rather than the module toolchain preference. The [exact-head CI run](https://github.com/the-sarge/cpace/actions/runs/34856624779) resolved that range to Go 1.27.1.
+- Post-review `task check` passed on product head `4c7610d714f48145cd7a4fba9b9b5867e9e06559`, covering normal/race tests, helper validation, formatting, static and structural analysis, and vulnerability scanning. All nine hosted checks passed, including macOS and Windows. The exact head merged as `8d7cf396fafb8839adfc1845afa5a7b6b8572f3d`.
+- No tracked-file fixes, verification rerun, replacement review, or deferred follow-up was needed after the metadata correction. Existing pinned audit and long-fuzz evidence remains historical; this maintenance update makes no stronger release-readiness claim.
