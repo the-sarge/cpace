@@ -3019,3 +3019,7 @@ Merged [PR #288](https://github.com/the-sarge/cpace/pull/288) as `1d34ae62457046
 ### Next
 
 The optional stale `nc` references in the implementation-time caller-input audit survived revalidation against merged commit `1d34ae62457046d745939dfa1aee915d46553433`; [issue #289](https://github.com/the-sarge/cpace/issues/289) is the live follow-up. Existing pinned dependency, security-audit, and long-fuzz evidence remains historical; this maintenance change makes no stronger release-readiness claim.
+
+### Workflow policy
+
+At the maintainer’s request, [PR #290](https://github.com/the-sarge/cpace/pull/290) also removes the AGENTS.md rule requiring an explicit per-action instruction for each merge.
