@@ -46,11 +46,11 @@ func TestMessageFramingDecodeReturnsOwnedFields(t *testing.T) {
 
 	msg[len(msg)-1] ^= 0xff
 	if !bytes.Equal(got.ada, []byte("ADa")) {
-		t.Fatalf("decoded associated data aliases message buffer: %q", got.ada)
+		t.Fatalf("decoded associated data after message mutation got %q want %q", got.ada, "ADa")
 	}
 	msg[messageHeaderSize+1] ^= 0xff
 	if !bytes.Equal(got.sid, []byte("sid")) {
-		t.Fatalf("decoded session id aliases message buffer: %q", got.sid)
+		t.Fatalf("decoded session ID after message mutation got %q want %q", got.sid, "sid")
 	}
 }
 
@@ -86,7 +86,7 @@ func TestMessageFramingCatalogueAcceptsMaxFields(t *testing.T) {
 	for _, tc := range messageFramingMaxFieldCases() {
 		t.Run(tc.name, func(t *testing.T) {
 			if len(tc.msg) >= maxMessageLength {
-				t.Fatalf("max-size message len=%d exceeds aggregate cap %d", len(tc.msg), maxMessageLength)
+				t.Fatalf("max-size message length got %d want < %d", len(tc.msg), maxMessageLength)
 			}
 			if err := decodeMessageFromCatalogue(tc.msg); err != nil {
 				t.Fatalf("decode max fields: %v", err)
@@ -138,10 +138,10 @@ func TestMessageFramingCatalogueRejectsFieldLimits(t *testing.T) {
 func assertMessageFramingError(t *testing.T, err error, wantErrContains string) {
 	t.Helper()
 	if !errors.Is(err, ErrMessage) {
-		t.Fatalf("decode err=%v want ErrMessage", err)
+		t.Fatalf("decode err got %v want ErrMessage", err)
 	}
 	if wantErrContains != "" && !strings.Contains(err.Error(), wantErrContains) {
-		t.Fatalf("decode err=%q missing %q", err, wantErrContains)
+		t.Fatalf("decode err got %q want substring %q", err, wantErrContains)
 	}
 }
 
@@ -335,7 +335,7 @@ func TestMessageAProtocolFuzzSeedsPreserveValidFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	invalid := fuzzDraftInvalidVector(t)
+	invalid := mustLoadDraftInvalidVector(t)
 	var decoded messageAProtocolFuzzSeedCounts
 	for _, seed := range messageAProtocolFuzzSeeds(exchange.msgA, exchange.msgB, invalid.InvalidY1) {
 		got, err := decodeMessageA(seed)
@@ -349,7 +349,7 @@ func TestMessageAProtocolFuzzSeedsPreserveValidFields(t *testing.T) {
 		}
 	}
 	if want := (messageAProtocolFuzzSeedCounts{valid: 1, identityPoint: 1, invalidPoint: 1, otherSessionID: 1}); decoded != want {
-		t.Fatalf("decoded Message A protocol fuzz seed categories=%+v want %+v", decoded, want)
+		t.Fatalf("decoded Message A protocol fuzz seed categories got %+v want %+v", decoded, want)
 	}
 }
 
@@ -365,7 +365,7 @@ func TestMessageAProtocolFuzzSeedPreservationRejectsUnclassifiedDecode(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	if classifyMessageAProtocolFuzzSeed(got, baseA, fuzzDraftInvalidVector(t).InvalidY1) != messageAProtocolFuzzSeedUnclassified {
+	if classifyMessageAProtocolFuzzSeed(got, baseA, mustLoadDraftInvalidVector(t).InvalidY1) != messageAProtocolFuzzSeedUnclassified {
 		t.Fatal("unclassified successful decode passed preservation assertion")
 	}
 }
@@ -431,7 +431,7 @@ func TestMessageBFuzzSeedsPreserveValidFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	invalid := fuzzDraftInvalidVector(t)
+	invalid := mustLoadDraftInvalidVector(t)
 	var decoded messageBFuzzSeedCounts
 	for _, seed := range messageBFuzzSeeds(exchange.msgB, msgC, invalid.InvalidY1) {
 		got, err := decodeMessageB(seed)
@@ -445,7 +445,7 @@ func TestMessageBFuzzSeedsPreserveValidFields(t *testing.T) {
 		}
 	}
 	if want := (messageBFuzzSeedCounts{valid: 1, identityPoint: 1, invalidPoint: 1, tamperedTag: 1}); decoded != want {
-		t.Fatalf("decoded Message B fuzz seed categories=%+v want %+v", decoded, want)
+		t.Fatalf("decoded Message B fuzz seed categories got %+v want %+v", decoded, want)
 	}
 }
 
@@ -465,7 +465,7 @@ func TestMessageBFuzzSeedPreservationRejectsUnclassifiedDecode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if classifyMessageBFuzzSeed(got, baseB, fuzzDraftInvalidVector(t).InvalidY1, tamperedB.tag) != messageBFuzzSeedUnclassified {
+	if classifyMessageBFuzzSeed(got, baseB, mustLoadDraftInvalidVector(t).InvalidY1, tamperedB.tag) != messageBFuzzSeedUnclassified {
 		t.Fatal("unclassified successful Message B decode passed preservation assertion")
 	}
 }
@@ -534,7 +534,7 @@ func TestExactMessageFieldIndexRejectsAmbiguousLengths(t *testing.T) {
 			t.Fatal("messageSpec.exactFieldIndex accepted ambiguous exact field lengths")
 		}
 		if !strings.Contains(fmt.Sprint(got), "ambiguous exact 32-byte field") {
-			t.Fatalf("panic=%v want ambiguous exact field diagnostic", got)
+			t.Fatalf("panic got %v want ambiguous exact field diagnostic", got)
 		}
 	}()
 	_, _ = spec.exactFieldIndex(pointSize)
@@ -556,7 +556,7 @@ func TestMessageFuzzSeedsRejectsAmbiguousExactFieldLengths(t *testing.T) {
 			t.Fatal("messageFuzzSeeds accepted ambiguous exact field lengths")
 		}
 		if !strings.Contains(fmt.Sprint(got), "ambiguous exact 32-byte field") {
-			t.Fatalf("panic=%v want ambiguous exact field diagnostic", got)
+			t.Fatalf("panic got %v want ambiguous exact field diagnostic", got)
 		}
 	}()
 	_ = messageFuzzSeeds(spec, valid, withMessageRole(valid, otherMessageRole(spec.role)), nil)
@@ -581,11 +581,11 @@ func TestMessageFuzzSeedsSkipsAbsentExactFieldLengths(t *testing.T) {
 		clone(crossRole),
 	}
 	if len(seeds) != len(want) {
-		t.Fatalf("messageFuzzSeeds returned %d seeds, want %d", len(seeds), len(want))
+		t.Fatalf("messageFuzzSeeds seed count got %d want %d", len(seeds), len(want))
 	}
 	for i := range want {
 		if !bytes.Equal(seeds[i], want[i]) {
-			t.Fatalf("messageFuzzSeeds seed %d=%x want %x", i, seeds[i], want[i])
+			t.Fatalf("messageFuzzSeeds seed %d got %x want %x", i, seeds[i], want[i])
 		}
 	}
 }

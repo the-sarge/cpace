@@ -158,7 +158,7 @@ func TestEmbeddedDraftGeneratorJSON(t *testing.T) {
 		t.Fatal(err)
 	}
 	if v.H != "SHA-512" || v.HsInBytes != sha512BlockSize || v.ZPADLength != 100 {
-		t.Fatalf("unexpected generator metadata H=%q H.s_in_bytes=%d ZPAD=%d", v.H, v.HsInBytes, v.ZPADLength)
+		t.Fatalf("generator metadata got H=%q H.s_in_bytes=%d ZPAD=%d want H=SHA-512 H.s_in_bytes=%d ZPAD=100", v.H, v.HsInBytes, v.ZPADLength, sha512BlockSize)
 	}
 	gotGS := generatorString(v.DSI, v.PRS, v.CI, v.SID, v.HsInBytes)
 	if !bytes.Equal(gotGS, v.GeneratorString) {
@@ -186,7 +186,7 @@ func TestEmbeddedDraftConfirmationTagGoldens(t *testing.T) {
 	}
 	for _, key := range []string{"tagA", "tagB"} {
 		if len(tags[key]) != tagSize {
-			t.Fatalf("%s length=%d want %d", key, len(tags[key]), tagSize)
+			t.Fatalf("%s length got %d want %d", key, len(tags[key]), tagSize)
 		}
 	}
 }
@@ -350,7 +350,7 @@ func TestCoreDraft21Vectors(t *testing.T) {
 	}
 	for _, key := range []string{"ya", "yb"} {
 		if v[key][31]&0xf0 != 0 {
-			t.Fatalf("%s top nibble is not sampler-injectable: %x", key, v[key][31])
+			t.Fatalf("%s top nibble got %x want 0 for sampler injection", key, v[key][31]&0xf0)
 		}
 	}
 
@@ -425,10 +425,7 @@ func draftVectorInput(v draftVector, ad []byte) normalizedInput {
 }
 
 func TestScalarMultVFYDraftInvalidVectors(t *testing.T) {
-	v, err := loadDraftInvalidVectorJSON(draft21RistrettoInvalidJSON)
-	if err != nil {
-		t.Fatal(err)
-	}
+	v := mustLoadDraftInvalidVector(t)
 	s, err := scalarFromCanonical(v.Valid["s"])
 	if err != nil {
 		t.Fatal(err)
@@ -449,10 +446,10 @@ func TestScalarMultVFYDraftInvalidVectors(t *testing.T) {
 	} {
 		got, err := scalarMultVFY(s, tc.encoded)
 		if got != nil {
-			t.Fatalf("%s: invalid scalar_mult_vfy out=%x want nil", tc.name, got)
+			t.Fatalf("%s: invalid scalar_mult_vfy out got %x want nil", tc.name, got)
 		}
 		if !errors.Is(err, ErrAbort) || !errors.Is(err, tc.sentinel) {
-			t.Fatalf("%s: invalid scalar_mult_vfy err=%v want ErrAbort and %v", tc.name, err, tc.sentinel)
+			t.Fatalf("%s: invalid scalar_mult_vfy err got %v want ErrAbort and %v", tc.name, err, tc.sentinel)
 		}
 	}
 }
