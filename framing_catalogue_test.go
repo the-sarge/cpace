@@ -86,7 +86,7 @@ func TestMessageFramingCatalogueAcceptsMaxFields(t *testing.T) {
 	for _, tc := range messageFramingMaxFieldCases() {
 		t.Run(tc.name, func(t *testing.T) {
 			if len(tc.msg) >= maxMessageLength {
-				t.Fatalf("max-size message len=%d exceeds aggregate cap %d", len(tc.msg), maxMessageLength)
+				t.Fatalf("max-size message length got %d want < %d", len(tc.msg), maxMessageLength)
 			}
 			if err := decodeMessageFromCatalogue(tc.msg); err != nil {
 				t.Fatalf("decode max fields: %v", err)
@@ -141,7 +141,7 @@ func assertMessageFramingError(t *testing.T, err error, wantErrContains string) 
 		t.Fatalf("decode err got %v want ErrMessage", err)
 	}
 	if wantErrContains != "" && !strings.Contains(err.Error(), wantErrContains) {
-		t.Fatalf("decode err=%q missing %q", err, wantErrContains)
+		t.Fatalf("decode err got %q want substring %q", err, wantErrContains)
 	}
 }
 
