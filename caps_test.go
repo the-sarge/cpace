@@ -113,22 +113,22 @@ func TestPackageOwnedCapPolicyAcceptsInputCopies(t *testing.T) {
 	}
 
 	if !bytes.Equal(accepted.password, []byte("password")) {
-		t.Fatalf("accepted password aliases caller input: %q", accepted.password)
+		t.Fatalf("accepted password after caller mutation got %q want %q", accepted.password, "password")
 	}
 	if !bytes.Equal(accepted.selfID, []byte("initiator")) {
-		t.Fatalf("accepted self ID aliases caller input: %q", accepted.selfID)
+		t.Fatalf("accepted self ID after caller mutation got %q want %q", accepted.selfID, "initiator")
 	}
 	if !bytes.Equal(accepted.peerID, []byte("responder")) {
-		t.Fatalf("accepted peer ID aliases caller input: %q", accepted.peerID)
+		t.Fatalf("accepted peer ID after caller mutation got %q want %q", accepted.peerID, "responder")
 	}
 	if !bytes.Equal(accepted.context, []byte("context")) {
-		t.Fatalf("accepted context aliases caller input: %q", accepted.context)
+		t.Fatalf("accepted context after caller mutation got %q want %q", accepted.context, "context")
 	}
 	if !bytes.Equal(accepted.sid, []byte("sid")) {
-		t.Fatalf("accepted session ID aliases caller input: %q", accepted.sid)
+		t.Fatalf("accepted session ID after caller mutation got %q want %q", accepted.sid, "sid")
 	}
 	if !bytes.Equal(accepted.localAD, []byte("AD")) {
-		t.Fatalf("accepted local associated data aliases caller input: %q", accepted.localAD)
+		t.Fatalf("accepted local associated data after caller mutation got %q want %q", accepted.localAD, "AD")
 	}
 }
 

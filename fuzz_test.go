@@ -182,7 +182,7 @@ func FuzzProtocolMismatch(f *testing.F) {
 			t.Fatalf("Respond failed before expected confirmation mismatch: %v", err)
 		}
 		if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrConfirmationFailed) {
-			t.Fatalf("Finish err=%v", err)
+			t.Fatalf("Finish err got %v want ErrConfirmationFailed", err)
 		}
 	})
 }
@@ -284,7 +284,7 @@ func FuzzScalarMultVFY(f *testing.F) {
 		out, err := scalarMultVFY(s, encoded)
 		if err == nil {
 			if len(out) != pointSize {
-				t.Fatalf("scalarMultVFY output length=%d", len(out))
+				t.Fatalf("scalarMultVFY output length got %d want %d", len(out), pointSize)
 			}
 			if bytes.Equal(out, make([]byte, pointSize)) {
 				t.Fatalf("scalarMultVFY accepted identity output")
@@ -295,7 +295,7 @@ func FuzzScalarMultVFY(f *testing.F) {
 			t.Fatalf("scalarMultVFY rejection out got %x want nil", out)
 		}
 		if !errors.Is(err, ErrAbort) {
-			t.Fatalf("scalarMultVFY rejection err=%v does not wrap ErrAbort", err)
+			t.Fatalf("scalarMultVFY rejection err got %v want ErrAbort", err)
 		}
 		// A canonical decode round-trips its input, and the harness scalar is
 		// the fixed non-zero draft-fixture scalar, so the post-multiply
@@ -307,7 +307,7 @@ func FuzzScalarMultVFY(f *testing.F) {
 		switch {
 		case len(encoded) != pointSize:
 			if errors.Is(err, ErrPeerShareEncoding) || errors.Is(err, ErrPeerShareIdentity) {
-				t.Fatalf("length rejection err=%v wraps a peer-share sentinel", err)
+				t.Fatalf("length rejection err got %v want no peer-share sentinel", err)
 			}
 		case bytes.Equal(encoded, make([]byte, pointSize)):
 			if !errors.Is(err, ErrPeerShareIdentity) || errors.Is(err, ErrPeerShareEncoding) {

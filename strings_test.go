@@ -101,18 +101,18 @@ func TestIRTranscriptOwnsInputsAndOutput(t *testing.T) {
 	gotTranscript[0] ^= 0xff
 
 	if !bytes.Equal(tr.bytes(), wantTranscript) {
-		t.Fatalf("transcript changed after caller mutation")
+		t.Fatalf("transcript after caller mutation got %x want %x", tr.bytes(), wantTranscript)
 	}
 	gotTranscriptID := tr.transcriptID()
 	gotTranscriptID[0] ^= 0xff
 	if !bytes.Equal(tr.transcriptID(), wantTranscriptID) {
-		t.Fatalf("transcript ID changed after caller mutation")
+		t.Fatalf("transcript ID after caller mutation got %x want %x", tr.transcriptID(), wantTranscriptID)
 	}
 	if got := tr.initiatorConfirmationTag(isk, sid); !bytes.Equal(got, wantTagA) {
-		t.Fatalf("initiator tag changed after caller mutation")
+		t.Fatalf("initiator tag after caller mutation got %x want %x", got, wantTagA)
 	}
 	if got := tr.responderConfirmationTag(isk, sid); !bytes.Equal(got, wantTagB) {
-		t.Fatalf("responder tag changed after caller mutation")
+		t.Fatalf("responder tag after caller mutation got %x want %x", got, wantTagB)
 	}
 }
 
@@ -128,13 +128,13 @@ func TestIRTranscriptInitiatorAD(t *testing.T) {
 	// Returned slice is an independent copy: mutating it must not affect the transcript.
 	got[0] ^= 0xff
 	if again := tr.initiatorAD(); !bytes.Equal(again, []byte("ada")) {
-		t.Fatalf("initiatorAD returned aliased slice: %q", again)
+		t.Fatalf("initiatorAD after returned slice mutation got %q want %q", again, "ada")
 	}
 
 	// Transcript owns its inputs: mutating the caller's slice must not change it.
 	ada[0] = 'A'
 	if again := tr.initiatorAD(); !bytes.Equal(again, []byte("ada")) {
-		t.Fatalf("initiatorAD changed after caller mutation: %q", again)
+		t.Fatalf("initiatorAD after caller mutation got %q want %q", again, "ada")
 	}
 }
 
@@ -164,7 +164,7 @@ func TestIRTranscriptClear(t *testing.T) {
 		}
 	}
 	if tr.bytes() != nil {
-		t.Fatalf("clear did not nil transcript: %x", tr.bytes())
+		t.Fatalf("transcript after clear got %x want nil", tr.bytes())
 	}
 	if tr.ya != nil || tr.ada != nil || tr.yb != nil || tr.adb != nil {
 		t.Fatal("clear did not nil transcript component fields")

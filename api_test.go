@@ -170,7 +170,7 @@ func TestSessionClose(t *testing.T) {
 	}
 	secrets.assertCleared()
 	if _, err := sI.Export([]byte("label"), []byte("ctx"), 32); !errors.Is(err, ErrSessionClosed) {
-		t.Fatalf("Export after Close err=%v", err)
+		t.Fatalf("Export after Close err got %v want ErrSessionClosed", err)
 	}
 	if !bytes.Equal(sI.TranscriptID(), transcriptID) {
 		t.Fatal("TranscriptID changed after Close")
@@ -193,7 +193,7 @@ func TestSessionValueCopiesShareCloseState(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := copied.Export([]byte("label"), []byte("ctx"), 32); !errors.Is(err, ErrSessionClosed) {
-		t.Fatalf("Export from copied closed session err=%v", err)
+		t.Fatalf("Export from copied closed session err got %v want ErrSessionClosed", err)
 	}
 	if err := copied.Close(); err != nil {
 		t.Fatal(err)
@@ -483,10 +483,10 @@ func TestMutableInputsAreCopied(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := sI.PeerID(); !bytes.Equal(got, []byte("responder")) {
-		t.Fatalf("initiator peer ID=%q after caller mutation", got)
+		t.Fatalf("initiator peer ID after caller mutation got %q want %q", got, "responder")
 	}
 	if got := sR.PeerID(); !bytes.Equal(got, []byte("initiator")) {
-		t.Fatalf("responder peer ID=%q after caller mutation", got)
+		t.Fatalf("responder peer ID after caller mutation got %q want %q", got, "initiator")
 	}
 	if !bytes.Equal(sI.TranscriptID(), sR.TranscriptID()) {
 		t.Fatal("transcript IDs differ after caller mutation")
@@ -599,7 +599,7 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		}
 		initiatorSecrets := snapshotInitiatorSecrets(t, initiator)
 		if _, _, err := initiator.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
-			t.Fatalf("initiator Finish garbage err=%v", err)
+			t.Fatalf("initiator Finish garbage err got %v want ErrMessage", err)
 		}
 		initiatorSecrets.assertCleared()
 	})
@@ -612,7 +612,7 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		exchange := newExchange(t, initCfg, respCfg)
 		initiatorSecrets := snapshotInitiatorSecrets(t, exchange.initiator)
 		if _, _, err := exchange.initiator.Finish(exchange.msgB); !errors.Is(err, ErrConfirmationFailed) {
-			t.Fatalf("initiator Finish wrong-password err=%v", err)
+			t.Fatalf("initiator Finish wrong-password err got %v want ErrConfirmationFailed", err)
 		}
 		initiatorSecrets.assertCleared()
 	})
@@ -622,7 +622,7 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		exchange := newExchange(t, initInput, respInput)
 		responderSecrets := snapshotResponderSecrets(t, exchange.responder)
 		if _, err := exchange.responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
-			t.Fatalf("responder Finish garbage err=%v", err)
+			t.Fatalf("responder Finish garbage err got %v want ErrMessage", err)
 		}
 		responderSecrets.assertCleared()
 	})
@@ -634,7 +634,7 @@ func TestClearOnFinishFailurePaths(t *testing.T) {
 		msgC[len(msgC)-1] ^= 0xff
 		responderSecrets := snapshotResponderSecrets(t, exchange.responder)
 		if _, err := exchange.responder.Finish(msgC); !errors.Is(err, ErrConfirmationFailed) {
-			t.Fatalf("responder Finish tampered tagA err=%v", err)
+			t.Fatalf("responder Finish tampered tagA err got %v want ErrConfirmationFailed", err)
 		}
 		responderSecrets.assertCleared()
 	})
@@ -647,6 +647,7 @@ func TestSessionISKSurvivesCoreClear(t *testing.T) {
 	responderSecrets := snapshotResponderSecrets(t, exchange.responder)
 	sR := exchange.finishResponder(msgC)
 	responderSecrets.assertCleared()
+	snapshotSessionSecrets(t, sR).assertLive()
 	kI, err := sI.Export([]byte("label"), []byte("ctx"), 32)
 	if err != nil {
 		t.Fatal(err)
@@ -667,7 +668,7 @@ func TestFinishZeroValueHardening(t *testing.T) {
 	var initiator Initiator
 	if _, _, err := initiator.Finish([]byte("garbage")); !errors.Is(err, ErrInvalidInput) ||
 		!strings.Contains(err.Error(), "uninitialized initiator") {
-		t.Fatalf("zero-value Initiator.Finish malformed err=%v", err)
+		t.Fatalf("zero-value Initiator.Finish malformed err got %v want ErrInvalidInput containing uninitialized initiator", err)
 	}
 	if initiator.state != nil {
 		t.Fatal("zero-value Initiator.Finish consumed state on malformed message")
@@ -680,7 +681,7 @@ func TestFinishZeroValueHardening(t *testing.T) {
 	msgB := encodeMessageB(v["Yb"], v["ADb"], bytes.Repeat([]byte{0x99}, tagSize))
 	if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrInvalidInput) ||
 		!strings.Contains(err.Error(), "uninitialized initiator") {
-		t.Fatalf("zero-value Initiator.Finish shaped msgB err=%v", err)
+		t.Fatalf("zero-value Initiator.Finish shaped msgB err got %v want ErrInvalidInput containing uninitialized initiator", err)
 	}
 	if initiator.state != nil {
 		t.Fatal("zero-value Initiator.Finish consumed state on shaped message B")
@@ -689,7 +690,7 @@ func TestFinishZeroValueHardening(t *testing.T) {
 	var responder Responder
 	if _, err := responder.Finish([]byte("garbage")); !errors.Is(err, ErrInvalidInput) ||
 		!strings.Contains(err.Error(), "uninitialized responder") {
-		t.Fatalf("zero-value Responder.Finish malformed err=%v", err)
+		t.Fatalf("zero-value Responder.Finish malformed err got %v want ErrInvalidInput containing uninitialized responder", err)
 	}
 	if responder.state != nil {
 		t.Fatal("zero-value Responder.Finish consumed state on malformed message")
@@ -701,7 +702,7 @@ func TestFinishZeroValueHardening(t *testing.T) {
 		t.Fatal("zero-value Responder.Finish returned a Session for forged message C")
 	}
 	if !errors.Is(err, ErrInvalidInput) || !strings.Contains(err.Error(), "uninitialized responder") {
-		t.Fatalf("zero-value Responder.Finish forged msgC err=%v", err)
+		t.Fatalf("zero-value Responder.Finish forged msgC err got %v want ErrInvalidInput containing uninitialized responder", err)
 	}
 	if responder.state != nil {
 		t.Fatal("zero-value Responder.Finish consumed state on forged message C")
@@ -795,14 +796,14 @@ func TestSingleUseStateCloseAfterFinish(t *testing.T) {
 		initInput, respInput := defaultExchangeInputs()
 		exchange := newExchange(t, initInput, respInput)
 		if _, _, err := exchange.initiator.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
-			t.Fatalf("initiator Finish garbage err=%v", err)
+			t.Fatalf("initiator Finish garbage err got %v want ErrMessage", err)
 		}
 		if err := exchange.initiator.Close(); err != nil {
 			t.Fatalf("Initiator.Close after failed Finish err=%v", err)
 		}
 
 		if _, err := exchange.responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
-			t.Fatalf("responder Finish garbage err=%v", err)
+			t.Fatalf("responder Finish garbage err got %v want ErrMessage", err)
 		}
 		if err := exchange.responder.Close(); err != nil {
 			t.Fatalf("Responder.Close after failed Finish err=%v", err)
@@ -812,7 +813,7 @@ func TestSingleUseStateCloseAfterFinish(t *testing.T) {
 		msgC2, _ := exchange2.finishInitiator()
 		msgC2[len(msgC2)-1] ^= 0xff
 		if _, err := exchange2.responder.Finish(msgC2); !errors.Is(err, ErrConfirmationFailed) {
-			t.Fatalf("responder Finish tampered tagA err=%v", err)
+			t.Fatalf("responder Finish tampered tagA err got %v want ErrConfirmationFailed", err)
 		}
 		if err := exchange2.responder.Close(); err != nil {
 			t.Fatalf("Responder.Close after confirmation failure err=%v", err)
@@ -1064,12 +1065,12 @@ func TestInputFieldSizeLimits(t *testing.T) {
 			cfg := testInitiatorInput()
 			tc.edit(&cfg, bytes.Repeat([]byte{0x42}, tc.field.length+1))
 			if _, _, err := startTestInitiator(cfg); !errors.Is(err, ErrInvalidInput) {
-				t.Fatalf("Start err=%v", err)
+				t.Fatalf("Start err got %v want ErrInvalidInput", err)
 			} else if want := ErrInvalidInput.Error() + ": " + tc.field.name + " too large"; err.Error() != want {
 				t.Fatalf("Start err got %q want %q", err.Error(), want)
 			}
 			if _, _, err := Respond(cfg, nil); !errors.Is(err, ErrInvalidInput) {
-				t.Fatalf("Respond err=%v", err)
+				t.Fatalf("Respond err got %v want ErrInvalidInput", err)
 			} else if want := ErrInvalidInput.Error() + ": " + tc.field.name + " too large"; err.Error() != want {
 				t.Fatalf("Respond err got %q want %q", err.Error(), want)
 			}
@@ -1111,14 +1112,14 @@ func TestProtocolAllowsEmptyLocalAssociatedData(t *testing.T) {
 func TestScalarSamplingRejectsRepeatedZero(t *testing.T) {
 	if _, err := sampleScalar(&repeatingReader{buf: []byte{0}}); !errors.Is(err, ErrRandomness) ||
 		errors.Is(err, ErrInvalidInput) {
-		t.Fatalf("sampleScalar err=%v", err)
+		t.Fatalf("sampleScalar err got %v want ErrRandomness without ErrInvalidInput", err)
 	}
 }
 
 func TestScalarSamplingMasksDraftRistrettoBits(t *testing.T) {
 	in := bytes.Repeat([]byte{0xff}, scalarSize)
 	if _, err := scalarFromCanonical(in); !errors.Is(err, ErrInvalidInput) {
-		t.Fatalf("unmasked all-ones scalar err=%v", err)
+		t.Fatalf("unmasked all-ones scalar err got %v want ErrInvalidInput", err)
 	}
 	s, err := sampleScalar(&repeatingReader{buf: in})
 	if err != nil {
@@ -1135,7 +1136,7 @@ func TestScalarSamplingWrapsRandomnessReadFailure(t *testing.T) {
 	if _, err := sampleScalar(failingReader{err: io.ErrUnexpectedEOF}); !errors.Is(err, ErrRandomness) ||
 		errors.Is(err, ErrInvalidInput) ||
 		!errors.Is(err, io.ErrUnexpectedEOF) {
-		t.Fatalf("sampleScalar err=%v", err)
+		t.Fatalf("sampleScalar err got %v want ErrRandomness and io.ErrUnexpectedEOF without ErrInvalidInput", err)
 	}
 }
 
@@ -1153,13 +1154,13 @@ func TestProtocolRejectsEmptySessionIDByDefault(t *testing.T) {
 			cfg.SessionID = tc.sid
 			if _, _, err := startTestInitiator(cfg); !errors.Is(err, ErrInvalidInput) ||
 				!errors.Is(err, ErrEmptySessionID) {
-				t.Fatalf("Start err=%v", err)
+				t.Fatalf("Start err got %v want ErrInvalidInput and ErrEmptySessionID", err)
 			}
 
 			msgA := encodeMessageA(tc.sid, bytes.Repeat([]byte{0x42}, pointSize), nil)
 			if _, _, err := respondTestResponder(cfg, msgA); !errors.Is(err, ErrInvalidInput) ||
 				!errors.Is(err, ErrEmptySessionID) {
-				t.Fatalf("Respond err=%v", err)
+				t.Fatalf("Respond err got %v want ErrInvalidInput and ErrEmptySessionID", err)
 			}
 		})
 	}
@@ -1242,7 +1243,7 @@ func TestProtocolRejectsAsymmetricSessionID(t *testing.T) {
 				t.Fatal(err)
 			}
 			if _, _, err := respondTestResponder(respCfg, msgA); !errors.Is(err, ErrMessage) {
-				t.Fatalf("Respond err=%v", err)
+				t.Fatalf("Respond err got %v want ErrMessage", err)
 			}
 		})
 	}
@@ -1278,7 +1279,7 @@ func TestConfirmationFailsOnBoundInputMismatch(t *testing.T) {
 
 	exchange := newExchange(t, initCfg, respCfg)
 	if _, _, err := exchange.initiator.Finish(exchange.msgB); !errors.Is(err, ErrConfirmationFailed) {
-		t.Fatalf("Finish err=%v", err)
+		t.Fatalf("Finish err got %v want ErrConfirmationFailed", err)
 	}
 }
 
@@ -1288,7 +1289,7 @@ func TestRoleLocalIdentityReversalFailsConfirmation(t *testing.T) {
 
 	exchange := newExchange(t, initCfg, respCfg)
 	if _, _, err := exchange.initiator.Finish(exchange.msgB); !errors.Is(err, ErrConfirmationFailed) {
-		t.Fatalf("Finish err=%v", err)
+		t.Fatalf("Finish err got %v want ErrConfirmationFailed", err)
 	}
 }
 
@@ -1362,7 +1363,7 @@ func TestTranscriptLockingMismatches(t *testing.T) {
 			_, msgB, err := respondTestResponder(respCfg, msgA)
 			if tc.respondErr != nil {
 				if !errors.Is(err, tc.respondErr) {
-					t.Fatalf("Respond err=%v", err)
+					t.Fatalf("Respond err got %v want %v", err, tc.respondErr)
 				}
 				return
 			}
@@ -1374,7 +1375,7 @@ func TestTranscriptLockingMismatches(t *testing.T) {
 			}
 			_, _, err = initiator.Finish(msgB)
 			if !errors.Is(err, tc.finishErr) {
-				t.Fatalf("Finish err=%v", err)
+				t.Fatalf("Finish err got %v want %v", err, tc.finishErr)
 			}
 		})
 	}
@@ -1410,7 +1411,7 @@ func TestStateReuseAndConcurrentFinish(t *testing.T) {
 		}
 	}
 	if ok != 1 || used != 1 {
-		t.Fatalf("ok=%d used=%d", ok, used)
+		t.Fatalf("Finish results got ok=%d used=%d want ok=1 used=1", ok, used)
 	}
 
 	// A fresh initiator produces the message C needed to exercise responder reuse.
@@ -1426,7 +1427,7 @@ func TestStateReuseAndConcurrentFinish(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, err := exchange.responder.Finish(msgC); !errors.Is(err, ErrStateUsed) {
-		t.Fatalf("second responder finish err=%v", err)
+		t.Fatalf("second responder finish err got %v want ErrStateUsed", err)
 	}
 }
 
@@ -1496,7 +1497,7 @@ func TestProtocolAbortsOnInvalidRistrettoEncoding(t *testing.T) {
 	invalid := mustLoadDraftInvalidVector(t)
 	badA := encodeMessageA([]byte("sid"), invalid.InvalidY1, nil)
 	if _, _, err := respondTestResponder(cfg, badA); !errors.Is(err, ErrAbort) {
-		t.Fatalf("Respond err=%v", err)
+		t.Fatalf("Respond err got %v want ErrAbort", err)
 	}
 }
 
@@ -1516,10 +1517,10 @@ func TestResponderPrevalidatesInvalidInitiatorShareBeforeRandomness(t *testing.T
 			badA := encodeMessageA([]byte("sid"), tc.ya, nil)
 			_, _, err := respondWithRandom(cfg, badA, random)
 			if !errors.Is(err, ErrAbort) || errors.Is(err, ErrRandomness) {
-				t.Fatalf("Respond err=%v", err)
+				t.Fatalf("Respond err got %v want ErrAbort without ErrRandomness", err)
 			}
 			if random.reads != 0 {
-				t.Fatalf("Respond read randomness %d times before rejecting share", random.reads)
+				t.Fatalf("Respond randomness reads before rejecting share got %d want 0", random.reads)
 			}
 
 			nc, err := normalizeRespondInput(cfg)
@@ -1530,13 +1531,13 @@ func TestResponderPrevalidatesInvalidInitiatorShareBeforeRandomness(t *testing.T
 			random = &countingFailingReader{err: io.ErrUnexpectedEOF}
 			core, yb, tagB, err := newResponderCore(nc, tc.ya, nil, random)
 			if core != nil || yb != nil || tagB != nil {
-				t.Fatalf("newResponderCore returned core=%v yb=%x tagB=%x on invalid share", core, yb, tagB)
+				t.Fatalf("newResponderCore on invalid share got core=%v yb=%x tagB=%x want nil outputs", core, yb, tagB)
 			}
 			if !errors.Is(err, ErrAbort) || errors.Is(err, ErrRandomness) {
-				t.Fatalf("newResponderCore err=%v", err)
+				t.Fatalf("newResponderCore err got %v want ErrAbort without ErrRandomness", err)
 			}
 			if random.reads != 0 {
-				t.Fatalf("newResponderCore read randomness %d times before rejecting share", random.reads)
+				t.Fatalf("newResponderCore randomness reads before rejecting share got %d want 0", random.reads)
 			}
 		})
 	}
@@ -1560,7 +1561,7 @@ func TestInitiatorAbortsOnInvalidResponderShare(t *testing.T) {
 			}
 			msgB := encodeMessageB(tc.yb, nil, bytes.Repeat([]byte{0x99}, tagSize))
 			if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrAbort) {
-				t.Fatalf("Finish err=%v", err)
+				t.Fatalf("Finish err got %v want ErrAbort", err)
 			}
 		})
 	}
@@ -1625,13 +1626,13 @@ func TestPeerShareErrorsWrapErrAbort(t *testing.T) {
 				t.Fatal("expected peer-share rejection, got nil error")
 			}
 			if !errors.Is(err, ErrAbort) {
-				t.Fatalf("err=%v does not wrap ErrAbort", err)
+				t.Fatalf("err got %v want ErrAbort", err)
 			}
 			if !errors.Is(err, tc.sentinel) {
-				t.Fatalf("err=%v does not wrap %v", err, tc.sentinel)
+				t.Fatalf("err got %v want %v", err, tc.sentinel)
 			}
 			if errors.Is(err, tc.other) {
-				t.Fatalf("err=%v wraps unrelated sentinel %v", err, tc.other)
+				t.Fatalf("err got %v want no wrapping of %v", err, tc.other)
 			}
 			// Exact-string match pins the role context and the single
 			// "cpace: protocol abort" prefix mandated by ADR-0003.
@@ -1656,7 +1657,7 @@ func TestPeerShareLengthDefenseInternal(t *testing.T) {
 		short := make([]byte, n)
 		p, err := decodePublicShare(short)
 		if p != nil {
-			t.Fatalf("len=%d: decodePublicShare returned non-nil element", n)
+			t.Fatalf("len=%d: decodePublicShare got %v want nil", n, p)
 		}
 		assertLengthDefenseError(t, n, err)
 		out, err := scalarMultVFY(s, short)
@@ -1670,13 +1671,13 @@ func TestPeerShareLengthDefenseInternal(t *testing.T) {
 func assertLengthDefenseError(t *testing.T, n int, err error) {
 	t.Helper()
 	if !errors.Is(err, ErrAbort) {
-		t.Fatalf("len=%d: err=%v does not wrap ErrAbort", n, err)
+		t.Fatalf("len=%d: err got %v want ErrAbort", n, err)
 	}
 	if errors.Is(err, ErrPeerShareEncoding) || errors.Is(err, ErrPeerShareIdentity) {
-		t.Fatalf("len=%d: err=%v wraps a peer-share sentinel", n, err)
+		t.Fatalf("len=%d: err got %v want no peer-share sentinel", n, err)
 	}
 	if !strings.Contains(err.Error(), "invalid peer share length") {
-		t.Fatalf("len=%d: err=%q missing length diagnostic", n, err)
+		t.Fatalf("len=%d: err got %q want invalid peer share length diagnostic", n, err)
 	}
 }
 
@@ -1840,7 +1841,7 @@ func TestWireLengthRejectionIsMessageNotPeerShare(t *testing.T) {
 			t.Fatalf("len=%d: Respond err got %v want ErrMessage", n, err)
 		}
 		if errors.Is(err, ErrAbort) || errors.Is(err, ErrPeerShareEncoding) || errors.Is(err, ErrPeerShareIdentity) {
-			t.Fatalf("len=%d: wire-length rejection err=%v leaked an abort-layer error", n, err)
+			t.Fatalf("len=%d: wire-length rejection err got %v want no abort-layer error", n, err)
 		}
 	}
 }
@@ -1858,13 +1859,13 @@ func TestScalarMultVFYPostMultiplyIdentityDefense(t *testing.T) {
 		t.Fatalf("out got %x want nil", out)
 	}
 	if !errors.Is(err, ErrAbort) {
-		t.Fatalf("err=%v does not wrap ErrAbort", err)
+		t.Fatalf("err got %v want ErrAbort", err)
 	}
 	if errors.Is(err, ErrPeerShareEncoding) || errors.Is(err, ErrPeerShareIdentity) {
-		t.Fatalf("err=%v wraps a peer-share sentinel", err)
+		t.Fatalf("err got %v want no peer-share sentinel", err)
 	}
 	if !strings.Contains(err.Error(), "neutral-element shared secret") {
-		t.Fatalf("err=%q missing neutral-element diagnostic", err)
+		t.Fatalf("err got %q want neutral-element shared secret diagnostic", err)
 	}
 
 	p, err := decodePublicShare(invalid.Valid["X"])
@@ -1876,13 +1877,13 @@ func TestScalarMultVFYPostMultiplyIdentityDefense(t *testing.T) {
 		t.Fatalf("element out got %x want nil", out)
 	}
 	if !errors.Is(err, ErrAbort) {
-		t.Fatalf("element err=%v does not wrap ErrAbort", err)
+		t.Fatalf("element err got %v want ErrAbort", err)
 	}
 	if errors.Is(err, ErrPeerShareEncoding) || errors.Is(err, ErrPeerShareIdentity) {
-		t.Fatalf("element err=%v wraps a peer-share sentinel", err)
+		t.Fatalf("element err got %v want no peer-share sentinel", err)
 	}
 	if !strings.Contains(err.Error(), "neutral-element shared secret") {
-		t.Fatalf("element err=%q missing neutral-element diagnostic", err)
+		t.Fatalf("element err got %q want neutral-element shared secret diagnostic", err)
 	}
 }
 
@@ -1898,7 +1899,7 @@ func TestInitiatorReflectedShareFailsConfirmationNotAbort(t *testing.T) {
 	}
 	msgB := encodeMessageB(a.ya, nil, bytes.Repeat([]byte{0x99}, tagSize))
 	if _, _, err := initiator.Finish(msgB); !errors.Is(err, ErrConfirmationFailed) {
-		t.Fatalf("Finish err=%v", err)
+		t.Fatalf("Finish err got %v want ErrConfirmationFailed", err)
 	}
 }
 
@@ -1909,7 +1910,7 @@ func TestResponderRejectsTamperedMessageC(t *testing.T) {
 	msgC, _ := exchange.finishInitiator()
 	msgC[len(msgC)-1] ^= 0x01
 	if _, err := exchange.responder.Finish(msgC); !errors.Is(err, ErrConfirmationFailed) {
-		t.Fatalf("Finish err=%v", err)
+		t.Fatalf("Finish err got %v want ErrConfirmationFailed", err)
 	}
 }
 
@@ -1918,18 +1919,18 @@ func TestFinishConsumesStateOnParseFailure(t *testing.T) {
 	respCfg := testResponderInput()
 	exchange := newExchange(t, initCfg, respCfg)
 	if _, _, err := exchange.initiator.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
-		t.Fatalf("initiator Finish garbage err=%v", err)
+		t.Fatalf("initiator Finish garbage err got %v want ErrMessage", err)
 	}
 	if _, _, err := exchange.initiator.Finish(exchange.msgB); !errors.Is(err, ErrStateUsed) {
-		t.Fatalf("initiator second Finish err=%v", err)
+		t.Fatalf("initiator second Finish err got %v want ErrStateUsed", err)
 	}
 
 	if _, err := exchange.responder.Finish([]byte("garbage")); !errors.Is(err, ErrMessage) {
-		t.Fatalf("responder Finish garbage err=%v", err)
+		t.Fatalf("responder Finish garbage err got %v want ErrMessage", err)
 	}
 	msgC := encodeMessageC(bytes.Repeat([]byte{0x99}, tagSize))
 	if _, err := exchange.responder.Finish(msgC); !errors.Is(err, ErrStateUsed) {
-		t.Fatalf("responder second Finish err=%v", err)
+		t.Fatalf("responder second Finish err got %v want ErrStateUsed", err)
 	}
 }
 

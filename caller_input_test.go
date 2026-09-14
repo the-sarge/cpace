@@ -19,19 +19,19 @@ func TestCallerInputHandoffTransfersOwnershipToNormalizedInput(t *testing.T) {
 	defer normalized.wipe()
 
 	if !bytes.Equal(normalized.password, []byte("password")) {
-		t.Fatalf("normalized password got %q", normalized.password)
+		t.Fatalf("normalized password got %q want %q", normalized.password, "password")
 	}
 	if !bytes.Equal(normalized.initiatorID, []byte("initiator")) {
-		t.Fatalf("normalized initiator ID got %q", normalized.initiatorID)
+		t.Fatalf("normalized initiator ID got %q want %q", normalized.initiatorID, "initiator")
 	}
 	if !bytes.Equal(normalized.responderID, []byte("responder")) {
-		t.Fatalf("normalized responder ID got %q", normalized.responderID)
+		t.Fatalf("normalized responder ID got %q want %q", normalized.responderID, "responder")
 	}
 	if !bytes.Equal(normalized.sid, []byte("sid")) {
-		t.Fatalf("normalized session ID got %q", normalized.sid)
+		t.Fatalf("normalized session ID got %q want %q", normalized.sid, "sid")
 	}
 	if !bytes.Equal(normalized.ad, []byte("AD")) {
-		t.Fatalf("normalized associated data got %q", normalized.ad)
+		t.Fatalf("normalized associated data got %q want %q", normalized.ad, "AD")
 	}
 	wantCI := buildCI([]byte("initiator"), []byte("responder"), []byte("context"))
 	if !bytes.Equal(normalized.ci, wantCI) {
@@ -54,9 +54,9 @@ func TestCallerInputHandoffMapsResponderRole(t *testing.T) {
 	defer normalized.wipe()
 
 	if !bytes.Equal(normalized.initiatorID, []byte("initiator")) {
-		t.Fatalf("normalized initiator ID got %q", normalized.initiatorID)
+		t.Fatalf("normalized initiator ID got %q want %q", normalized.initiatorID, "initiator")
 	}
 	if !bytes.Equal(normalized.responderID, []byte("responder")) {
-		t.Fatalf("normalized responder ID got %q", normalized.responderID)
+		t.Fatalf("normalized responder ID got %q want %q", normalized.responderID, "responder")
 	}
 }

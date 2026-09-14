@@ -75,7 +75,7 @@ func TestFuzzTargetRegistryMatchesDefinedTargets(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(sortedKeys(registeredTargets), sortedKeys(definedTargets)) {
-		t.Fatalf("registered fuzz targets do not match defined fuzz targets\nregistered: %v\ndefined:    %v", sortedKeys(registeredTargets), sortedKeys(definedTargets))
+		t.Fatalf("defined fuzz targets got %v want %v", sortedKeys(definedTargets), sortedKeys(registeredTargets))
 	}
 }
 
@@ -104,7 +104,7 @@ func TestFuzzTargetRegistryMatchesOSSFuzzBuild(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(gotLines, wantLines) {
-		t.Fatalf("ossfuzz/build.sh compile lines do not match .github/fuzz-targets.json\nwant:\n%s\ngot:\n%s", strings.Join(wantLines, "\n"), strings.Join(gotLines, "\n"))
+		t.Fatalf("ossfuzz/build.sh compile lines got\n%s\nwant\n%s", strings.Join(gotLines, "\n"), strings.Join(wantLines, "\n"))
 	}
 }
 

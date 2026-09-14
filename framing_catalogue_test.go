@@ -46,11 +46,11 @@ func TestMessageFramingDecodeReturnsOwnedFields(t *testing.T) {
 
 	msg[len(msg)-1] ^= 0xff
 	if !bytes.Equal(got.ada, []byte("ADa")) {
-		t.Fatalf("decoded associated data aliases message buffer: %q", got.ada)
+		t.Fatalf("decoded associated data after message mutation got %q want %q", got.ada, "ADa")
 	}
 	msg[messageHeaderSize+1] ^= 0xff
 	if !bytes.Equal(got.sid, []byte("sid")) {
-		t.Fatalf("decoded session id aliases message buffer: %q", got.sid)
+		t.Fatalf("decoded session ID after message mutation got %q want %q", got.sid, "sid")
 	}
 }
 
