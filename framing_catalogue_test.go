@@ -727,3 +727,7 @@ func otherMessageRole(role byte) byte {
 	}
 	return 0xff
 }
+
+func messageFramingCatalogue() []messageSpec {
+	return []messageSpec{messageASpec, messageBSpec, messageCSpec}
+}

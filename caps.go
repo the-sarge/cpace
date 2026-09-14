@@ -16,11 +16,11 @@ type packageCapField struct {
 	exact  bool
 }
 
-func cappedPackageCapField(name string, maxLen int) packageCapField {
+func newCappedPackageCapField(name string, maxLen int) packageCapField {
 	return packageCapField{name: name, length: maxLen}
 }
 
-func exactPackageCapField(name string, wantLen int) packageCapField {
+func newExactPackageCapField(name string, wantLen int) packageCapField {
 	return packageCapField{name: name, length: wantLen, exact: true}
 }
 
@@ -42,37 +42,19 @@ func (f packageCapField) validateMessageLength(n int) error {
 	return nil
 }
 
-func shippedPackageCapPolicy() []packageCapField {
-	return []packageCapField{
-		passwordCap,
-		selfIDCap,
-		peerIDCap,
-		contextCap,
-		sessionIDCap,
-		localAssociatedDataCap,
-		messageASessionIDCap,
-		messageAPointCap,
-		messageAAssociatedDataCap,
-		messageBPointCap,
-		messageBAssociatedDataCap,
-		messageBTagCap,
-		messageCTagCap,
-	}
-}
-
 var (
-	passwordCap            = cappedPackageCapField("password", maxPasswordLength)
-	selfIDCap              = cappedPackageCapField("self id", maxIDLength)
-	peerIDCap              = cappedPackageCapField("peer id", maxIDLength)
-	contextCap             = cappedPackageCapField("context", maxContextLength)
-	sessionIDCap           = cappedPackageCapField("session id", maxSessionIDLength)
-	localAssociatedDataCap = cappedPackageCapField("local associated data", maxAssociatedDataLength)
+	passwordCap            = newCappedPackageCapField("password", maxPasswordLength)
+	selfIDCap              = newCappedPackageCapField("self id", maxIDLength)
+	peerIDCap              = newCappedPackageCapField("peer id", maxIDLength)
+	contextCap             = newCappedPackageCapField("context", maxContextLength)
+	sessionIDCap           = newCappedPackageCapField("session id", maxSessionIDLength)
+	localAssociatedDataCap = newCappedPackageCapField("local associated data", maxAssociatedDataLength)
 
-	messageASessionIDCap      = cappedPackageCapField("message A session id", maxSessionIDLength)
-	messageAPointCap          = exactPackageCapField("message A point", pointSize)
-	messageAAssociatedDataCap = cappedPackageCapField("message A associated data", maxAssociatedDataLength)
-	messageBPointCap          = exactPackageCapField("message B point", pointSize)
-	messageBAssociatedDataCap = cappedPackageCapField("message B associated data", maxAssociatedDataLength)
-	messageBTagCap            = exactPackageCapField("message B tag", tagSize)
-	messageCTagCap            = exactPackageCapField("message C tag", tagSize)
+	messageASessionIDCap      = newCappedPackageCapField("message A session id", maxSessionIDLength)
+	messageAPointCap          = newExactPackageCapField("message A point", pointSize)
+	messageAAssociatedDataCap = newCappedPackageCapField("message A associated data", maxAssociatedDataLength)
+	messageBPointCap          = newExactPackageCapField("message B point", pointSize)
+	messageBAssociatedDataCap = newCappedPackageCapField("message B associated data", maxAssociatedDataLength)
+	messageBTagCap            = newExactPackageCapField("message B tag", tagSize)
+	messageCTagCap            = newExactPackageCapField("message C tag", tagSize)
 )

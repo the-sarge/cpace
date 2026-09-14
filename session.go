@@ -4,9 +4,25 @@ import (
 	"crypto/hkdf"
 	"crypto/sha512"
 	"fmt"
+	"sync"
 )
 
 const maxHKDFOutput = 255 * 64
+
+// Session is an explicitly confirmed CPace session. Copies of a Session share
+// the same close state and secret key material.
+type Session struct {
+	state        *sessionState
+	transcriptID []byte
+	peerAD       []byte
+	peerID       []byte
+}
+
+type sessionState struct {
+	mu     sync.Mutex
+	closed bool
+	isk    []byte
+}
 
 // TranscriptID returns the draft CPaceSidOutput value for the confirmed
 // initiator-responder CPace transcript. It is not a complete channel binding
@@ -95,4 +111,13 @@ func (s *Session) Export(label, context []byte, length int) ([]byte, error) {
 		return nil, fmt.Errorf("%w: export failed: %w", ErrInvalidInput, err)
 	}
 	return out, nil
+}
+
+func newSession(isk, transcriptID, peerAD, peerID []byte) *Session {
+	return &Session{
+		state:        &sessionState{isk: clone(isk)},
+		transcriptID: clone(transcriptID),
+		peerAD:       clone(peerAD),
+		peerID:       clone(peerID),
+	}
 }

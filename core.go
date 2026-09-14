@@ -23,19 +23,19 @@ type responderCore struct {
 	peerID     []byte
 }
 
-func newInitiatorCore(nc normalizedInput, random io.Reader) (*initiatorCore, []byte, error) {
+func newInitiatorCore(ni normalizedInput, random io.Reader) (*initiatorCore, []byte, error) {
 	if random == nil {
 		random = rand.Reader
 	}
-	g := calculateGenerator(nc.password, nc.ci, nc.sid)
+	g := calculateGenerator(ni.password, ni.ci, ni.sid)
 	defer clearElement(g)
 	// Early-clear the password so its residency is bounded by the generator
-	// derivation, not the full constructor lifetime. nc is a by-value copy:
+	// derivation, not the full constructor lifetime. ni is a by-value copy:
 	// clearBytes zeroes the shared backing array, and the shell's deferred
-	// nc.wipe() re-covers the field on every exit path, including this
+	// ni.wipe() re-covers the field on every exit path, including this
 	// constructor's error returns and panics.
-	clearBytes(nc.password)
-	nc.password = nil
+	clearBytes(ni.password)
+	ni.password = nil
 	y, err := sampleScalar(random)
 	if err != nil {
 		return nil, nil, err
@@ -43,10 +43,10 @@ func newInitiatorCore(nc normalizedInput, random io.Reader) (*initiatorCore, []b
 	ya := scalarMult(y, g)
 	return &initiatorCore{
 		scalar: y,
-		sid:    clone(nc.sid),
+		sid:    clone(ni.sid),
 		ya:     clone(ya),
-		ada:    clone(nc.ad),
-		peerID: clone(nc.responderID),
+		ada:    clone(ni.ad),
+		peerID: clone(ni.responderID),
 	}, ya, nil
 }
 
@@ -70,7 +70,7 @@ func (c *initiatorCore) finish(peerYb, peerAdb, peerTag []byte) ([]byte, *Sessio
 	return tagA, newSession(isk, tr.transcriptID(), peerAdb, c.peerID), nil
 }
 
-func newResponderCore(nc normalizedInput, peerYa, peerAda []byte, random io.Reader) (*responderCore, []byte, []byte, error) {
+func newResponderCore(ni normalizedInput, peerYa, peerAda []byte, random io.Reader) (*responderCore, []byte, []byte, error) {
 	if random == nil {
 		random = rand.Reader
 	}
@@ -81,12 +81,12 @@ func newResponderCore(nc normalizedInput, peerYa, peerAda []byte, random io.Read
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	g := calculateGenerator(nc.password, nc.ci, nc.sid)
+	g := calculateGenerator(ni.password, ni.ci, ni.sid)
 	defer clearElement(g)
 	// Early-clear the password as in newInitiatorCore; the shell's deferred
-	// nc.wipe() re-covers the field on exit.
-	clearBytes(nc.password)
-	nc.password = nil
+	// ni.wipe() re-covers the field on exit.
+	clearBytes(ni.password)
+	ni.password = nil
 	y, err := sampleScalar(random)
 	if err != nil {
 		return nil, nil, nil, err
@@ -98,14 +98,14 @@ func newResponderCore(nc normalizedInput, peerYa, peerAda []byte, random io.Read
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	tr := newIRTranscript(peerYa, peerAda, yb, nc.ad)
-	isk := tr.deriveISK(nc.sid, k)
-	tagB := tr.responderConfirmationTag(isk, nc.sid)
+	tr := newIRTranscript(peerYa, peerAda, yb, ni.ad)
+	isk := tr.deriveISK(ni.sid, k)
+	tagB := tr.responderConfirmationTag(isk, ni.sid)
 	return &responderCore{
 		isk:        isk,
 		transcript: tr,
-		sid:        clone(nc.sid),
-		peerID:     clone(nc.initiatorID),
+		sid:        clone(ni.sid),
+		peerID:     clone(ni.initiatorID),
 	}, yb, tagB, nil
 }
 

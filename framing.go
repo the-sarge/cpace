@@ -20,6 +20,7 @@ const (
 	maxLEB128BytesForField = 3
 )
 
+// A negative constant cannot convert to uint: the prefix must encode the largest field cap.
 const _ = uint((1 << (7 * maxLEB128BytesForField)) - 1 - maxAssociatedDataLength)
 
 const (
@@ -36,6 +37,7 @@ const (
 		maxLEB128BytesForField + tagSize
 )
 
+// A negative constant cannot convert to uint: the aggregate cap must strictly exceed each valid message bound.
 const (
 	_ = uint(maxMessageLength - maxValidMessageALength - 1)
 	_ = uint(maxMessageLength - maxValidMessageBLength - 1)
@@ -93,10 +95,6 @@ var (
 		},
 	}
 )
-
-func messageFramingCatalogue() []messageSpec {
-	return []messageSpec{messageASpec, messageBSpec, messageCSpec}
-}
 
 func encodeMessageA(sid, ya, ada []byte) []byte {
 	return messageASpec.encode(sid, ya, ada)
@@ -174,7 +172,7 @@ type messageReader struct {
 }
 
 func newMessageReader(in []byte, spec messageSpec) (*messageReader, error) {
-	if len(in) < 3 {
+	if len(in) < messageHeaderSize {
 		return nil, fmt.Errorf("%w: truncated header", ErrMessage)
 	}
 	if in[0] != wireFormatV1 {
@@ -189,7 +187,7 @@ func newMessageReader(in []byte, spec messageSpec) (*messageReader, error) {
 	if len(in) > maxMessageLength {
 		return nil, fmt.Errorf("%w: message too large", ErrMessage)
 	}
-	return &messageReader{buf: in, off: 3}, nil
+	return &messageReader{buf: in, off: messageHeaderSize}, nil
 }
 
 func (r *messageReader) readField(spec messageFieldSpec) ([]byte, error) {

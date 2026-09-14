@@ -146,3 +146,21 @@ func TestPackageOwnedCapPolicyRejectsInputBeforeCopying(t *testing.T) {
 		t.Fatal("acceptInput mutated caller input on a later cap failure")
 	}
 }
+
+func shippedPackageCapPolicy() []packageCapField {
+	return []packageCapField{
+		passwordCap,
+		selfIDCap,
+		peerIDCap,
+		contextCap,
+		sessionIDCap,
+		localAssociatedDataCap,
+		messageASessionIDCap,
+		messageAPointCap,
+		messageAAssociatedDataCap,
+		messageBPointCap,
+		messageBAssociatedDataCap,
+		messageBTagCap,
+		messageCTagCap,
+	}
+}
