@@ -88,3 +88,7 @@ func TestLVCatBoundaryComposition(t *testing.T) {
 		t.Fatalf("second field=%x want %x", got[len(wantPrefix)+len(first):], wantSecond)
 	}
 }
+
+func prependLen(data []byte) []byte {
+	return appendLengthValue(nil, data)
+}

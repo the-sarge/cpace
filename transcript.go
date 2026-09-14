@@ -26,10 +26,6 @@ func newIRTranscript(ya, ada, yb, adb []byte) irTranscript {
 	}
 }
 
-func (t *irTranscript) bytes() []byte {
-	return clone(t.transcript)
-}
-
 func (t *irTranscript) transcriptID() []byte {
 	return transcriptID(t.transcript)
 }

@@ -2,10 +2,6 @@ package cpace
 
 import "fmt"
 
-func prependLen(data []byte) []byte {
-	return appendLengthValue(nil, data)
-}
-
 func lvCat(args ...[]byte) []byte {
 	var total int
 	for _, arg := range args {

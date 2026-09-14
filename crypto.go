@@ -84,17 +84,6 @@ func clearScalar(s *ristretto255.Scalar) {
 	runtime.KeepAlive(s)
 }
 
-func scalarFromCanonical(b []byte) (*ristretto255.Scalar, error) {
-	if len(b) != scalarSize {
-		return nil, fmt.Errorf("%w: scalar length", ErrInvalidInput)
-	}
-	s, err := ristretto255.NewScalar().SetCanonicalBytes(b)
-	if err != nil {
-		return nil, fmt.Errorf("%w: invalid scalar", ErrInvalidInput)
-	}
-	return s, nil
-}
-
 func scalarMult(s *ristretto255.Scalar, p *ristretto255.Element) []byte {
 	return ristretto255.NewIdentityElement().ScalarMult(s, p).Bytes()
 }
@@ -128,6 +117,8 @@ func confirmationTag(isk, sid, y, ad []byte) []byte {
 	macKey := sha512.Sum512(keyInput)
 	clearBytes(keyInput)
 	m := hmac.New(sha512.New, macKey[:])
+	// hmac.New retains internal key copies that this package cannot clear;
+	// clearing macKey only wipes our local copy.
 	clearBytes(macKey[:])
 	_, _ = m.Write(lvCat(y, ad))
 	return m.Sum(nil)

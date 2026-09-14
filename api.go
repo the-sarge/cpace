@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"sync"
 )
 
 const (
@@ -19,6 +18,11 @@ const (
 )
 
 const suiteName = "CPACE-RISTR255-SHA512"
+
+const (
+	uninitializedInitiator = "uninitialized initiator"
+	uninitializedResponder = "uninitialized responder"
+)
 
 // Initiator is a single-use initiator state returned by Start.
 type Initiator struct {
@@ -34,38 +38,23 @@ type Responder struct {
 
 type responderState = singleUseState[*responderCore]
 
-// Session is an explicitly confirmed CPace session. Copies of a Session share
-// the same close state and secret key material.
-type Session struct {
-	state        *sessionState
-	transcriptID []byte
-	peerAD       []byte
-	peerID       []byte
-}
-
-type sessionState struct {
-	mu     sync.Mutex
-	closed bool
-	isk    []byte
-}
-
 // Start creates initiator state and message A.
 func Start(input Input) (*Initiator, []byte, error) {
 	return startWithRandom(input, rand.Reader)
 }
 
 func startWithRandom(input Input, random io.Reader) (*Initiator, []byte, error) {
-	nc, err := normalizeStartInput(input)
+	ni, err := normalizeStartInput(input)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer nc.wipe()
+	defer ni.wipe()
 
-	core, ya, err := newInitiatorCore(nc, random)
+	core, ya, err := newInitiatorCore(ni, random)
 	if err != nil {
 		return nil, nil, err
 	}
-	return &Initiator{state: newSingleUseState(core, "uninitialized initiator")}, encodeMessageA(nc.sid, ya, nc.ad), nil
+	return &Initiator{state: newSingleUseState(core, uninitializedInitiator)}, encodeMessageA(ni.sid, ya, ni.ad), nil
 }
 
 // Respond consumes message A, creates responder state, and returns message B.
@@ -77,23 +66,23 @@ func Respond(input Input, messageA []byte) (*Responder, []byte, error) {
 }
 
 func respondWithRandom(input Input, messageA []byte, random io.Reader) (*Responder, []byte, error) {
-	nc, err := normalizeRespondInput(input)
+	ni, err := normalizeRespondInput(input)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer nc.wipe()
+	defer ni.wipe()
 	a, err := decodeMessageA(messageA)
 	if err != nil {
 		return nil, nil, err
 	}
-	if !bytes.Equal(a.sid, nc.sid) {
+	if !bytes.Equal(a.sid, ni.sid) {
 		return nil, nil, fmt.Errorf("%w: session id mismatch", ErrMessage)
 	}
-	core, yb, tagB, err := newResponderCore(nc, a.ya, a.ada, random)
+	core, yb, tagB, err := newResponderCore(ni, a.ya, a.ada, random)
 	if err != nil {
 		return nil, nil, err
 	}
-	return &Responder{state: newSingleUseState(core, "uninitialized responder")}, encodeMessageB(yb, nc.ad, tagB), nil
+	return &Responder{state: newSingleUseState(core, uninitializedResponder)}, encodeMessageB(yb, ni.ad, tagB), nil
 }
 
 // Finish consumes message B, verifies the responder confirmation tag, and
@@ -125,7 +114,7 @@ func (i *Initiator) Close() error {
 		return nil
 	}
 	if i.state == nil {
-		return fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
+		return fmt.Errorf("%w: %s", ErrInvalidInput, uninitializedInitiator)
 	}
 	return i.state.closeCore()
 }
@@ -155,39 +144,21 @@ func (r *Responder) Close() error {
 		return nil
 	}
 	if r.state == nil {
-		return fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
+		return fmt.Errorf("%w: %s", ErrInvalidInput, uninitializedResponder)
 	}
 	return r.state.closeCore()
 }
 
 func (i *Initiator) finishCore() (*initiatorCore, error) {
 	if i == nil || i.state == nil {
-		return nil, fmt.Errorf("%w: uninitialized initiator", ErrInvalidInput)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidInput, uninitializedInitiator)
 	}
 	return i.state.claimFinish()
 }
 
 func (r *Responder) finishCore() (*responderCore, error) {
 	if r == nil || r.state == nil {
-		return nil, fmt.Errorf("%w: uninitialized responder", ErrInvalidInput)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidInput, uninitializedResponder)
 	}
 	return r.state.claimFinish()
-}
-
-func newSession(isk, transcriptID, peerAD, peerID []byte) *Session {
-	return &Session{
-		state:        &sessionState{isk: clone(isk)},
-		transcriptID: clone(transcriptID),
-		peerAD:       clone(peerAD),
-		peerID:       clone(peerID),
-	}
-}
-
-func clone(in []byte) []byte {
-	if in == nil {
-		return nil
-	}
-	out := make([]byte, len(in))
-	copy(out, in)
-	return out
 }
