@@ -3023,3 +3023,24 @@ The optional stale `nc` references in the implementation-time caller-input audit
 ### Workflow policy
 
 At the maintainer’s request, [PR #290](https://github.com/the-sarge/cpace/pull/290) also removes the AGENTS.md rule requiring an explicit per-action instruction for each merge.
+
+---
+
+## Test-suite fixture and dialect sweep landed - 2026-09-14 14:20 EDT
+
+**Main:** `bf6519afb3b8`
+**Actor:** Codex
+
+### Summary
+
+Merged [PR #291](https://github.com/the-sarge/cpace/pull/291) as `bf6519afb3b8b2df622d29a0180b1ffcea8e08b5`, closing [issue #257](https://github.com/the-sarge/cpace/issues/257). Consolidated deterministic Exchange setup, invalid-vector loading, and concurrent Finish-result checks; added Session secret snapshots; normalized root-test diagnostics and table names; and reused input builders in fuzz tests. The PR records the surviving coverage for removed subset tests. Production code, dependencies, vector bytes, fuzz seeds/caps/oracles, and protocol-step ordering are unchanged.
+
+### Validation
+
+- Final candidate `e339cde42f66998edc3afa0de521a4df0051a878` passed `go test -count=1 ./...`, `task check` including race and static checks, and all 14 five-second fuzz smoke targets. Coverage remained 97.7%, with the same 300 statement blocks and no previously covered block lost. The final local certification passed against base `0ed7637cd58c1397a1bce990f12a6a74866e7f2c`; an earlier certification attempt hit a shared golangci-lint lock and passed unchanged after the competing process exited.
+- Initial RAS run `20260914T172658-48eeb333ae77bece658a37f7` had six successful reviewers and two adapter failures (AGY Flash structured output and Cursor Kimi candidate recovery). Accepted fixture, Session-liveness, and diagnostic findings were fixed manually. Source verification resolved all accepted findings at the final candidate. Replacement run `20260914T180802-64db566f7637e08014d93b59` completed with all six currently configured reviewers successful and zero findings.
+- Required Check, DCO, Dependency Gate, and SAST Gate checks passed; CodeQL and macOS/Windows smoke also passed. After marking the PR ready, [CI run 34879629649](https://github.com/the-sarge/cpace/actions/runs/34879629649) passed on the exact final candidate via the existing manual trigger. No refreshed release-audit or long-fuzz claim is made.
+
+### Next
+
+Stale test-name references in the spec matrix and ADR-0003 survived revalidation against the merged commit. [Issue #292](https://github.com/the-sarge/cpace/issues/292) is the live documentation follow-up.
