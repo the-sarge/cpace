@@ -2997,3 +2997,29 @@ Merged the GitHub Actions maintenance update [#285](https://github.com/the-sarge
 - RAS review `20260914T144011-f7561a343423230a378f8607` completed with eight reviewers and eight adjudicators. Its single low-priority finding was resolved by correcting the PR description: with `GOTOOLCHAIN=local`, the pinned setup-go action selects from the unchanged Go 1.27 range rather than the module toolchain preference. The [exact-head CI run](https://github.com/the-sarge/cpace/actions/runs/34856624779) resolved that range to Go 1.27.1.
 - Post-review `task check` passed on product head `4c7610d714f48145cd7a4fba9b9b5867e9e06559`, covering normal/race tests, helper validation, formatting, static and structural analysis, and vulnerability scanning. All nine hosted checks passed, including macOS and Windows. The exact head merged as `8d7cf396fafb8839adfc1845afa5a7b6b8572f3d`.
 - No tracked-file fixes, verification rerun, replacement review, or deferred follow-up was needed after the metadata correction. Existing pinned audit and long-fuzz evidence remains historical; this maintenance update makes no stronger release-readiness claim.
+
+---
+
+## Production-package consistency sweep landed - 2026-09-14 12:32 EDT
+
+**Main:** `1d34ae624570`
+**Actor:** Codex
+
+### Summary
+
+Merged [PR #288](https://github.com/the-sarge/cpace/pull/288) as `1d34ae62457046d745939dfa1aee915d46553433`, closing [issue #256](https://github.com/the-sarge/cpace/issues/256). The root-package consistency sweep moved five test-only helpers into test files, colocated the Session declarations with their methods, moved `clone` into `bytes.go`, centralized existing role diagnostics, aligned constructor/local names, and documented framing bounds and the HMAC cleanup limit. Public API, observable behavior, error text and wrapping, slice ownership, and cleanup/locking order are preserved.
+
+### Validation
+
+- Baseline and candidate `go test ./...` passed. Post-review `task check` passed on exact product head `82dc5910eaed6bce6acd317a0eab9aef77a7490b` against base `da7d1995c49d48ccb927507b19c337a74c9d2033`, with a clean worktree; the gate covered normal/race tests, helper validation, formatting, static/structural analysis, and vulnerability scanning.
+- A Go parser/type-system census found no remaining internal declarations with only test callers and confirmed unchanged exported declarations/type shapes. All seven moved function bodies were byte-identical, and existing test bodies and assertions were unchanged.
+- RAS run `20260914T160654-3b85efede34df89e117f86e8` completed with six successful reviewers, adjudication, and synthesis: no required fixes or verification. Cursor Kimi failed structured-output parsing; AGY Flash was stopped after more than ten minutes without a completed report. Neither failed attempt counted as review evidence.
+- Required checks `Check`, `DCO`, `Dependency Gate`, and `SAST Gate` passed on the reviewed head before the maintainer-authorized squash merge. Hosted macOS, Windows, and CodeQL checks also passed.
+
+### Next
+
+The optional stale `nc` references in the implementation-time caller-input audit survived revalidation against merged commit `1d34ae62457046d745939dfa1aee915d46553433`; [issue #289](https://github.com/the-sarge/cpace/issues/289) is the live follow-up. Existing pinned dependency, security-audit, and long-fuzz evidence remains historical; this maintenance change makes no stronger release-readiness claim.
+
+### Workflow policy
+
+At the maintainer’s request, [PR #290](https://github.com/the-sarge/cpace/pull/290) also removes the AGENTS.md rule requiring an explicit per-action instruction for each merge.
