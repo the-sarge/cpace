@@ -3044,3 +3044,23 @@ Merged [PR #291](https://github.com/the-sarge/cpace/pull/291) as `bf6519afb3b8b2
 ### Next
 
 Stale test-name references in the spec matrix and ADR-0003 survived revalidation against the merged commit. [Issue #292](https://github.com/the-sarge/cpace/issues/292) is the live documentation follow-up.
+
+---
+
+## Validation tools shared-identity sweep landed - 2026-09-14 14:44 EDT
+
+**Main:** `1c68ef606c67`
+**Actor:** Codex
+
+### Summary
+
+Merged [PR #294](https://github.com/the-sarge/cpace/pull/294) as `1c68ef606c67367c59590416b90f966c1396db28`, closing [issue #258](https://github.com/the-sarge/cpace/issues/258). Aligned the standalone release-policy and evidence-baseline validators' finding types, sorting, assertion contracts, and fatal-helper naming. Replaced the mutable accepted-policy catalogue and deep-clone harness with a fresh constructor, derived step identities from existing name/action fields, documented both validation-only contracts, and removed incidental action-pin/comment dependencies from mutation fixtures. Finding locations are now repository-relative; policy values, diagnostic messages, exit codes, final-component symlink rejection, and evidence-manifest behavior remain unchanged.
+
+### Validation
+
+- Both tool modules' suites passed, including focused constructor-independence, identity, paired-assertion, sorting, path, and file-kind regressions. Before/after binaries produced byte-identical stdout, stderr, and exit status on the same current tree with absolute and relative roots. The named common finding type, sorting helper, and paired assertion helper match byte-for-byte.
+- Final `task check` passed on exact head `d3dde54f3b8129747afc20e86917e3f90d6a304a` against base `0f98fc2ead4974ad8c4edd6d94294eaaa80e227c`, with a clean worktree and unchanged HEAD. This included normal/race tests, release/evidence helper checks, static and structural analysis, and vulnerability scanning.
+- RAS run `20260914T183606-e413d615118e85cefb52c8f3` completed with four successful reviewers and successful synthesis, with no findings or follow-ups; no verification or replacement review was required. Both Claude reviewers failed at startup and were not counted as successful review evidence.
+- Required Check, DCO, Dependency Gate, and SAST Gate checks passed before squash merge. After marking the PR ready, [CI run 34882446872](https://github.com/the-sarge/cpace/actions/runs/34882446872) passed on the same exact candidate through the existing manual trigger.
+
+This tool-maintenance change does not refresh pinned dependency, security-audit, or long-fuzz evidence and makes no stronger release-readiness claim.
