@@ -86,6 +86,8 @@ func main() {
 	fmt.Println("evidence baseline checker passed")
 }
 
+const baselineRef = "docs/evidence-baseline.md"
+
 func checkRepo(repoRoot string) ([]finding, error) {
 	baselinePath := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
 	if _, info, pathFindings, err := lstatRepoRelative(repoRoot, "docs/evidence-baseline.md", "docs/evidence-baseline.md"); err != nil {
@@ -106,22 +108,22 @@ func checkRepo(repoRoot string) ([]finding, error) {
 	referencedBundles := map[string]bool{}
 	summaryDocSet := map[string]bool{}
 	for _, row := range rows {
-		rawRefs, rawFindings := evidenceRefs(row.rawCell, baselinePath+":"+row.lane)
+		rawRefs, rawFindings := evidenceRefs(row.rawCell, baselineRef+":"+row.lane)
 		findings = append(findings, rawFindings...)
 		for _, ref := range rawRefs {
-			_, info, pathFindings, err := lstatRepoRelative(repoRoot, ref, baselinePath+":"+row.lane)
+			_, info, pathFindings, err := lstatRepoRelative(repoRoot, ref, baselineRef+":"+row.lane)
 			if len(pathFindings) > 0 {
 				findings = append(findings, pathFindings...)
 				continue
 			}
 			switch {
 			case errors.Is(err, fs.ErrNotExist):
-				findings = append(findings, finding{path: baselinePath + ":" + row.lane, msg: "referenced raw artifact does not exist: " + ref})
+				findings = append(findings, finding{path: baselineRef + ":" + row.lane, msg: "referenced raw artifact does not exist: " + ref})
 				continue
 			case err != nil:
 				return nil, err
 			case info.Mode()&fs.ModeSymlink != 0:
-				findings = append(findings, finding{path: baselinePath + ":" + row.lane, msg: "referenced raw artifact is a symlink: " + ref})
+				findings = append(findings, finding{path: baselineRef + ":" + row.lane, msg: "referenced raw artifact is a symlink: " + ref})
 			}
 			bundle := evidenceBundleForRef(ref, info)
 			if bundle != "" {
@@ -129,24 +131,24 @@ func checkRepo(repoRoot string) ([]finding, error) {
 			}
 		}
 
-		docRefs, docFindings := summaryRefs(row.summaryCell, baselinePath+":"+row.lane)
+		docRefs, docFindings := summaryRefs(row.summaryCell, baselineRef+":"+row.lane)
 		findings = append(findings, docFindings...)
 		for _, ref := range docRefs {
 			summaryDocSet[ref] = true
-			_, info, pathFindings, err := lstatRepoRelative(repoRoot, ref, baselinePath+":"+row.lane)
+			_, info, pathFindings, err := lstatRepoRelative(repoRoot, ref, baselineRef+":"+row.lane)
 			if len(pathFindings) > 0 {
 				findings = append(findings, pathFindings...)
 				continue
 			}
 			switch {
 			case errors.Is(err, fs.ErrNotExist):
-				findings = append(findings, finding{path: baselinePath + ":" + row.lane, msg: "referenced summary doc does not exist: " + ref})
+				findings = append(findings, finding{path: baselineRef + ":" + row.lane, msg: "referenced summary doc does not exist: " + ref})
 			case err != nil:
 				return nil, err
 			case info.Mode()&fs.ModeSymlink != 0:
-				findings = append(findings, finding{path: baselinePath + ":" + row.lane, msg: "referenced summary doc is a symlink: " + ref})
+				findings = append(findings, finding{path: baselineRef + ":" + row.lane, msg: "referenced summary doc is a symlink: " + ref})
 			case info.IsDir():
-				findings = append(findings, finding{path: baselinePath + ":" + row.lane, msg: "referenced summary doc is a directory: " + ref})
+				findings = append(findings, finding{path: baselineRef + ":" + row.lane, msg: "referenced summary doc is a directory: " + ref})
 			}
 		}
 	}
@@ -176,7 +178,7 @@ func summaryDocsFromBaseline(repoRoot string) ([]string, []finding, error) {
 	}
 	summaryDocSet := map[string]bool{}
 	for _, row := range rows {
-		refs, refFindings := summaryRefs(row.summaryCell, baselinePath+":"+row.lane)
+		refs, refFindings := summaryRefs(row.summaryCell, baselineRef+":"+row.lane)
 		findings = append(findings, refFindings...)
 		for _, ref := range refs {
 			summaryDocSet[ref] = true
@@ -196,7 +198,7 @@ func checkSummaryDocsManifest(repoRoot string, want []string) []finding {
 	if err != nil {
 		return []finding{{path: summaryDocsManifestRef, msg: err.Error()}}
 	}
-	if !sameStringSlice(got, want) {
+	if !slices.Equal(got, want) {
 		return []finding{{path: summaryDocsManifestRef, msg: fmt.Sprintf("summary-doc manifest got %q, want %q; run (cd tools/evidencebaseline && go run . --repo-root ../.. --write-summary-docs)", got, want)}}
 	}
 	return nil
@@ -334,13 +336,13 @@ func parseBaselineIndex(path string) ([]baselineRow, []finding, error) {
 		return nil, nil, err
 	}
 	if len(tableLines) == 0 {
-		return nil, []finding{{path: path, msg: "Baseline Index table is missing or empty"}}, nil
+		return nil, []finding{{path: baselineRef, msg: "Baseline Index table is missing or empty"}}, nil
 	}
 
 	header := splitTableRow(tableLines[0])
 	wantHeader := []string{"Evidence lane", "Pinned baseline", "Raw artifacts", "Summary docs", "Freshness rule"}
-	if !sameStringSlice(header, wantHeader) {
-		return nil, []finding{{path: path, msg: fmt.Sprintf("Baseline Index header got %q, want %q", header, wantHeader)}}, nil
+	if !slices.Equal(header, wantHeader) {
+		return nil, []finding{{path: baselineRef, msg: fmt.Sprintf("Baseline Index header got %q, want %q", header, wantHeader)}}, nil
 	}
 
 	var rows []baselineRow
@@ -348,28 +350,28 @@ func parseBaselineIndex(path string) ([]baselineRow, []finding, error) {
 	seenLane := map[string]bool{}
 	dataStart := 2
 	if len(tableLines) < 2 {
-		findings = append(findings, finding{path: path, msg: "Baseline Index separator is missing"})
+		findings = append(findings, finding{path: baselineRef, msg: "Baseline Index separator is missing"})
 		dataStart = 1
 	} else {
 		separator := splitTableRow(tableLines[1])
 		if !validTableSeparator(separator, len(wantHeader)) {
-			findings = append(findings, finding{path: path, msg: fmt.Sprintf("Baseline Index separator got %q, want %d Markdown separator columns", separator, len(wantHeader))})
+			findings = append(findings, finding{path: baselineRef, msg: fmt.Sprintf("Baseline Index separator got %q, want %d Markdown separator columns", separator, len(wantHeader))})
 			dataStart = 1
 		}
 	}
 	for _, line := range tableLines[dataStart:] {
 		cells := splitTableRow(line)
 		if len(cells) != len(wantHeader) {
-			findings = append(findings, finding{path: path, msg: "Baseline Index row has wrong column count: " + line})
+			findings = append(findings, finding{path: baselineRef, msg: "Baseline Index row has wrong column count: " + line})
 			continue
 		}
 		lane := cells[0]
 		if lane == "" {
-			findings = append(findings, finding{path: path, msg: "Baseline Index row has empty evidence lane"})
+			findings = append(findings, finding{path: baselineRef, msg: "Baseline Index row has empty evidence lane"})
 			continue
 		}
 		if seenLane[lane] {
-			findings = append(findings, finding{path: path + ":" + lane, msg: "duplicate evidence lane"})
+			findings = append(findings, finding{path: baselineRef + ":" + lane, msg: "duplicate evidence lane"})
 		}
 		seenLane[lane] = true
 		rows = append(rows, baselineRow{
@@ -379,7 +381,7 @@ func parseBaselineIndex(path string) ([]baselineRow, []finding, error) {
 		})
 	}
 	if len(rows) == 0 {
-		findings = append(findings, finding{path: path, msg: "Baseline Index contains no evidence rows"})
+		findings = append(findings, finding{path: baselineRef, msg: "Baseline Index contains no evidence rows"})
 	}
 	return rows, findings, nil
 }
@@ -612,7 +614,7 @@ func checkBundle(repoRoot, bundle string) []finding {
 	if !ok {
 		return findings
 	}
-	entries, sumFindings, err := parseSHA256SUMS(sumPath)
+	entries, sumFindings, err := parseSHA256SUMS(sumPath, bundle+"/SHA256SUMS")
 	if err != nil {
 		findings = append(findings, finding{path: bundle + "/SHA256SUMS", msg: err.Error()})
 		return findings
@@ -681,7 +683,7 @@ type checksumEntry struct {
 	path string
 }
 
-func parseSHA256SUMS(path string) ([]checksumEntry, []finding, error) {
+func parseSHA256SUMS(path, findingPath string) ([]checksumEntry, []finding, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, nil, err
@@ -700,31 +702,31 @@ func parseSHA256SUMS(path string) ([]checksumEntry, []finding, error) {
 			continue
 		}
 		if len(line) >= 66 && line[64] == ' ' && line[65] == '*' {
-			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", path, lineNo), msg: "checksum line must use text-mode SHA256SUMS format without a binary '*' path prefix"})
+			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", findingPath, lineNo), msg: "checksum line must use text-mode SHA256SUMS format without a binary '*' path prefix"})
 			continue
 		}
 		if len(line) < 67 || line[64:66] != "  " {
-			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", path, lineNo), msg: "checksum line must use '<64 lowercase hex><two spaces><bundle-relative path>' format"})
+			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", findingPath, lineNo), msg: "checksum line must use '<64 lowercase hex><two spaces><bundle-relative path>' format"})
 			continue
 		}
 		hash, rel := line[:64], line[66:]
 		if !sha256Hex.MatchString(hash) {
-			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", path, lineNo), msg: "checksum hash must be 64 lowercase hex characters"})
+			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", findingPath, lineNo), msg: "checksum hash must be 64 lowercase hex characters"})
 		}
 		if strings.ContainsAny(rel, " \t\r\n") {
-			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", path, lineNo), msg: "checksum path must not contain whitespace"})
+			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", findingPath, lineNo), msg: "checksum path must not contain whitespace"})
 			continue
 		}
 		if strings.HasPrefix(rel, "*") {
-			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", path, lineNo), msg: "checksum path must not start with a binary '*' path prefix"})
+			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", findingPath, lineNo), msg: "checksum path must not start with a binary '*' path prefix"})
 			continue
 		}
 		if !safeBundleRelativePath(rel) {
-			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", path, lineNo), msg: "checksum path must be a safe bundle-relative path"})
+			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", findingPath, lineNo), msg: "checksum path must be a safe bundle-relative path"})
 			continue
 		}
 		if seen[rel] {
-			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", path, lineNo), msg: "duplicate checksum path: " + rel})
+			findings = append(findings, finding{path: fmt.Sprintf("%s:%d", findingPath, lineNo), msg: "duplicate checksum path: " + rel})
 		}
 		seen[rel] = true
 		entries = append(entries, checksumEntry{hash: hash, path: rel})
@@ -842,18 +844,6 @@ func ignoredBundleEntry(rel string) bool {
 		return true
 	}
 	return filepath.Base(rel) == ".DS_Store"
-}
-
-func sameStringSlice(got, want []string) bool {
-	if len(got) != len(want) {
-		return false
-	}
-	for i := range got {
-		if got[i] != want[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func sortedKeys(set map[string]bool) []string {
