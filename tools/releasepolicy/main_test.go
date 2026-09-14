@@ -123,6 +123,40 @@ func TestReleasePolicyRejectsNonBlockingSASTReport(t *testing.T) {
 	assertFinding(t, findings, ".github/workflows/sast-gate.yml:jobs.sast-gate.steps", "SAST report step must fail the job")
 }
 
+func TestReleasePolicyRejectsConditionalSASTJob(t *testing.T) {
+	for _, condition := range []string{"false", "true", "null"} {
+		t.Run(condition, func(t *testing.T) {
+			repoRoot := t.TempDir()
+			mustWriteReleasePolicyRepoFixture(t, repoRoot)
+			workflow := mustReplaceOnce(t, acceptedSASTWorkflow, "  sast-gate:\n    steps:\n", "  sast-gate:\n    if: "+condition+"\n    steps:\n")
+			mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
+
+			findings, err := checkRepo(repoRoot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertOnlyFinding(t, findings, ".github/workflows/sast-gate.yml:jobs.sast-gate.if", "SAST job must not declare an if condition")
+		})
+	}
+}
+
+func TestReleasePolicyRejectsConditionalSASTScan(t *testing.T) {
+	for _, condition := range []string{"false", "true", "null"} {
+		t.Run(condition, func(t *testing.T) {
+			repoRoot := t.TempDir()
+			mustWriteReleasePolicyRepoFixture(t, repoRoot)
+			workflow := mustReplaceOnce(t, acceptedSASTWorkflow, "        id: sast\n", "        id: sast\n        if: "+condition+"\n")
+			mustWriteFile(t, filepath.Join(repoRoot, ".github", "workflows", "sast-gate.yml"), []byte(workflow), 0o644)
+
+			findings, err := checkRepo(repoRoot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertOnlyFinding(t, findings, ".github/workflows/sast-gate.yml:jobs.sast-gate.steps.sast.if", "SAST scan step must not declare an if condition")
+		})
+	}
+}
+
 func TestReleasePolicyRejectsNonBlockingSASTJob(t *testing.T) {
 	repoRoot := t.TempDir()
 	mustWriteReleasePolicyRepoFixture(t, repoRoot)

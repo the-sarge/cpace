@@ -114,6 +114,9 @@ func checkSASTFailurePolicy(repoRoot string) ([]finding, error) {
 		return nil, err
 	}
 	job := mapping(mapping(root, "jobs"), "sast-gate")
+	if mapping(job, "if") != nil {
+		return []finding{{path: path + ":jobs.sast-gate.if", msg: "SAST job must not declare an if condition"}}, nil
+	}
 	if continueOnError := mapping(job, "continue-on-error"); continueOnError != nil && scalar(continueOnError) != "false" {
 		return []finding{{path: path + ":jobs.sast-gate.continue-on-error", msg: "SAST job must remain blocking"}}, nil
 	}
@@ -122,6 +125,9 @@ func checkSASTFailurePolicy(repoRoot string) ([]finding, error) {
 	var reportStep *yaml.Node
 	for idx, step := range steps(job) {
 		if scalar(mapping(step, "id")) == "sast" {
+			if mapping(step, "if") != nil {
+				return []finding{{path: path + ":jobs.sast-gate.steps.sast.if", msg: "SAST scan step must not declare an if condition"}}, nil
+			}
 			scanIndex = idx
 		}
 		if scalar(mapping(step, "name")) == "Report golangci-lint result" {
