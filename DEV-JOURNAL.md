@@ -3104,3 +3104,24 @@ Merged [PR #298](https://github.com/the-sarge/cpace/pull/298) as `e00d652d6b02bf
 - Required Check, DCO, Dependency Gate, and SAST Gate checks passed. Post-ready [CI run 34887201530](https://github.com/the-sarge/cpace/actions/runs/34887201530) passed on the same exact candidate through the existing manual trigger before squash merge.
 
 This wrapper change does not refresh pinned dependency, security-audit, or long-fuzz evidence and makes no stronger release-readiness claim.
+
+---
+
+## Conditional SAST policy enforcement landed - 2026-09-14 19:27 EDT
+
+**Main:** `fee0d3a7c82d`
+**Actor:** Codex
+
+### Summary
+
+Merged [PR #300](https://github.com/the-sarge/cpace/pull/300), closing [#272](https://github.com/the-sarge/cpace/issues/272). The Release policy checker now rejects explicit `if` keys on `jobs.sast-gate` and its required `id: sast` scan step. The approved plan follows the scan identity introduced by #279; the original issue used the earlier `gosec` identity.
+
+### Validation
+
+Both focused repository-checker regressions were observed failing before their respective guards, then passing for `false`, `true`, and `null` at both locations. The accepted fixture, current repository, full releasepolicy module suite, and `task check:changed` passed. Final `task check` passed on clean reviewed head `6604ba62c0e8fe1d3bb615f9517b24c8f88aac52` against base `5fe32bedbd27a6306b4d5574dc7d0ecc1393514e`, including race tests, linting, structural checks, and govulncheck with no vulnerabilities found.
+
+RAS review `20260914T231804-cfad706f5447e2d79f241fb7` completed with six successful reviewers and synthesis, zero findings, and no deferred work. No fix verification or replacement review was required. All four required PR checks passed; the [post-ready CI run](https://github.com/the-sarge/cpace/actions/runs/34908772926) also succeeded on the exact reviewed head before squash merge as `fee0d3a7c82ddee68f875f9b7ed90e5d2ffc6004`.
+
+### Decisions
+
+The [merged PR](https://github.com/the-sarge/cpace/pull/300) records the bounded verification-aid contract: explicit keys in the enumerated workflow, without claiming comprehensive GitHub Actions semantics or inherited YAML condition handling. The workflow, SARIF behavior, pins, permissions, dependencies, and public API did not change. This work does not refresh cryptographic release evidence or establish production readiness.
