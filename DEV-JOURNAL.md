@@ -3084,3 +3084,23 @@ Merged [PR #296](https://github.com/the-sarge/cpace/pull/296) as `b3c66dac0a7e47
 - Required Check, DCO, Dependency Gate, and SAST Gate checks passed. After the PR was marked ready, [CI run 34885549148](https://github.com/the-sarge/cpace/actions/runs/34885549148) passed on the same exact candidate through the existing manual trigger before squash merge.
 
 This incremental tooling change does not refresh pinned dependency, security-audit, or long-fuzz evidence and makes no stronger release-readiness claim.
+
+---
+
+## Uncached evidence-baseline tests landed - 2026-09-14 15:32 EDT
+
+**Main:** `e00d652d6b02`
+**Actor:** Codex
+
+### Summary
+
+Merged [PR #298](https://github.com/the-sarge/cpace/pull/298) as `e00d652d6b02bfcc2dfae66c019403c869e28d5d`, closing [issue #265](https://github.com/the-sarge/cpace/issues/265). The evidence-baseline wrapper now uses `go test -count=1 ./...` so repository-coupled nested-module tests execute despite a warm Go test cache. Checker behavior, evidence policy, dependencies, and package behavior remain unchanged.
+
+### Validation
+
+- Repeated invocation of the old wrapper produced `(cached)`; both repeated `task evidence:baseline` invocations after the change executed tests and passed.
+- Full `task check` passed, followed by final local certification with the same command on exact pushed head `aab82ecee5591bdaaa00bf0e3b8d9ede1eb76a74` against base `91d11c55a645a5a63f6935a0abcab3cced14ef21`, with a clean worktree. Coverage included normal/race tests, nested-module checks, lint, and vulnerability scanning.
+- Independent standards and spec reviews found no code issues. RAS review `20260914T192607-b2eeaf5900539f82197ca65e` completed with all six reviewers and synthesis successful, with zero findings or follow-ups. No fixes, verification, or replacement review were needed; RAS did not post to GitHub.
+- Required Check, DCO, Dependency Gate, and SAST Gate checks passed. Post-ready [CI run 34887201530](https://github.com/the-sarge/cpace/actions/runs/34887201530) passed on the same exact candidate through the existing manual trigger before squash merge.
+
+This wrapper change does not refresh pinned dependency, security-audit, or long-fuzz evidence and makes no stronger release-readiness claim.
