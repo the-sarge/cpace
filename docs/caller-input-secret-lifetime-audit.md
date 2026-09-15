@@ -21,11 +21,11 @@ Scope: manual audit for the ADR-0009 caller-input implementation. This is not a 
 - On `normalizeInput` error, the error comes from `acceptInput` before any package-owned clone is returned.
 - On panic before ownership transfer after `acceptInput` succeeds, `normalizeInput`'s deferred `caller.wipe()` clears package-owned clones still referenced by `callerInput` during panic unwind.
 - On successful normalization, `callerInput.handoff` transfers package-owned slices into `normalizedInput`, clears residual context storage after CI construction, and nils the transferred slice headers in `callerInput`; the deferred `caller.wipe()` then runs without retaining or clearing the slices now owned by `normalizedInput`.
-- After successful normalization, `startWithRandom` and `respondWithRandom` immediately defer `nc.wipe()` so `normalizedInput` owns the transferred slices only until the role-specific constructor path returns or unwinds.
-- On core-constructor success, `newInitiatorCore` and `newResponderCore` clear `nc.password` immediately after `calculateGenerator` returns, bounding password residency to generator derivation rather than the whole constructor. The outer deferred `nc.wipe()` remains a backstop and is idempotent.
-- On core-constructor error, including randomness errors after generator derivation, the outer deferred `nc.wipe()` clears any remaining normalized slices. The constructors also clear the password before scalar sampling, so the password is cleared before randomness errors can return.
-- On panic after `startWithRandom` or `respondWithRandom` installs `defer nc.wipe()`, the normalized password and other normalized slices are cleared during panic unwinding.
-- `Respond` decodes and validates message A after `defer nc.wipe()` is installed, so malformed message A and session-ID mismatch paths clear normalized input.
+- After successful normalization, `startWithRandom` and `respondWithRandom` immediately defer `ni.wipe()` so `normalizedInput` owns the transferred slices only until the role-specific constructor path returns or unwinds.
+- On core-constructor success, `newInitiatorCore` and `newResponderCore` clear `ni.password` immediately after `calculateGenerator` returns, bounding password residency to generator derivation rather than the whole constructor. The outer deferred `ni.wipe()` remains a backstop and is idempotent.
+- On core-constructor error, including randomness errors after generator derivation, the outer deferred `ni.wipe()` clears any remaining normalized slices. The constructors also clear the password before scalar sampling, so the password is cleared before randomness errors can return.
+- On panic after `startWithRandom` or `respondWithRandom` installs `defer ni.wipe()`, the normalized password and other normalized slices are cleared during panic unwinding.
+- `Respond` decodes and validates message A after `defer ni.wipe()` is installed, so malformed message A and session-ID mismatch paths clear normalized input.
 
 ## Residual Risks
 
