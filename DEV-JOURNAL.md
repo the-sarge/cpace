@@ -3125,3 +3125,24 @@ RAS review `20260914T231804-cfad706f5447e2d79f241fb7` completed with six success
 ### Decisions
 
 The [merged PR](https://github.com/the-sarge/cpace/pull/300) records the bounded verification-aid contract: explicit keys in the enumerated workflow, without claiming comprehensive GitHub Actions semantics or inherited YAML condition handling. The workflow, SARIF behavior, pins, permissions, dependencies, and public API did not change. This work does not refresh cryptographic release evidence or establish production readiness.
+
+---
+
+## Gosec failure suppression checks landed - 2026-09-14 20:15 EDT
+
+**Main:** `a1adc6f09586`
+**Actor:** Codex
+
+### Summary
+
+Merged [PR #302](https://github.com/the-sarge/cpace/pull/302), closing [issue #273](https://github.com/the-sarge/cpace/issues/273). The Release policy checker rejects target-level gosec error suppression unless `ignore_error` is absent or a YAML boolean false, and rejects the exact whitespace-delimited `-no-fail` option. The Taskfile remains the sole owner of scan-scope flags.
+
+### Decisions
+
+Kept the approved check boundary to the named YAML field and literal scalar-command token. This maintained verification aid does not claim general shell or Task template coverage, change library behavior, or refresh pinned release evidence. The [PR review disposition](https://github.com/the-sarge/cpace/pull/302) records rejection of out-of-scope flag-spelling expansion and optional diagnostic polish.
+
+### Validation
+
+Both suppression regressions failed before their corresponding guard and passed afterward. Preservation fixtures cover explicit false, a filename containing `-no-fail`, and the existing owner-local scan-policy change. `task check:changed` and final `task check` passed. The real `task gosec GOSEC=false` probe exited 201, preserving non-zero failure propagation.
+
+RAS review `20260915T000328-7d53dd0c93b763f418a152a2` completed with six reviewers and no required fixes or follow-ups. Exact-head certification covered `2aa39f641db115c1800ce063da09027dfe8f7f06` against base `45e08c6fa89533881e206468780754cc418ec998`; the worktree remained clean. All four required GitHub checks passed, including successful post-ready [CI run 34912227034](https://github.com/the-sarge/cpace/actions/runs/34912227034) on that head. Squash merge `a1adc6f09586ebc4e2b9e134662f08fbe89447ab` landed the work on main.
