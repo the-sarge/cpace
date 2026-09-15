@@ -3146,3 +3146,21 @@ Kept the approved check boundary to the named YAML field and literal scalar-comm
 Both suppression regressions failed before their corresponding guard and passed afterward. Preservation fixtures cover explicit false, a filename containing `-no-fail`, and the existing owner-local scan-policy change. `task check:changed` and final `task check` passed. The real `task gosec GOSEC=false` probe exited 201, preserving non-zero failure propagation.
 
 RAS review `20260915T000328-7d53dd0c93b763f418a152a2` completed with six reviewers and no required fixes or follow-ups. Exact-head certification covered `2aa39f641db115c1800ce063da09027dfe8f7f06` against base `45e08c6fa89533881e206468780754cc418ec998`; the worktree remained clean. All four required GitHub checks passed, including successful post-ready [CI run 34912227034](https://github.com/the-sarge/cpace/actions/runs/34912227034) on that head. Squash merge `a1adc6f09586ebc4e2b9e134662f08fbe89447ab` landed the work on main.
+
+---
+
+## Audit and coverage reference maintenance - 2026-09-14 21:00 EDT
+
+**Main:** `abcb40810ad0`
+**Actor:** Codex
+
+### Completed
+
+- Merged [PR #304](https://github.com/the-sarge/cpace/pull/304) as `abcb40810ad043e9e038600a1d91d44cb5f9aa6e`, closing [#289](https://github.com/the-sarge/cpace/issues/289) and [#292](https://github.com/the-sarge/cpace/issues/292). The caller-input secret-lifetime audit now uses `ni.wipe()` and `ni.password`; the spec matrix and ADR-0003 cite the surviving responder rejection subtests, with the ADR preserving the historical test-name mapping.
+- Preserved the audit date, implementation-time scope, evidence-freshness caveats, and accepted ADR decision. The three-document maintenance change does not refresh security or release evidence.
+
+### Validation
+
+- Candidate `17a2a65168ee35ff32aa95f5689eb547836999f2`, based on `d309fe5c16e27d083d331480a0800a8aec7686f7`, passed `git diff --check`, `task docs:check`, and both `TestPeerShareErrorsWrapErrAbort/respond_non-canonical` and `TestPeerShareErrorsWrapErrAbort/respond_identity` subtests.
+- Scoped RAS review `20260915T005231-f8b96a1c1c17b37f0a670e88` completed with six successful reviewers and six completed adjudications. No required fixes or follow-ups remained. The sole suggestion for extra ADR date/status metadata was independently rejected as an optional editorial preference outside the accepted obligation; no verification or replacement review was needed. An earlier attempt was interrupted to relocate RAS storage and was not used as evidence. The review contract and disposition are recorded in [PR #304](https://github.com/the-sarge/cpace/pull/304).
+- Final exact-head `BASE_REF=d309fe5c16e27d083d331480a0800a8aec7686f7 task check:changed` passed documentation validation, Go tool helper tests, and the evidence-baseline checker. Required Check, DCO, Dependency Gate, and SAST Gate checks passed, and post-ready [CI run 34915295058](https://github.com/the-sarge/cpace/actions/runs/34915295058) completed successfully on the same candidate before squash merge.
