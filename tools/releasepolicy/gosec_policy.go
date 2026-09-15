@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -28,6 +29,11 @@ func checkGosecTaskPolicy(repoRoot string) ([]finding, error) {
 	}
 
 	task := mapping(mapping(root, "tasks"), "gosec")
+	// Only an absent field or an explicit YAML boolean false preserves failure propagation.
+	if ignoreError := mapping(task, "ignore_error"); ignoreError != nil &&
+		(ignoreError.Kind != yaml.ScalarNode || ignoreError.Tag != "!!bool" || !strings.EqualFold(ignoreError.Value, "false")) {
+		c.fail("tasks.gosec.ignore_error", "gosec task must not ignore errors")
+	}
 	commands := mapping(task, "cmds")
 	if commands == nil || commands.Kind != yaml.SequenceNode || len(commands.Content) != 1 {
 		c.fail("tasks.gosec.cmds", "gosec task must contain exactly one command")
@@ -36,6 +42,11 @@ func checkGosecTaskPolicy(repoRoot string) ([]finding, error) {
 	command := scalar(commands.Content[0])
 	if !strings.HasPrefix(command, "{{.GOSEC}} ") || !strings.HasSuffix(command, " ./...") {
 		c.fail("tasks.gosec.cmds[0]", fmt.Sprintf("gosec task command %q must own scan policy between {{.GOSEC}} and ./...", command))
+	}
+	// Check the exact whitespace-delimited option in the canonical scalar command.
+	// This is regression coverage, not general shell or Task template parsing.
+	if slices.Contains(strings.Fields(command), "-no-fail") {
+		c.fail("tasks.gosec.cmds[0]", "gosec task must not use -no-fail")
 	}
 	return c.findings, nil
 }

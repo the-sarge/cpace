@@ -52,6 +52,66 @@ func TestReleasePolicyAllowsGosecPolicyChangeAtTaskOwner(t *testing.T) {
 	}
 }
 
+func TestReleasePolicyRejectsGosecTaskIgnoringErrors(t *testing.T) {
+	for _, value := range []string{"true", `"false"`, "null", "{}"} {
+		t.Run(value, func(t *testing.T) {
+			repoRoot := t.TempDir()
+			mustWriteReleasePolicyRepoFixture(t, repoRoot)
+			taskfile := mustReplaceOnce(t, acceptedScanTaskfile, "  gosec:\n", "  gosec:\n    ignore_error: "+value+"\n")
+			mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+			findings, err := checkRepo(repoRoot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertFinding(t, findings, "Taskfile.yml:tasks.gosec.ignore_error", "gosec task must not ignore errors")
+		})
+	}
+}
+
+func TestReleasePolicyRejectsGosecNoFailOption(t *testing.T) {
+	repoRoot := t.TempDir()
+	mustWriteReleasePolicyRepoFixture(t, repoRoot)
+	taskfile := mustReplaceOnce(t, acceptedScanTaskfile, `"{{.GOSEC}} -tests ./..."`, `"{{.GOSEC}} -tests -no-fail ./..."`)
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertFinding(t, findings, "Taskfile.yml:tasks.gosec.cmds[0]", "gosec task must not use -no-fail")
+}
+
+func TestReleasePolicyAllowsGosecExplicitErrorPropagation(t *testing.T) {
+	repoRoot := t.TempDir()
+	mustWriteReleasePolicyRepoFixture(t, repoRoot)
+	taskfile := mustReplaceOnce(t, acceptedScanTaskfile, "  gosec:\n", "  gosec:\n    ignore_error: false\n")
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(findings) > 0 {
+		t.Fatalf("explicit gosec error propagation got findings %#v want none", findings)
+	}
+}
+
+func TestReleasePolicyAllowsGosecNoFailSubstringInOutputPath(t *testing.T) {
+	repoRoot := t.TempDir()
+	mustWriteReleasePolicyRepoFixture(t, repoRoot)
+	taskfile := mustReplaceOnce(t, acceptedScanTaskfile, `"{{.GOSEC}} -tests ./..."`, `"{{.GOSEC}} -tests -out scan-no-fail.sarif ./..."`)
+	mustWriteFile(t, filepath.Join(repoRoot, "Taskfile.yml"), []byte(taskfile), 0o644)
+
+	findings, err := checkRepo(repoRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(findings) > 0 {
+		t.Fatalf("gosec output path got findings %#v want none", findings)
+	}
+}
+
 func TestReleasePolicyAllowsGolangciArgsChangeAtTaskOwner(t *testing.T) {
 	repoRoot := t.TempDir()
 	mustWriteReleasePolicyRepoFixture(t, repoRoot)
