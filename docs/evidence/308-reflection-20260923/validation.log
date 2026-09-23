@@ -1,0 +1,122 @@
+
+UTC 2026-09-23T18:14:58.755539+00:00
+$ git rev-parse HEAD
+d2db6eed5923395bf0dfb57e73275ea0a1506c44
+exit_code=0
+
+UTC 2026-09-23T18:14:58.766847+00:00
+$ git status --short --branch
+## codex/308-reflection-regressions
+exit_code=0
+
+UTC 2026-09-23T18:14:58.779543+00:00
+$ uname -srm
+Darwin 27.0.0 arm64
+exit_code=0
+
+UTC 2026-09-23T18:14:58.783040+00:00
+$ go version
+go version go1.27.1 darwin/arm64
+exit_code=0
+
+UTC 2026-09-23T18:14:58.790186+00:00
+$ task --version
+3.53.1
+exit_code=0
+
+UTC 2026-09-23T18:14:58.821730+00:00
+$ go test -run ^(TestReflection|TestRistrettoDraft21Vectors|TestIRTranscriptDraftVectorFlow) -count=1 -v .
+=== RUN   TestReflectionResponderRejectsOwnTag
+=== RUN   TestReflectionResponderRejectsOwnTag/empty/production_randomness
+=== RUN   TestReflectionResponderRejectsOwnTag/empty/forced_equal_shares
+=== RUN   TestReflectionResponderRejectsOwnTag/equal_nonempty/production_randomness
+=== RUN   TestReflectionResponderRejectsOwnTag/equal_nonempty/forced_equal_shares
+=== RUN   TestReflectionResponderRejectsOwnTag/different/production_randomness
+=== RUN   TestReflectionResponderRejectsOwnTag/different/forced_equal_shares
+--- PASS: TestReflectionResponderRejectsOwnTag (0.00s)
+    --- PASS: TestReflectionResponderRejectsOwnTag/empty/production_randomness (0.00s)
+    --- PASS: TestReflectionResponderRejectsOwnTag/empty/forced_equal_shares (0.00s)
+    --- PASS: TestReflectionResponderRejectsOwnTag/equal_nonempty/production_randomness (0.00s)
+    --- PASS: TestReflectionResponderRejectsOwnTag/equal_nonempty/forced_equal_shares (0.00s)
+    --- PASS: TestReflectionResponderRejectsOwnTag/different/production_randomness (0.00s)
+    --- PASS: TestReflectionResponderRejectsOwnTag/different/forced_equal_shares (0.00s)
+=== RUN   TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag
+=== RUN   TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/empty/production_randomness
+=== RUN   TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/empty/forced_equal_shares
+=== RUN   TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/equal_nonempty/production_randomness
+=== RUN   TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/equal_nonempty/forced_equal_shares
+=== RUN   TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/different/production_randomness
+=== RUN   TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/different/forced_equal_shares
+--- PASS: TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag (0.00s)
+    --- PASS: TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/empty/production_randomness (0.00s)
+    --- PASS: TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/empty/forced_equal_shares (0.00s)
+    --- PASS: TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/equal_nonempty/production_randomness (0.00s)
+    --- PASS: TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/equal_nonempty/forced_equal_shares (0.00s)
+    --- PASS: TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/different/production_randomness (0.00s)
+    --- PASS: TestReflectionInitiatorRejectsReflectedShareAndAuthenticTag/different/forced_equal_shares (0.00s)
+=== RUN   TestReflectionInitiatorWithoutTagOracle
+=== RUN   TestReflectionInitiatorWithoutTagOracle/empty
+=== RUN   TestReflectionInitiatorWithoutTagOracle/equal_nonempty
+=== RUN   TestReflectionInitiatorWithoutTagOracle/different
+--- PASS: TestReflectionInitiatorWithoutTagOracle (0.00s)
+    --- PASS: TestReflectionInitiatorWithoutTagOracle/empty (0.00s)
+    --- PASS: TestReflectionInitiatorWithoutTagOracle/equal_nonempty (0.00s)
+    --- PASS: TestReflectionInitiatorWithoutTagOracle/different (0.00s)
+=== RUN   TestReflectionHonestExchangeControls
+=== RUN   TestReflectionHonestExchangeControls/empty
+=== RUN   TestReflectionHonestExchangeControls/equal_nonempty
+=== RUN   TestReflectionHonestExchangeControls/different
+=== RUN   TestReflectionHonestExchangeControls/forced_equal_shares_different_ad
+--- PASS: TestReflectionHonestExchangeControls (0.00s)
+    --- PASS: TestReflectionHonestExchangeControls/empty (0.00s)
+    --- PASS: TestReflectionHonestExchangeControls/equal_nonempty (0.00s)
+    --- PASS: TestReflectionHonestExchangeControls/different (0.00s)
+    --- PASS: TestReflectionHonestExchangeControls/forced_equal_shares_different_ad (0.00s)
+=== RUN   TestReflectionRejectsTagsFromAnotherExchange
+=== RUN   TestReflectionRejectsTagsFromAnotherExchange/empty
+=== RUN   TestReflectionRejectsTagsFromAnotherExchange/equal_nonempty
+=== RUN   TestReflectionRejectsTagsFromAnotherExchange/different
+--- PASS: TestReflectionRejectsTagsFromAnotherExchange (0.00s)
+    --- PASS: TestReflectionRejectsTagsFromAnotherExchange/empty (0.00s)
+    --- PASS: TestReflectionRejectsTagsFromAnotherExchange/equal_nonempty (0.00s)
+    --- PASS: TestReflectionRejectsTagsFromAnotherExchange/different (0.00s)
+=== RUN   TestIRTranscriptDraftVectorFlow
+--- PASS: TestIRTranscriptDraftVectorFlow (0.00s)
+=== RUN   TestRistrettoDraft21Vectors
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_nil
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_empty
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_appended
+=== RUN   TestRistrettoDraft21Vectors/generator_sid_mutation_truncated
+--- PASS: TestRistrettoDraft21Vectors (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_first_byte (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_last_byte (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_nil (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_empty (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_appended (0.00s)
+    --- PASS: TestRistrettoDraft21Vectors/generator_sid_mutation_truncated (0.00s)
+PASS
+ok  	github.com/the-sarge/cpace	0.203s
+exit_code=0
+
+UTC 2026-09-23T18:14:59.205312+00:00
+$ task --silent check
+release helper smoke tests passed
+ok  	github.com/the-sarge/cpace/tools/releasepolicy	0.225s
+release policy checker passed
+CI change classifier tests passed
+Go tool helper tests passed
+Fuzz input validator tests passed
+ok  	github.com/the-sarge/cpace/tools/evidencebaseline	0.338s
+evidence baseline checker passed
+ok  	github.com/the-sarge/cpace	0.125s
+ok  	github.com/the-sarge/cpace	1.462s
+0 issues.
+No vulnerabilities found.
+exit_code=0
+
+UTC 2026-09-23T18:15:16.583100+00:00
+$ go mod verify
+all modules verified
+exit_code=0

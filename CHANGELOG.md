@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Reject otherwise valid equal local/remote confirmation tags in both `Finish` methods with `ErrConfirmationFailed` (#308). With forced equal shares and equal associated data, the old responder accepted its own B tag reflected as C before initiator confirmation. No feasible network attack causing this condition with fresh production randomness was established. The correction preserves wire and MAC derivation, releases no C or Session on rejection, and consumes state; it also rejects the negligible honest equal-message collision case. See [the analysis](docs/key-confirmation-reflection.md) for regression coverage and required release-evidence refresh.
+
 ## v0.1.3 - 2026-08-01
 
 - Pre-v1 caller-input API change (breaking relative to `v0.1.2`): replace public `Config` with role-local `Input`. Removed fields are `InitiatorID`, `ResponderID`, and `AssociatedData`; callers now use `SelfID`, `PeerID`, and `LocalAssociatedData`. Migration rule: the initiator calls `Start` with `SelfID=initiator, PeerID=responder`, and the responder calls `Respond` with `SelfID=responder, PeerID=initiator`. `Password`, `Context`, `SessionID`, and `AllowEmptySessionID` keep the same semantics, and wire format is unchanged.
