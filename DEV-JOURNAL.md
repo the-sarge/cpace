@@ -3164,3 +3164,28 @@ RAS review `20260915T000328-7d53dd0c93b763f418a152a2` completed with six reviewe
 - Candidate `17a2a65168ee35ff32aa95f5689eb547836999f2`, based on `d309fe5c16e27d083d331480a0800a8aec7686f7`, passed `git diff --check`, `task docs:check`, and both `TestPeerShareErrorsWrapErrAbort/respond_non-canonical` and `TestPeerShareErrorsWrapErrAbort/respond_identity` subtests.
 - Scoped RAS review `20260915T005231-f8b96a1c1c17b37f0a670e88` completed with six successful reviewers and six completed adjudications. No required fixes or follow-ups remained. The sole suggestion for extra ADR date/status metadata was independently rejected as an optional editorial preference outside the accepted obligation; no verification or replacement review was needed. An earlier attempt was interrupted to relocate RAS storage and was not used as evidence. The review contract and disposition are recorded in [PR #304](https://github.com/the-sarge/cpace/pull/304).
 - Final exact-head `BASE_REF=d309fe5c16e27d083d331480a0800a8aec7686f7 task check:changed` passed documentation validation, Go tool helper tests, and the evidence-baseline checker. Required Check, DCO, Dependency Gate, and SAST Gate checks passed, and post-ready [CI run 34915295058](https://github.com/the-sarge/cpace/actions/runs/34915295058) completed successfully on the same candidate before squash merge.
+
+---
+
+## CPace confirmation reflection hardening landed - 2026-09-23 14:27 EDT
+
+**Main:** `42f4a4d660be`
+**Actor:** Codex
+
+### Completed
+
+Merged [PR #309](https://github.com/the-sarge/cpace/pull/309) as `42f4a4d660bef4464a011f3d16e589b8cf115866`, closing [issue #308](https://github.com/the-sarge/cpace/issues/308). Both Finish paths now reject otherwise valid equal local/remote confirmation tags with `ErrConfirmationFailed` before returning an authenticated Session; the initiator also withholds C. Regression coverage exercises authentic-tag reflection, forced equal shares, empty/equal/different AD, honest controls, replay, state consumption, and cleanup.
+
+### Decisions
+
+The [reflection analysis](docs/key-confirmation-reflection.md) records the concrete finding behind the narrow behavior-freeze exception: the old responder accepted its own B tag as C under forced equal-share/equal-AD conditions. No feasible network attack forcing that condition with fresh production randomness was established. The change preserves API, wire format, MAC derivation, dependencies, and production randomness ownership. The [upstream-context comment](https://github.com/the-sarge/cpace/pull/309#issuecomment-5800529366) connects the correction to [cfrg/draft-irtf-cfrg-cpace#21](https://github.com/cfrg/draft-irtf-cfrg-cpace/pull/21); final RFC wording remains to be checked when updating the specification target.
+
+### Validation
+
+Source candidate `d2db6eed5923395bf0dfb57e73275ea0a1506c44` passed focused regressions/vectors, full `task check`, and module verification; [the committed evidence bundle](docs/evidence/308-reflection-20260923/README.md) preserves the transcript and checksums. The documentation-only descendant and exact PR head `2a1500fa6c62bf21987937b572a3c9018e9b8761` was separately certified with the same commands from a clean pushed worktree against base `87528342d68d26db4a5a69386ae5647baf7d05ed`.
+
+RAS review `20260923T181926-6341a5b2c1f098b8d4fb7a12` completed with four successful reviewers and zero findings or follow-ups. Claude Fable failed at process launch; the configured quorum was met and synthesis completed. Independent dispositions were fix-now 0, defer 0, reject 0, and stop-for-decision 0; no fix verification or replacement review was required. The [PR](https://github.com/the-sarge/cpace/pull/309) preserves the review and certification receipt. Check, DCO, Dependency Gate, and SAST Gate passed, as did fresh post-ready [CI run 35902177502](https://github.com/the-sarge/cpace/actions/runs/35902177502) on the exact reviewed head before merge.
+
+### Next
+
+The [evidence baseline](docs/evidence-baseline.md) remains the live release-evidence index. This security-relevant correction requires exact-candidate dependency/SAST, Capslock, security/spec/vector, and paired long-fuzz refresh before stronger release claims. Ordinary checks and automated reviews do not replace those lanes or independent cryptographic review.
