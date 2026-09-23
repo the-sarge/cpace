@@ -66,3 +66,5 @@ The responder and initiator tests were each run before their corresponding check
 ## Evidence limits
 
 This security-relevant change invalidates the applicability of the older commit-pinned dependency/SAST, Capslock, security/spec/vector, and paired long-fuzz release evidence to this candidate. [Evidence baseline](evidence-baseline.md) preserves the historical records and the refresh requirement. Local tests and automated code review are not an independent cryptographic assessment, a multi-host long-fuzz campaign, or a release-evidence refresh. No stronger release claim is made by this change. Exact source-candidate validation results are recorded separately from the source commit to avoid a self-referential SHA.
+
+[The validation bundle](evidence/308-reflection-20260923/README.md) records source candidate `d2db6eed5923395bf0dfb57e73275ea0a1506c44`, successful focused regressions/vectors, full `task check`, module verification, and the Standards/Spec reviews. It includes raw command output and checksums; the follow-up evidence commit changes documentation only.
