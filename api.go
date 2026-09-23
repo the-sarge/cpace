@@ -88,6 +88,7 @@ func respondWithRandom(input Input, messageA []byte, random io.Reader) (*Respond
 // Finish consumes message B, verifies the responder confirmation tag, and
 // returns message C plus an authenticated session. The initiator state is
 // consumed even when message parsing or confirmation fails.
+// A valid peer tag equal to the local tag is rejected with ErrConfirmationFailed.
 func (i *Initiator) Finish(messageB []byte) ([]byte, *Session, error) {
 	core, err := i.finishCore()
 	if err != nil {
@@ -122,6 +123,7 @@ func (i *Initiator) Close() error {
 // Finish consumes message C, verifies the initiator confirmation tag, and
 // returns an authenticated session. The responder state is consumed even when
 // message parsing or confirmation fails.
+// A valid peer tag equal to the local tag is rejected with ErrConfirmationFailed.
 func (r *Responder) Finish(messageC []byte) (*Session, error) {
 	core, err := r.finishCore()
 	if err != nil {

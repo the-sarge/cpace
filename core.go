@@ -67,6 +67,11 @@ func (c *initiatorCore) finish(peerYb, peerAdb, peerTag []byte) ([]byte, *Sessio
 		return nil, nil, ErrConfirmationFailed
 	}
 	tagA := tr.initiatorConfirmationTag(isk, c.sid)
+	// Reject equal confirmation tags before releasing our tag or a Session.
+	// CI role binding does not distinguish identical MAC inputs (#308).
+	if hmac.Equal(tagA, peerTag) {
+		return nil, nil, ErrConfirmationFailed
+	}
 	return tagA, newSession(isk, tr.transcriptID(), peerAdb, c.peerID), nil
 }
 
@@ -112,6 +117,12 @@ func newResponderCore(ni normalizedInput, peerYa, peerAda []byte, random io.Read
 func (c *responderCore) finish(peerTagC []byte) (*Session, error) {
 	expectedA := c.transcript.initiatorConfirmationTag(c.isk, c.sid)
 	if !hmac.Equal(expectedA, peerTagC) {
+		return nil, ErrConfirmationFailed
+	}
+	// A correct tag is not peer confirmation if it is also our own tag.
+	// Equal shares and AD otherwise let B's tag be reflected as C (#308).
+	tagB := c.transcript.responderConfirmationTag(c.isk, c.sid)
+	if hmac.Equal(tagB, peerTagC) {
 		return nil, ErrConfirmationFailed
 	}
 	return newSession(c.isk, c.transcript.transcriptID(), c.transcript.initiatorAD(), c.peerID), nil

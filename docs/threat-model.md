@@ -75,6 +75,10 @@ length-value fields, exact-sized public shares and tags, and per-field size
 caps. Decoders reject malformed, non-canonical, oversized, trailing, wrong-role,
 wrong-suite, and invalid-length inputs.
 
+### Key-Confirmation Reflection
+
+Both Finish paths reject an otherwise valid remote confirmation tag equal to the local tag with `ErrConfirmationFailed`. This addresses issue #308's forced equal-share/equal-AD case, where the baseline responder accepted its own B tag as C. No feasible way to force that condition with fresh production randomness was established, but identities, CI, and SessionID do not distinguish identical tag inputs within one session. Initiator confirmation is released only after peer verification and the equality check; all rejected Finish calls return no Session and consume state. See [the reflection analysis](key-confirmation-reflection.md) for the attacker model, A/B/C ordering, correctly framed regression attempts, compatibility change, concurrent-session limits, and stale release-evidence lanes.
+
 ### Session Outputs
 
 `Session.TranscriptID` is the draft `CPaceSidOutput` for the confirmed CPace
