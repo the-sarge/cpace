@@ -30,7 +30,11 @@ assert_install() {
   esac
 }
 
-assert_install task github.com/go-task/task/v3/cmd/task
+task_install_output=$(run_tool install task)
+if [ "$task_install_output" != "install github.com/go-task/task/v3/cmd/task@v3.53.1" ]; then
+  echo "task install got $task_install_output want install github.com/go-task/task/v3/cmd/task@v3.53.1" >&2
+  exit 1
+fi
 assert_install govulncheck golang.org/x/vuln/cmd/govulncheck
 assert_install gosec github.com/securego/gosec/v2/cmd/gosec
 assert_install staticcheck honnef.co/go/tools/cmd/staticcheck
