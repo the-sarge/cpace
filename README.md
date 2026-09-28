@@ -52,6 +52,8 @@ Input and wire fields have package-owned per-field caps: passwords and party IDs
 
 ## Validation
 
+Install the repository-pinned Task 3.53.1 with `scripts/go-tool.sh install task` using Go 1.27.1, and put `$(go env GOPATH)/bin` (or your configured `GOBIN`) on `PATH`. Confirm the selected tools with `go version` and `task --version`.
+
 This repository uses `Taskfile.yml` as the local validation facade:
 
 ```sh

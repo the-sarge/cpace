@@ -43,6 +43,9 @@ jobs:
       - name: Install task
         run: scripts/go-tool.sh install task
 
+      - name: Report Task version
+        run: task --version
+
       - name: Install golangci-lint
         run: scripts/go-tool.sh install golangci-lint
 

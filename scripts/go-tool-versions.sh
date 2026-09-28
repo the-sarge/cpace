@@ -24,7 +24,7 @@ cpace_go_tool_resolve() {
       ;;
     task)
       cpace_go_tool_module=github.com/go-task/task/v3/cmd/task
-      cpace_go_tool_version=v3.50.0
+      cpace_go_tool_version=v3.53.1
       ;;
     *)
       return 1
