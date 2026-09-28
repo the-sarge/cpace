@@ -3189,3 +3189,14 @@ RAS review `20260923T181926-6341a5b2c1f098b8d4fb7a12` completed with four succes
 ### Next
 
 The [evidence baseline](docs/evidence-baseline.md) remains the live release-evidence index. This security-relevant correction requires exact-candidate dependency/SAST, Capslock, security/spec/vector, and paired long-fuzz refresh before stronger release claims. Ordinary checks and automated reviews do not replace those lanes or independent cryptographic review.
+
+---
+
+## Exact CI toolchain baseline merged - 2026-09-28 18:00 EDT
+
+**Main:** `8cb24478359f`
+**Actor:** Codex
+
+Merged [the-sarge/cpace#312](https://github.com/the-sarge/cpace/pull/312) for the agreed exact CI toolchain baseline. The implementation and review handoff are recorded in the linked PR.
+
+Validation: the current PR checks passed at reviewed head `2a02224456055162119fe831406def49078e56a9` before squash merge `8cb24478359f989bacfd0fe6e8595c2fcbdc0f5f`. This rollout did not publish a release.
