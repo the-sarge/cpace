@@ -151,11 +151,7 @@ dispatches from `refs/heads/main`. Treat that guard as workflow hygiene and
 defense in depth: the trust boundary is that fork PRs cannot dispatch this
 workflow, and manual dispatch requires repository write access.
 
-The autoscaled runner image must provide a POSIX/GNU userland and a working C
-compiler for Linux race-detector fuzz builds. At minimum the workflow checks
-for `bash`, `find`, `jq`, `mktemp`, `sed`, `sort`, `touch`, `xargs`, and a C
-compiler (`cc`, `gcc`, or `clang`) before reporting the fuzz plan or invoking
-`task fuzz`. Go and Task are installed by the workflow itself.
+The autoscaled runner image must provide a POSIX/GNU userland, a working C compiler for Linux race-detector fuzz builds, `infra-ensure-tool`, and the repository-pinned Task v3.53.1 binary. At minimum the workflow checks for `bash`, `find`, `jq`, `mktemp`, `sed`, `sort`, `touch`, `xargs`, and a C compiler (`cc`, `gcc`, or `clang`) before reporting the fuzz plan or invoking `task fuzz`. Managed Linux Task bootstrap selects the exact installed version and fails if the image cannot supply it. The existing `actions/setup-go` step selects Go from `go.mod`; infra owns prepopulating its tool cache. Hosted jobs and local development retain the Go-based Task bootstrap.
 
 Any additional self-hosted lane must either be ephemeral with one job per
 runner instance, or restricted to trusted `main`-only scheduled and manual
