@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+# Existing fixtures exercise developer bootstrap regardless of their host.
+export GITHUB_ACTIONS=false
+
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT HUP INT TERM
