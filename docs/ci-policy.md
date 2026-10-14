@@ -21,8 +21,8 @@ Pinned Go CLI modules used by tracked workflows and the Taskfile Staticcheck and
 ## Analyzer Ownership
 
 `gosec` and `staticcheck` run inside `golangci-lint` for the root module rather
-than as standalone lanes. The pinned `golangci-lint v2.13.1` vendors
-`gosec v2.28.0` and `honnef.co/go/tools v0.8.0`, so the consolidated lane is at
+than as standalone lanes. The pinned `golangci-lint v2.14.0` vendors
+`gosec v2.29.0` and `honnef.co/go/tools v0.8.1`, so the consolidated lane is at
 least as current as the retired standalone pins. The canonical `.golangci.yml`
 enables `gosec` with `run.tests: true` and `staticcheck` with
 `all,-QF1011,-ST1000`; the only intentional relaxation against the retired
