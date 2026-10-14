@@ -22,6 +22,10 @@ fi
 case "$mode" in
   install)
     [ "$#" -eq 0 ] || usage
+    if [ "$tool_name" = task ] && [ "${GITHUB_ACTIONS:-}" = true ] &&
+      [ "${RUNNER_ENVIRONMENT:-}" = self-hosted ] && [ "${RUNNER_OS:-}" = Linux ]; then
+      exec infra-ensure-tool task "$cpace_go_tool_version" "$cpace_go_tool_module" "${GOBIN:-$(go env GOPATH)/bin}"
+    fi
     exec go install "${cpace_go_tool_module}@${cpace_go_tool_version}"
     ;;
   run)

@@ -21,8 +21,8 @@ Pinned Go CLI modules used by tracked workflows and the Taskfile Staticcheck and
 ## Analyzer Ownership
 
 `gosec` and `staticcheck` run inside `golangci-lint` for the root module rather
-than as standalone lanes. The pinned `golangci-lint v2.13.1` vendors
-`gosec v2.28.0` and `honnef.co/go/tools v0.8.0`, so the consolidated lane is at
+than as standalone lanes. The pinned `golangci-lint v2.14.0` vendors
+`gosec v2.29.0` and `honnef.co/go/tools v0.8.1`, so the consolidated lane is at
 least as current as the retired standalone pins. The canonical `.golangci.yml`
 enables `gosec` with `run.tests: true` and `staticcheck` with
 `all,-QF1011,-ST1000`; the only intentional relaxation against the retired
@@ -151,11 +151,7 @@ dispatches from `refs/heads/main`. Treat that guard as workflow hygiene and
 defense in depth: the trust boundary is that fork PRs cannot dispatch this
 workflow, and manual dispatch requires repository write access.
 
-The autoscaled runner image must provide a POSIX/GNU userland and a working C
-compiler for Linux race-detector fuzz builds. At minimum the workflow checks
-for `bash`, `find`, `jq`, `mktemp`, `sed`, `sort`, `touch`, `xargs`, and a C
-compiler (`cc`, `gcc`, or `clang`) before reporting the fuzz plan or invoking
-`task fuzz`. Go and Task are installed by the workflow itself.
+The autoscaled runner image must provide a POSIX/GNU userland, a working C compiler for Linux race-detector fuzz builds, `infra-ensure-tool`, and the repository-pinned Task v3.53.1 binary. At minimum the workflow checks for `bash`, `find`, `jq`, `mktemp`, `sed`, `sort`, `touch`, `xargs`, and a C compiler (`cc`, `gcc`, or `clang`) before reporting the fuzz plan or invoking `task fuzz`. Managed Linux Task bootstrap selects the exact installed version and fails if the image cannot supply it. The existing `actions/setup-go` step selects Go from `go.mod`; infra owns prepopulating its tool cache. Hosted jobs and local development retain the Go-based Task bootstrap.
 
 Any additional self-hosted lane must either be ephemeral with one job per
 runner instance, or restricted to trusted `main`-only scheduled and manual

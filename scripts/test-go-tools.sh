@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+# Existing fixtures exercise developer bootstrap regardless of their host.
+export GITHUB_ACTIONS=false
+
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT HUP INT TERM
@@ -12,6 +15,18 @@ set -eu
 printf '%s\n' "$*"
 EOF
 chmod +x "$tmpdir/bin/go"
+
+cat >"$tmpdir/bin/infra-ensure-tool" <<'EOF'
+#!/bin/sh
+set -eu
+printf 'selected %s\n' "$*"
+EOF
+chmod +x "$tmpdir/bin/infra-ensure-tool"
+managed=$(PATH="$tmpdir/bin:$PATH" GITHUB_ACTIONS=true RUNNER_ENVIRONMENT=self-hosted RUNNER_OS=Linux GOBIN="$tmpdir/selected" "$repo_root/scripts/go-tool.sh" install task)
+if [ "$managed" != "selected task v3.53.1 github.com/go-task/task/v3/cmd/task $tmpdir/selected" ]; then
+  echo "managed Task selection got $managed want the installed exact version" >&2
+  exit 1
+fi
 
 run_tool() {
   PATH="$tmpdir/bin:$PATH" "$repo_root/scripts/go-tool.sh" "$@"
