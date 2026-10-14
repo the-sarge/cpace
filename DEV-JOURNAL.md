@@ -3200,3 +3200,16 @@ The [evidence baseline](docs/evidence-baseline.md) remains the live release-evid
 Merged [the-sarge/cpace#312](https://github.com/the-sarge/cpace/pull/312) for the agreed exact CI toolchain baseline. The implementation and review handoff are recorded in the linked PR.
 
 Validation: the current PR checks passed at reviewed head `2a02224456055162119fe831406def49078e56a9` before squash merge `8cb24478359f989bacfd0fe6e8595c2fcbdc0f5f`. This rollout did not publish a release.
+
+---
+
+## Linux image tool reuse and compatible analysis tools - 2026-10-13 23:38 EDT
+
+**Main:** `606ae3c1cdab`
+**Actor:** Codex
+
+Merged [PR #316](https://github.com/the-sarge/cpace/pull/316) as `606ae3c1cdab4b6eaaf73e658fb56bec240c94ed`. Managed Linux bootstrap reuses exact image-installed tools while preserving explicit overrides and local bootstrap. The approved shared Staticcheck 0.8.2 and golangci-lint 2.14.0 pins support Go 1.27.2; application APIs and dependencies remain unchanged.
+
+Validation: candidate `53ba7a71e2e7374e1b21ff7b81833f867462907d` passed tool-bootstrap fixtures and full `task check` with Go 1.27.2. RAS initial `20261013T222753-97a1482783568fd8af20bc99`, replacement `20261014T013724-c5952ed77d3319e1c064187b`, and exact-head verification were independently dispositioned. Post-ready [CI](https://github.com/the-sarge/cpace/actions/runs/38506624877) and [SAST](https://github.com/the-sarge/cpace/actions/runs/38506624842), both attempt 2, passed on the same candidate; SAST reported Go 1.27.2 and zero linter issues. All required checks passed before squash merge.
+
+Fleet image rollout and remaining consumer work are tracked in [infra #682](https://github.com/the-sarge/infra/issues/682), which remains the live batch status.
