@@ -23,4 +23,4 @@ The live taxonomy is dimensional (`priority/*`, `kind/*`, `area/*`, plus `releas
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` (domain glossary) + `docs/adr/` (decision records) at the repo root. See `docs/agents/domain.md`.
+Single-context: one `GLOSSARY.md` (domain glossary) + `docs/adr/` (decision records) at the repo root. See `docs/agents/domain.md`.

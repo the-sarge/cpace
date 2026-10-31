@@ -53,7 +53,7 @@ tracing each function and every early-return path.
 
 ## Decision
 
-Extract a deep, unexported **CPace core** (see `CONTEXT.md`): stateful
+Extract a deep, unexported **CPace core** (see `GLOSSARY.md`): stateful
 `initiatorCore` and `responderCore` types held as a named `core` field by the
 public `Initiator` and `Responder`, which become thin shells. (A named field,
 not Go struct embedding — no core methods are promoted onto the public types.)

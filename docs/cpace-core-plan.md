@@ -24,7 +24,7 @@ persistent-secret invariant is enforced by hand-placed deferred closures in the
 two `Finish` functions; the constructors' `defer`s cover scratch secrets only.
 
 Extract a deep `initiatorCore` / `responderCore` — collectively the **CPace
-core** (see `CONTEXT.md`). The public `Initiator` / `Responder` become thin
+core** (see `GLOSSARY.md`). The public `Initiator` / `Responder` become thin
 shells. The core owns one role's cryptographic computation and the lifetime of
 its persistent secrets, so the persistent-secret audit concentrates in two
 `clear()` methods instead of a trace across four functions.
@@ -39,7 +39,7 @@ its persistent secrets, so the persistent-secret audit concentrates in two
 | Randomness | Core constructor takes `io.Reader` (new core-test seam). `startWithRandom` / `respondWithRandom` **retained**, unexported, as the full-pipeline seam. |
 | `buildCI` | **In front** — `buildCI` runs inside `normalizeInput`; `normalizedInput` keeps its `ci` field unchanged. (Revises the earlier "behind the seam" call — lower churn, and it removes the seam contradiction phase-2 flagged.) |
 | Session | Core constructs it; only the Session's independent ISK clone persists past `clear()`. |
-| Naming | `initiatorCore` / `responderCore` — concept **CPace core** (`CONTEXT.md`). |
+| Naming | `initiatorCore` / `responderCore` — concept **CPace core** (`GLOSSARY.md`). |
 | Tests | Primitive-level vector tests retained as internal-seam tests; add core-level vector tests + an ISK-isolation test. |
 
 ## Target shape
