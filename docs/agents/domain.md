@@ -2,14 +2,18 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
-This repo is **single-context**: one `CONTEXT.md` plus `docs/adr/` at the repo root cover the whole project. The repository contains the root cpace library module and two nested validation-tool modules, but they share one domain vocabulary and one decision-record set.
+This repo is **single-context**: one `GLOSSARY.md` plus `docs/adr/` at the repo root cover the whole project. The repository contains the root cpace library module and two nested validation-tool modules, but they share one domain vocabulary and one decision-record set.
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root — the project's domain glossary.
+- **`GLOSSARY.md`** at the repo root — the project's domain glossary.
 - **`docs/adr/`** — read ADRs that touch the area you're about to work in.
 
-Both exist. (If a future split ever removes one, **proceed silently** — don't flag the absence; the producer skill `/grill-with-docs` recreates them lazily when terms or decisions actually get resolved.)
+Both exist. (If a future split ever removes one, **proceed silently** — don't flag the absence; the `domain-modeling` skill recreates them lazily when terms or decisions actually get resolved.)
+
+If a root `GLOSSARY-MAP.md` is introduced later, follow it to the relevant per-context `GLOSSARY.md` files and also read any applicable context-specific ADRs.
+
+Before 2026-10-31 the glossary was `CONTEXT.md`. Frozen evidence, the development journal and pinned-revision links keep that name; read it as this glossary at the cited revision.
 
 ## File structure
 
@@ -17,7 +21,7 @@ Single-context layout (this repo):
 
 ```
 /
-├── CONTEXT.md                      ← shared domain glossary
+├── GLOSSARY.md                     ← shared domain glossary
 ├── docs/adr/                       ← shared architecture decision records; read the live directory
 ├── go.mod                          ← root cpace library module
 ├── *.go                            ← flat cpace package for the root library module
@@ -28,9 +32,9 @@ Single-context layout (this repo):
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.
+When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `GLOSSARY.md`. Don't drift to synonyms the glossary explicitly avoids.
 
-If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/grill-with-docs`).
+If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `domain-modeling`).
 
 ## Flag ADR conflicts
 
