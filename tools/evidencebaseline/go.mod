@@ -2,4 +2,4 @@ module github.com/the-sarge/cpace/tools/evidencebaseline
 
 go 1.27
 
-toolchain go1.27.1
+toolchain go1.27.2
