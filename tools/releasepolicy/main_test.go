@@ -1192,7 +1192,7 @@ func mustReplaceOnce(t *testing.T, in, old, new string) string {
 
 func mustWriteFile(t *testing.T, path string, content []byte, mode os.FileMode) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil { // #nosec G301 -- Generated directory-kind or parent fixture beneath a private temporary root.
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(path, content, mode); err != nil {
