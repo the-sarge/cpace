@@ -450,7 +450,7 @@ func newAcceptedReleasePolicy() releasePolicy {
 							`--verify-tag \`,
 							`"${release_args[@]}"`,
 						},
-						env: map[string]string{
+						env: map[string]string{ // #nosec G101 -- Literal GitHub token expression in the accepted workflow oracle; no credential value.
 							"GH_TOKEN":           "${{ github.token }}",
 							"RELEASE_TAG":        "${{ needs.verify-tag.outputs.release-tag }}",
 							"RELEASE_PRERELEASE": "${{ needs.verify-tag.outputs.prerelease }}",

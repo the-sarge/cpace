@@ -74,7 +74,7 @@ func TestSummaryDocClassifierRefsMatchBaselineParser(t *testing.T) {
 	}
 	want := sortedKeys(wantSet)
 
-	cmd := exec.Command(filepath.Join(repoRoot, "scripts", "classify-check-changes.sh"), "--list-summary-docs")
+	cmd := exec.Command(filepath.Join(repoRoot, "scripts", "classify-check-changes.sh"), "--list-summary-docs") // #nosec G204 -- Runs the trusted checkout classifier with a fixed flag; no caller command.
 	cmd.Dir = repoRoot
 	out, err := cmd.Output()
 	if err != nil {
@@ -142,13 +142,13 @@ func TestEvidenceBaselineWriteSummaryDocsFlagRoundTrip(t *testing.T) {
 	repoRoot := mustFixtureRepo(t)
 	mustWriteTextFile(t, filepath.Join(repoRoot, summaryDocsManifestRef), "stale\n")
 
-	cmd := exec.Command("go", "run", ".", "--repo-root", repoRoot, "--write-summary-docs")
+	cmd := exec.Command("go", "run", ".", "--repo-root", repoRoot, "--write-summary-docs") // #nosec G204 -- Runs this module on a private generated fixture using fixed flags and no shell.
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("go run --write-summary-docs failed: %v\n%s", err, out)
 	}
 
-	content, err := os.ReadFile(filepath.Join(repoRoot, summaryDocsManifestRef))
+	content, err := os.ReadFile(filepath.Join(repoRoot, summaryDocsManifestRef)) // #nosec G304 -- Reads generated local test fixtures; no caller-supplied path.
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,7 +172,7 @@ func TestEvidenceBaselineWriteSummaryDocsRejectsManifestSymlink(t *testing.T) {
 		t.Skipf("symlink unavailable: %v", err)
 	}
 
-	cmd := exec.Command("go", "run", ".", "--repo-root", repoRoot, "--write-summary-docs")
+	cmd := exec.Command("go", "run", ".", "--repo-root", repoRoot, "--write-summary-docs") // #nosec G204 -- Runs this module on a private generated symlink fixture using fixed flags and no shell.
 	out, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Fatalf("expected symlinked manifest write to fail, got success:\n%s", out)
@@ -180,7 +180,7 @@ func TestEvidenceBaselineWriteSummaryDocsRejectsManifestSymlink(t *testing.T) {
 	if !strings.Contains(string(out), "summary-doc manifest must not be a symlink") {
 		t.Fatalf("expected symlink error, got:\n%s", out)
 	}
-	got, err := os.ReadFile(outside)
+	got, err := os.ReadFile(outside) // #nosec G304 -- Reads generated local test fixtures; no caller-supplied path.
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,7 +214,7 @@ func TestEvidenceBaselineWriteSummaryDocsRejectsUnsafeManifestPaths(t *testing.T
 		repoRoot := mustFixtureRepo(t)
 		manifest := filepath.Join(repoRoot, summaryDocsManifestRef)
 		mustRemove(t, manifest)
-		if err := os.Mkdir(manifest, 0o755); err != nil {
+		if err := os.Mkdir(manifest, 0o755); err != nil { // #nosec G301 -- Generated directory-kind or parent fixture beneath a private temporary root.
 			t.Fatal(err)
 		}
 
@@ -462,7 +462,7 @@ func TestEvidenceBaselineRejectsSymlinkedChecksumSignature(t *testing.T) {
 func TestEvidenceBaselineRejectsUnsafeBaselineRef(t *testing.T) {
 	repoRoot := mustFixtureRepo(t)
 	baseline := filepath.Join(repoRoot, "docs", "evidence-baseline.md")
-	content, err := os.ReadFile(baseline)
+	content, err := os.ReadFile(baseline) // #nosec G304 -- Reads generated local test fixtures; no caller-supplied path.
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -532,7 +532,7 @@ func TestEvidenceBaselineParserRejectsSummaryDocDirectory(t *testing.T) {
 	repoRoot := mustFixtureRepo(t)
 	summary := filepath.Join(repoRoot, "docs", "dependency-review.md")
 	mustRemove(t, summary)
-	if err := os.Mkdir(summary, 0o755); err != nil {
+	if err := os.Mkdir(summary, 0o755); err != nil { // #nosec G301 -- Generated directory-kind or parent fixture beneath a private temporary root.
 		t.Fatal(err)
 	}
 
@@ -685,7 +685,7 @@ func mustWriteSHA256SUMS(t *testing.T, dir string, files ...string) {
 	t.Helper()
 	var lines []string
 	for _, name := range files {
-		in, err := os.ReadFile(filepath.Join(dir, name))
+		in, err := os.ReadFile(filepath.Join(dir, name)) // #nosec G304 -- Reads generated local test fixtures; no caller-supplied path.
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -725,17 +725,17 @@ func assertNoFinding(t *testing.T, findings []finding, unwanted string) {
 
 func mustWriteTextFile(t *testing.T, path, content string) {
 	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil { // #nosec G301 -- Generated directory-kind or parent fixture beneath a private temporary root.
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil { // #nosec G306,G703 -- Writes generated test data to private temporary fixtures; no caller path or secret.
 		t.Fatal(err)
 	}
 }
 
 func mustAppendFile(t *testing.T, path, content string) {
 	t.Helper()
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0) // #nosec G304 -- Appends generated local test fixtures; no caller-supplied path.
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -747,7 +747,7 @@ func mustAppendFile(t *testing.T, path, content string) {
 
 func mustReplaceInFile(t *testing.T, path, old, new string) {
 	t.Helper()
-	content, err := os.ReadFile(path)
+	content, err := os.ReadFile(path) // #nosec G304 -- Reads generated local test fixtures; no caller-supplied path.
 	if err != nil {
 		t.Fatal(err)
 	}

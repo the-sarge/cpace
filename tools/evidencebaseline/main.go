@@ -218,7 +218,7 @@ func readSummaryDocsManifest(repoRoot string) ([]string, []finding, error) {
 	if !info.Mode().IsRegular() {
 		return nil, []finding{{path: summaryDocsManifestRef, msg: "summary-doc manifest must be a regular file"}}, nil
 	}
-	in, err := os.ReadFile(full)
+	in, err := os.ReadFile(full) // #nosec G304 -- Fixed local manifest; parents, symlinks and regular-file kind checked above.
 	if err != nil {
 		return nil, nil, err
 	}
@@ -311,7 +311,7 @@ func summaryDocsManifestWritePath(repoRoot string) (string, error) {
 }
 
 func parseBaselineIndex(path string) ([]baselineRow, []finding, error) {
-	in, err := os.ReadFile(path)
+	in, err := os.ReadFile(path) // #nosec G304 -- Reads the fixed baseline document beneath the operator-selected local repository root.
 	if err != nil {
 		return nil, nil, err
 	}
@@ -684,7 +684,7 @@ type checksumEntry struct {
 }
 
 func parseSHA256SUMS(path, findingPath string) ([]checksumEntry, []finding, error) {
-	file, err := os.Open(path)
+	file, err := os.Open(path) // #nosec G304 -- Reads a local bundle control file after regular-file and symlink validation.
 	if err != nil {
 		return nil, nil, err
 	}
@@ -746,7 +746,7 @@ func verifySHA256Entry(bundlePath, bundle string, entry checksumEntry) []finding
 		return []finding{{path: bundle + "/" + entry.path, msg: "checksum references non-regular file"}}
 	}
 
-	file, err := os.Open(full)
+	file, err := os.Open(full) // #nosec G304 -- Safe bundle-relative entry; components reject symlinks and target is regular.
 	if err != nil {
 		return []finding{{path: bundle + "/" + entry.path, msg: err.Error()}}
 	}

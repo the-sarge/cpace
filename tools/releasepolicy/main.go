@@ -74,7 +74,7 @@ func checkRepo(repoRoot string) ([]finding, error) {
 }
 
 func loadYAML(path string) (*yaml.Node, error) {
-	in, err := os.ReadFile(path)
+	in, err := os.ReadFile(path) // #nosec G304 -- Reads the fixed workflow beneath the operator-selected local repository root.
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +414,7 @@ func (c *checker) checkNoRunExpressions(jobs *yaml.Node) {
 
 func checkAllowedSigners(repoRoot string, policy releasePolicy) []finding {
 	const path = ".github/allowed_signers"
-	in, err := os.ReadFile(filepath.Join(repoRoot, path))
+	in, err := os.ReadFile(filepath.Join(repoRoot, path)) // #nosec G304 -- Reads the fixed signer policy beneath the operator-selected local repository root.
 	if err != nil {
 		return []finding{{path: path, msg: err.Error()}}
 	}

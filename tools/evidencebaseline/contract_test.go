@@ -50,7 +50,7 @@ func TestAssertFindingPairsPathAndMessage(t *testing.T) {
 	}
 	for _, scenario := range []string{"separate findings", "path contains message"} {
 		t.Run(scenario, func(t *testing.T) {
-			cmd := exec.Command(os.Args[0], "-test.run=^TestAssertFindingPairsPathAndMessage$")
+			cmd := exec.Command(os.Args[0], "-test.run=^TestAssertFindingPairsPathAndMessage$") // #nosec G204,G702 -- Reexecutes this test binary with a fixed test selector; no shell or caller command.
 			cmd.Env = append(os.Environ(), "CPACE_FINDING_ASSERT_SCENARIO="+scenario)
 			output, err := cmd.CombinedOutput()
 			if err == nil || !strings.Contains(string(output), "want path") {

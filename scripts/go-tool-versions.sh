@@ -12,7 +12,7 @@ cpace_go_tool_resolve() {
       ;;
     gosec)
       cpace_go_tool_module=github.com/securego/gosec/v2/cmd/gosec
-      cpace_go_tool_version=v2.26.1
+      cpace_go_tool_version=v2.30.0
       ;;
     govulncheck)
       cpace_go_tool_module=golang.org/x/vuln/cmd/govulncheck
