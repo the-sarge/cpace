@@ -3228,3 +3228,20 @@ Fleet image rollout and remaining consumer work are tracked in [infra #682](http
 **Decisions:** [Portfolio #729](https://github.com/the-sarge/infra/issues/729) approved retaining recursive scanner coverage and narrowly justified local annotations. This is compiler/scanner compatibility evidence, not a refreshed release-security, dependency or fuzz audit; historical pinned claims remain historical. No library tag, release or consumer propagation occurred.
 
 **Next:** Parent reconciliation of [cpace #320](https://github.com/the-sarge/cpace/issues/320) and [infra #686](https://github.com/the-sarge/infra/issues/686) remains on those live trackers. Historical draft #319 remains untouched.
+
+---
+
+## Task bootstrap compiler guidance corrected - 2026-11-11 06:52 EST
+
+**Main:** `8d7373a9b793`
+**Actor:** Codex
+
+### Completed
+
+Merged [PR #325](https://github.com/the-sarge/cpace/pull/325) for [issue #324](https://github.com/the-sarge/cpace/issues/324), a bounded final-audit correction under [portfolio infra#729](https://github.com/the-sarge/infra/issues/729). The current README Validation instruction now selects Go 1.27.4 when bootstrapping pinned Task 3.53.1. Exactly one compiler token changed; all other tracked bytes, commands, helper behavior, consumer floors, dependencies/sums, runtime/API and frozen evidence were preserved. Completed compiler/scanner PR #322 and journal #323 remain separate history; no installed artifact, release, tag or consumer propagation was introduced. User draft #319 remains untouched.
+
+### Validation
+
+Initial configured RAS `20261111T114515-8f4a10e0a7a791344d2602bc` returned zero findings. Both Codex reviewers and synthesis completed; both Claude processes failed, with configured quorum two met. No timeout/model/quorum overrides, replacement review, fixer or verification was used. Exact reviewed head `f4f0c6a638842b9572cc57f72cfdb24a6a86f64f`, base `2dc0c98575e75b4e707142c5c061de21d054c0e5`, passed the byte-preservation check and docs-only `task check:changed` lane: Markdown/whitespace and existing Go-tool routing smoke tests. [Local certification and readiness procedure](https://github.com/the-sarge/cpace/pull/325#issuecomment-6794966668) retain the evidence boundary.
+
+All four required checks passed in actual attempt-two runs after Ready at 11:47:12 UTC: [Check](https://github.com/the-sarge/cpace/actions/runs/43014519937/attempts/2), [DCO](https://github.com/the-sarge/cpace/actions/runs/43014520083/attempts/2), [Dependency Gate](https://github.com/the-sarge/cpace/actions/runs/43014520098/attempts/2) and [SAST Gate](https://github.com/the-sarge/cpace/actions/runs/43014519894/attempts/2). Existing successful PR runs were activated again because these workflows omit the Ready event; draft-phase results were excluded from the final certificate. Fresh live head/base, clean-worktree and mergeability checks preceded guarded squash to `8d7373a9b793700d23475412acd6d09a06586969`. This separate post-merge journal uses no RAS.
