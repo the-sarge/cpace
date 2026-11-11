@@ -3213,3 +3213,18 @@ Merged [PR #316](https://github.com/the-sarge/cpace/pull/316) as `606ae3c1cdab4b
 Validation: candidate `53ba7a71e2e7374e1b21ff7b81833f867462907d` passed tool-bootstrap fixtures and full `task check` with Go 1.27.2. RAS initial `20261013T222753-97a1482783568fd8af20bc99`, replacement `20261014T013724-c5952ed77d3319e1c064187b`, and exact-head verification were independently dispositioned. Post-ready [CI](https://github.com/the-sarge/cpace/actions/runs/38506624877) and [SAST](https://github.com/the-sarge/cpace/actions/runs/38506624842), both attempt 2, passed on the same candidate; SAST reported Go 1.27.2 and zero linter issues. All required checks passed before squash merge.
 
 Fleet image rollout and remaining consumer work are tracked in [infra #682](https://github.com/the-sarge/infra/issues/682), which remains the live batch status.
+
+---
+
+## Go 1.27.4 scanner compatibility landed - 2026-11-11 03:05 EST
+
+**Main:** `06f83b5f6de5`
+**Actor:** Codex
+
+**Completed:** [PR #322](https://github.com/the-sarge/cpace/pull/322) selects Go 1.27.4 in the root and both maintained validation-tool modules, and official standalone gosec v2.30.0 through the existing installer. The canonical recursive test-inclusive Task scan and release SARIF/failure policy remain unchanged. Twenty-four rule-specific local annotations explain reviewed validation-tool literals, fixture operations and intentional local reads; removing those comments yields byte-identical Go source. Language floors, dependencies/sums, crypto runtime/API, fixture behavior and frozen evidence are unchanged.
+
+**Validation:** Official Go 1.27.4 source installation of gosec via `scripts/go-tool.sh install gosec` succeeded. The unchanged canonical `task gosec` with SARIF output exited 0 with zero findings and no importer/SSA failure. All three module integrity/tidy checks, both tool test suites, and final exact-head `task check` passed. RAS `20261111T075806-b48bfd6d8adf089ee01e46c4` reported zero findings; both Codex reviewers and synthesis succeeded, both Claude processes failed, and configured quorum 2 was met without timeout/model changes. No fix verification or replacement review was needed. Required post-ready [Check](https://github.com/the-sarge/cpace/actions/runs/42983325941/attempts/2), [DCO](https://github.com/the-sarge/cpace/actions/runs/42983326175/attempts/2), [Dependency Gate](https://github.com/the-sarge/cpace/actions/runs/42983326116/attempts/2) and [SAST Gate](https://github.com/the-sarge/cpace/actions/runs/42983325978/attempts/2) passed on certified source head `57f477f2725dd258be9c92a03552ce04aa656eb6`; the merged tree matches it. macOS/Windows smoke, Actionlint and CodeQL also passed.
+
+**Decisions:** [Portfolio #729](https://github.com/the-sarge/infra/issues/729) approved retaining recursive scanner coverage and narrowly justified local annotations. This is compiler/scanner compatibility evidence, not a refreshed release-security, dependency or fuzz audit; historical pinned claims remain historical. No library tag, release or consumer propagation occurred.
+
+**Next:** Parent reconciliation of [cpace #320](https://github.com/the-sarge/cpace/issues/320) and [infra #686](https://github.com/the-sarge/infra/issues/686) remains on those live trackers. Historical draft #319 remains untouched.
